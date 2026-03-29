@@ -102,7 +102,7 @@ app.get("/api/lop/:maLop/hoc-sinh", async (req, res) => {
   }
 });
 
-// API Tra cứu học sinh
+// API Tra cứu học sinh (done)
 app.get("/api/tra-cuu-hoc-sinh", async (req, res) => {
   const { ten } = req.query;
   try {
@@ -155,7 +155,7 @@ app.get("/api/bao-cao-mon", async (req, res) => {
   }
 });
 
-// API Báo cáo tổng kết học kỳ (Hiện thực hóa BM11)
+// API Báo cáo tổng kết học kỳ (Hiện thực hóa BM11) (done)
 app.get("/api/bao-cao-hoc-ky", async (req, res) => {
   const { MaHocKyNamHoc } = req.query;
 
@@ -197,7 +197,7 @@ app.get("/api/bao-cao-hoc-ky", async (req, res) => {
 });
 
 // CÁC API QUẢN LÝ HỌC SINH VÀ LỚP HỌC SẼ ĐƯỢC THÊM VÀO DƯỚI ĐÂY
-// API Đăng nhập
+// API Đăng nhập (done)
 app.post("/api/login", async (req, res) => {
   const { TenDangNhap, MatKhau } = req.body;
   try {

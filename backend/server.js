@@ -4,6 +4,7 @@ const studentRoutes = require("./routes/studentRoutes"); // Kết nối file rou
 const configRoutes = require("./routes/configRoutes");
 const gradeRoutes = require("./routes/gradeRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/config", configRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/auth", authRoutes);
 
 // API kiểm tra nhanh
 app.get("/", (req, res) => {

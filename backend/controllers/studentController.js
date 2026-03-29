@@ -44,3 +44,30 @@ exports.tiepNhanHocSinh = async (req, res) => {
     res.status(500).json({ error: "Lỗi hệ thống khi tiếp nhận hồ sơ" });
   }
 };
+
+// API Tra cứu học sinh (BM7)
+exports.traCuuHocSinh = async (req, res) => {
+  const { ten } = req.query; // Lấy tên từ chuỗi query (VD: ?ten=Khoi)
+
+  try {
+    const query = `
+      SELECT 
+        hs.MaHocSinh, 
+        hs.HoTen, 
+        l.TenLop, 
+        hs.Email,
+        hs.NgaySinh,
+        gt.TenGioiTinh
+      FROM hocsinh hs
+      LEFT JOIN chitietlop ctl ON hs.MaHocSinh = ctl.MaHocSinh
+      LEFT JOIN lop l ON ctl.MaLop = l.MaLop
+      LEFT JOIN gioitinh gt ON hs.MaGioiTinh = gt.MaGioiTinh
+      WHERE hs.HoTen LIKE ?`; // Tìm kiếm theo từ khóa (gần đúng)
+
+    const [rows] = await db.query(query, [`%${ten}%`]);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Lỗi hệ thống khi tra cứu học sinh" });
+  }
+};
