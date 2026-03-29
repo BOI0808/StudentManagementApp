@@ -1,8 +1,6 @@
 // Import các thư viện cần thiết
 const express = require("express");
-const mysql = require("mysql2");
 const cors = require("cors");
-require("dotenv").config();
 
 // Tạo ứng dụng Express
 const app = express();
@@ -10,17 +8,6 @@ const app = express();
 // Sử dụng middleware
 app.use(cors());
 app.use(express.json());
-
-// Tạo pool kết nối
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASS || "",
-  database: process.env.DB_NAME || "quan_ly_hoc_sinh",
-  waitForConnections: true,
-  connectionLimit: process.env.DB_CONN_LIMIT || 10,
-  queueLimit: 0,
-});
 
 // Tạo đối tượng db từ pool
 const db = pool.promise();
@@ -36,12 +23,6 @@ pool.getConnection((err, connection) => {
 // API kiểm tra kết nối
 app.get("/", (req, res) => {
   res.send("Server Backend đã được tối ưu!");
-});
-
-//Khởi động server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server đang chạy tại: http://localhost:${PORT}`);
 });
 
 // API lấy quy định
@@ -95,7 +76,7 @@ app.get("/api/hoc-ky-nam-hoc", async (req, res) => {
   }
 });
 
-// Lấy danh sách Loại hình kiểm tra (để biết hệ số)
+// API Lấy danh sách Loại hình kiểm tra (để biết hệ số)
 app.get("/api/loai-kiem-tra", async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM loaihinhkiemtra");
@@ -216,6 +197,29 @@ app.get("/api/bao-cao-hoc-ky", async (req, res) => {
 });
 
 // CÁC API QUẢN LÝ HỌC SINH VÀ LỚP HỌC SẼ ĐƯỢC THÊM VÀO DƯỚI ĐÂY
+// API Đăng nhập
+app.post("/api/login", async (req, res) => {
+  const { TenDangNhap, MatKhau } = req.body;
+  try {
+    const [user] = await db.query(
+      "SELECT MaSo, HoTen, PhanQuyen FROM nguoidung WHERE TenDangNhap = ? AND MatKhau = ?",
+      [TenDangNhap, MatKhau]
+    );
+    if (user.length > 0) {
+      // Lấy thêm danh sách các mã chức năng mà người này được phép làm
+      const [quyen] = await db.query(
+        "SELECT MaCN FROM nguoidung_quyen WHERE MaSo = ?",
+        [user[0].MaSo]
+      );
+      res.json({ ...user[0], quyen: quyen.map((q) => q.MaCN) });
+    } else {
+      res.status(401).json({ error: "Sai tài khoản hoặc mật khẩu" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: "Lỗi đăng nhập" });
+  }
+});
+
 // API Tiếp nhận học sinh (Hiện thực hóa Biểu mẫu 5 & Quy định 4, 5)
 app.post("/api/tiep-nhan-hoc-sinh", async (req, res) => {
   const { HoTen, NgaySinh, MaGioiTinh, DiaChi, Email } = req.body;
@@ -299,50 +303,51 @@ app.post("/api/lap-danh-sach-lop", async (req, res) => {
   }
 });
 
-// API Tiếp nhận học sinh (Hiện thực hóa Biểu mẫu 5 & Quy định 4, 5)
-app.post("/api/tiep-nhan-hoc-sinh", async (req, res) => {
-  const { HoTen, NgaySinh, MaGioiTinh, DiaChi, Email } = req.body;
-
+// API Lưu điểm (Biểu mẫu 9)
+app.post("/api/nhap-diem", async (req, res) => {
+  const { MaHocSinh, MaLop, MaMonHoc, MaLoaiKiemTra, Diem } = req.body;
   try {
-    // 1. Lấy quy định về tuổi từ bảng ThamSo
-    const [config] = await db.query(
-      "SELECT ten_tham_so, gia_tri FROM thamso WHERE ten_tham_so IN ('TuoiToiThieu', 'TuoiToiDa')"
-    );
-    const minAge = config.find((c) => c.ten_tham_so === "TuoiToiThieu").gia_tri;
-    const maxAge = config.find((c) => c.ten_tham_so === "TuoiToiDa").gia_tri;
-
-    // 2. Tính tuổi học sinh (B6 trong thuật toán báo cáo)
-    const birthYear = new Date(NgaySinh).getFullYear();
-    const currentYear = new Date().getFullYear();
-    const age = currentYear - birthYear;
-
-    // 3. Kiểm tra điều kiện tuổi (QĐ4)
-    if (age < minAge || age > maxAge) {
-      return res
-        .status(400)
-        .json({
-          error: `Tuổi học sinh phải từ ${minAge} đến ${maxAge}. Hiện tại là ${age} tuổi.`,
-        });
-    }
-
-    // 4. Tạo mã học sinh tự động (Ví dụ: HS + timestamp)
-    const MaHocSinh = "HS" + Date.now().toString().slice(-8);
-
-    // 5. Lưu vào bảng hocsinh (B9 trong thuật toán báo cáo)
     const query =
-      "INSERT INTO hocsinh (MaHocSinh, HoTen, NgaySinh, MaGioiTinh, DiaChi, Email) VALUES (?, ?, ?, ?, ?, ?)";
+      "INSERT INTO bangdiem (MaBangDiem, MaLop, MaMonHoc, MaLoaiKiemTra, MaHocSinh, Diem) VALUES (?, ?, ?, ?, ?, ?)";
     await db.query(query, [
+      "BD" + Date.now(),
+      MaLop,
+      MaMonHoc,
+      MaLoaiKiemTra,
       MaHocSinh,
-      HoTen,
-      NgaySinh,
-      MaGioiTinh,
-      DiaChi,
-      Email,
+      Diem,
     ]);
-
-    res.json({ message: "Tiếp nhận học sinh thành công!", MaHocSinh });
+    res.json({ message: "Lưu điểm thành công" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Lỗi hệ thống khi tiếp nhận hồ sơ" });
+    res.status(500).json({ error: "Lỗi khi lưu điểm" });
   }
+});
+
+// API Cập nhật quy định (Thay đổi tham số)
+app.put("/api/cap-nhat-quy-dinh", async (req, res) => {
+  const { ten_tham_so, gia_tri } = req.body;
+  try {
+    await db.query("UPDATE thamso SET gia_tri = ? WHERE ten_tham_so = ?", [
+      gia_tri,
+      ten_tham_so,
+    ]);
+    res.json({ message: `Đã cập nhật ${ten_tham_so} thành ${gia_tri}` });
+  } catch (err) {
+    res.status(500).json({ error: "Lỗi cập nhật quy định" });
+  }
+});
+
+//Khởi động server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server đang chạy tại: http://localhost:${PORT}`);
+});
+
+//đóng pool khi tắt server
+process.on("SIGINT", () => {
+  console.log("Shutting down server...");
+  pool
+    .end()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
 });
