@@ -1,5 +1,31 @@
 const db = require("../config/db");
 
+// API tạo khối lớp
+exports.createBlock = async (req, res) => {
+  const { TenKhoiLop } = req.body;
+  try {
+    if (!TenKhoiLop)
+      return res.status(400).json({ error: "Tên khối không được để trống" });
+
+    // Kiểm tra trùng lặp tên khối [cite: 145]
+    const [existing] = await db.query(
+      "SELECT * FROM khoilop WHERE TenKhoiLop = ?",
+      [TenKhoiLop]
+    );
+    if (existing.length > 0)
+      return res.status(400).json({ error: "Khối này đã tồn tại" });
+
+    const MaKhoiLop = "K" + TenKhoiLop;
+    await db.query(
+      "INSERT INTO khoilop (MaKhoiLop, TenKhoiLop) VALUES (?, ?)",
+      [MaKhoiLop, TenKhoiLop]
+    );
+    res.json({ message: "Tạo khối lớp thành công", MaKhoiLop });
+  } catch (err) {
+    res.status(500).json({ error: "Lỗi hệ thống khi tạo khối" });
+  }
+};
+
 // API Lập danh sách lớp (BM6)
 exports.lapDanhSachLop = async (req, res) => {
   const { MaLop, MaHocSinh } = req.body;
