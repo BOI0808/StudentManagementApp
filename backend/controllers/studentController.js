@@ -45,27 +45,64 @@ exports.tiepNhanHocSinh = async (req, res) => {
   }
 };
 
-// API Tra cứu học sinh (BM7)
+// API Tra cứu học sinh (BM7) - Cập nhật theo bảng ketqua_monhoc
 exports.traCuuHocSinh = async (req, res) => {
-  const { ten } = req.query; // Lấy tên từ chuỗi query (VD: ?ten=Khoi)
+  const { keyword } = req.query; // Nhận từ khóa tìm kiếm (Tên, Mã HS hoặc Lớp)
 
   try {
     const query = `
       SELECT 
         hs.MaHocSinh, 
         hs.HoTen, 
-        l.TenLop, 
-        hs.Email,
-        hs.NgaySinh,
-        gt.TenGioiTinh
+        nh.TenNamHoc as NamHoc, 
+        l.TenLop,
+        -- Tính trung bình Học kỳ 1 từ bảng ketqua_monhoc
+        (SELECT ROUND(AVG(kq.DiemTrungBinhMon), 2)
+         FROM ketqua_monhoc kq 
+         JOIN hocky_namhoc h ON kq.MaHocKyNamHoc = h.MaHocKyNamHoc
+         WHERE kq.MaHocSinh = hs.MaHocSinh AND h.TenHocKy = 'Học kỳ 1') as TB_HK1,
+        -- Tính trung bình Học kỳ 2 từ bảng ketqua_monhoc
+        (SELECT ROUND(AVG(kq.DiemTrungBinhMon), 2)
+         FROM ketqua_monhoc kq 
+         JOIN hocky_namhoc h ON kq.MaHocKyNamHoc = h.MaHocKyNamHoc
+         WHERE kq.MaHocSinh = hs.MaHocSinh AND h.TenHocKy = 'Học kỳ 2') as TB_HK2
       FROM hocsinh hs
       LEFT JOIN chitietlop ctl ON hs.MaHocSinh = ctl.MaHocSinh
       LEFT JOIN lop l ON ctl.MaLop = l.MaLop
-      LEFT JOIN gioitinh gt ON hs.MaGioiTinh = gt.MaGioiTinh
-      WHERE hs.HoTen LIKE ?`; // Tìm kiếm theo từ khóa (gần đúng)
+      LEFT JOIN hocky_namhoc nh ON l.MaHocKyNamHoc = nh.MaHocKyNamHoc
+      WHERE hs.MaHocSinh = ? OR hs.HoTen LIKE ? OR l.TenLop LIKE ?`;
 
-    const [rows] = await db.query(query, [`%${ten}%`]);
-    res.json(rows);
+    const searchKeyword = `%${keyword}%`;
+    const [rows] = await db.query(query, [
+      keyword,
+      searchKeyword,
+      searchKeyword,
+    ]);
+
+    // Tính toán Điểm trung bình cả năm tại tầng ứng dụng
+    const result = rows.map((row) => {
+      const hk1 = parseFloat(row.TB_HK1) || null;
+      const hk2 = parseFloat(row.TB_HK2) || null;
+      let tbCaNam = null;
+
+      if (hk1 !== null && hk2 !== null) {
+        tbCaNam = ((hk1 + hk2) / 2).toFixed(2);
+      } else if (hk1 !== null || hk2 !== null) {
+        tbCaNam = (hk1 || hk2).toFixed(2); // Nếu chỉ có 1 học kỳ, lấy điểm học kỳ đó
+      }
+
+      return {
+        MaHocSinh: row.MaHocSinh,
+        HoTen: row.HoTen,
+        NamHoc: row.NamHoc,
+        Lop: row.TenLop,
+        TB_HK1: hk1,
+        TB_HK2: hk2,
+        TB_CaNam: tbCaNam,
+      };
+    });
+
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Lỗi hệ thống khi tra cứu học sinh" });
