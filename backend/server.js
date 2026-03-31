@@ -9,6 +9,7 @@ const classRoutes = require("./routes/classRoutes");
 const subjectRoutes = require("./routes/subjectRoutes");
 const semesterRoutes = require("./routes/semesterRoutes");
 const testTypeRoutes = require("./routes/testTypeRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use("/api/classes", classRoutes);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/semesters", semesterRoutes);
 app.use("/api/test-types", testTypeRoutes);
+app.use("/api/users", userRoutes);
 
 // API kiểm tra nhanh
 app.get("/", (req, res) => {
