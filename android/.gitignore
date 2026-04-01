@@ -1,0 +1,11 @@
+backend/node_modules/
+backend/.env
+
+android/.gradle/
+android/build/
+android/local.properties
+android/.idea/caches/
+android/*.iml
+
+.DS_Store
+Thumbs.db
