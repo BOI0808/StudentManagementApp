@@ -39,6 +39,7 @@
                 android:textStyle="bold" />
         </RelativeLayout>
 
+        <!-- Phần 1: Học kỳ - Năm học -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -141,6 +142,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Phần 2: Khối lớp -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -175,12 +177,14 @@
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvKhoiLop"
                     android:layout_width="match_parent"
-                    android:layout_height="150dp"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
                     tools:listitem="@layout/item_danh_muc"
                     tools:itemCount="3" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Phần 3: Môn học -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -279,7 +283,8 @@
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvMonHoc"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
                     tools:listitem="@layout/item_danh_muc"
                     tools:itemCount="5" />
             </LinearLayout>

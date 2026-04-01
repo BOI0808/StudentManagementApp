@@ -26,10 +26,10 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin = findViewById(R.id.btnLogin);
         tvGoToChangePassword = findViewById(R.id.tvGoToChangePassword);
 
-        // Xử lý khi nhấn nút Đăng nhập
+
         btnLogin.setOnClickListener(v -> performLogin());
 
-        // Xử lý khi nhấn Enter từ bàn phím tại ô Mật khẩu
+
         edtPassword.setOnEditorActionListener((TextView v, int actionId, KeyEvent event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO) {
                 performLogin();
@@ -38,7 +38,7 @@ public class LoginActivity extends AppCompatActivity {
             return false;
         });
 
-        // Xử lý khi nhấn "Đổi mật khẩu"
+
         tvGoToChangePassword.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, ChangePasswordActivity.class);
             startActivity(intent);
@@ -54,14 +54,14 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Logic phân quyền đăng nhập
-        if (username.equalsIgnoreCase("admin") && password.equals("admin")) {
-            // Đăng nhập với tư cách Admin
+
+        if (username.equalsIgnoreCase("admin") && password.equals("123456")) {
+
             Intent intent = new Intent(LoginActivity.this, AdminCreateUserActivity.class);
             startActivity(intent);
             finish();
         } else {
-            // Đăng nhập với tư cách Staff/User thông thường
+
             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
             startActivity(intent);
             finish();

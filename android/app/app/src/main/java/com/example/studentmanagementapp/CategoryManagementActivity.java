@@ -56,7 +56,7 @@ public class CategoryManagementActivity extends AppCompatActivity {
         btnSuaMon = findViewById(R.id.btnSuaMon);
         btnXoaMon = findViewById(R.id.btnXoaMon);
         rvMonHoc = findViewById(R.id.rvMonHoc);
-        rvKhoiLop = findViewById(R.id.rvKhoiLop); // Ánh xạ nhưng tạm thời chưa dùng tới
+        rvKhoiLop = findViewById(R.id.rvKhoiLop); 
     }
 
     private void setupRecyclerView() {
@@ -91,35 +91,57 @@ public class CategoryManagementActivity extends AppCompatActivity {
         btnThemMon.setOnClickListener(v -> {
             String ten = edtTenMonHoc.getText().toString().trim();
             if (ten.isEmpty()) {
-                Toast.makeText(this, "Nhập tên môn!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Vui lòng nhập tên môn học!", Toast.LENGTH_SHORT).show();
                 return;
             }
+            
+            // Tự động tạo mã MH01, MH02... dựa trên mã lớn nhất hiện có hoặc size
             String ma = "MH" + String.format("%02d", danhSachMonHoc.size() + 1);
-            danhSachMonHoc.add(new MonHoc(ma, ten));
+            
+            MonHoc monMoi = new MonHoc(ma, ten);
+            danhSachMonHoc.add(monMoi);
+            
+            // Thông báo Adapter cập nhật
             adapter.notifyItemInserted(danhSachMonHoc.size() - 1);
+            rvMonHoc.scrollToPosition(danhSachMonHoc.size() - 1);
+            
+            Toast.makeText(this, "Đã thêm môn học: " + ten, Toast.LENGTH_SHORT).show();
             clearInputs();
         });
 
         // 4. Nút SỬA môn học
         btnSuaMon.setOnClickListener(v -> {
             if (selectedPosition == -1) {
-                Toast.makeText(this, "Chọn môn để sửa!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Vui lòng chọn một môn từ danh sách để sửa!", Toast.LENGTH_SHORT).show();
                 return;
             }
             String tenMoi = edtTenMonHoc.getText().toString().trim();
+            if (tenMoi.isEmpty()) {
+                Toast.makeText(this, "Tên môn không được để trống!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
             danhSachMonHoc.get(selectedPosition).setTenMon(tenMoi);
             adapter.notifyItemChanged(selectedPosition);
+            
+            Toast.makeText(this, "Đã cập nhật môn học thành công", Toast.LENGTH_SHORT).show();
             clearInputs();
         });
 
         // 5. Nút XÓA môn học
         btnXoaMon.setOnClickListener(v -> {
             if (selectedPosition == -1) {
-                Toast.makeText(this, "Chọn môn để xóa!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Vui lòng chọn một môn từ danh sách để xóa!", Toast.LENGTH_SHORT).show();
                 return;
             }
+            
+            String tenXoa = danhSachMonHoc.get(selectedPosition).getTenMon();
             danhSachMonHoc.remove(selectedPosition);
             adapter.notifyItemRemoved(selectedPosition);
+            // Quan trọng: notifyDataSetChanged để cập nhật lại các index nếu cần, 
+            // hoặc đơn giản là notifyItemRemoved là đủ cho animation
+            
+            Toast.makeText(this, "Đã xóa môn học: " + tenXoa, Toast.LENGTH_SHORT).show();
             clearInputs();
         });
     }
@@ -135,5 +157,6 @@ public class CategoryManagementActivity extends AppCompatActivity {
         edtTenMonHoc.setText("");
         edtMaMonHoc.setText("Tự động");
         selectedPosition = -1;
+        edtTenMonHoc.clearFocus();
     }
 }

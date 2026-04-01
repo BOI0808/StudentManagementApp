@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F5F5"
-    tools:context=".TiepNhanHocSinhActivity">
+    tools:context=".ReceiveStudentsActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -62,7 +62,9 @@
                         android:id="@+id/edtHoTen"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPersonName" />
+                        android:inputType="textPersonName"
+                        android:singleLine="true"
+                        android:imeOptions="actionNext" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView
@@ -115,24 +117,68 @@
                         android:id="@+id/edtGioiTinhKhac"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text" />
+                        android:inputType="text"
+                        android:singleLine="true"
+                        android:imeOptions="actionNext" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ngày sinh:"
+                    android:textColor="#555555"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:endIconDrawable="@android:drawable/ic_menu_today"
-                    app:endIconMode="custom"
-                    android:hint="Ngày sinh">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/edtNgaySinh"
-                        android:layout_width="match_parent"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false"
+                    android:layout_marginBottom="16dp">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:focusable="false"
-                        android:inputType="none" />
-                </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:hint="Ngày">
+                        <AutoCompleteTextView
+                            android:id="@+id/spnNgay"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="4dp"
+                        android:hint="Tháng">
+                        <AutoCompleteTextView
+                            android:id="@+id/spnThang"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.2"
+                        android:layout_marginStart="4dp"
+                        android:hint="Năm">
+                        <AutoCompleteTextView
+                            android:id="@+id/spnNam"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -144,7 +190,9 @@
                         android:id="@+id/edtDiaChi"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPostalAddress" />
+                        android:inputType="textPostalAddress"
+                        android:singleLine="true"
+                        android:imeOptions="actionNext" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -157,7 +205,9 @@
                         android:id="@+id/edtEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress" />
+                        android:inputType="textEmailAddress"
+                        android:singleLine="true"
+                        android:imeOptions="actionDone" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
