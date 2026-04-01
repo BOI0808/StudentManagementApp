@@ -11,15 +11,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="16dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="16dp">
 
             <TextView
-                android:id="@+id/btnLogout"
+                android:id="@+id/tvLogout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
@@ -30,7 +30,7 @@
                 android:padding="8dp"
                 android:text="Đăng xuất"
                 android:textColor="#D32F2F"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -39,7 +39,7 @@
                 android:layout_centerInParent="true"
                 android:text="Tạo Tài Khoản"
                 android:textColor="#1976D2"
-                android:textSize="24sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
         </RelativeLayout>
 
@@ -47,12 +47,13 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="Họ và tên">
+            android:layout_marginBottom="8dp"
+            android:hint="Nhập Họ và tên nhân viên">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edtFullName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:padding="12dp"
                 android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -60,12 +61,13 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="Mã số nhân viên">
+            android:layout_marginBottom="8dp"
+            android:hint="Nhập Mã số nhân viên">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edtStaffId"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:padding="12dp"
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -74,19 +76,20 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:baselineAligned="false"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="8dp">
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:hint="Tên đăng nhập">
+                android:layout_marginEnd="4dp"
+                android:hint="Tên đăng nhập mới">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edtUsername"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:padding="12dp"
                     android:inputType="text" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -95,13 +98,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="4dp"
                 app:passwordToggleEnabled="true"
-                android:hint="Mật khẩu">
+                android:hint="Mật khẩu mới">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edtPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:padding="12dp"
                     android:inputType="textPassword" />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
@@ -110,12 +114,13 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="Email">
+            android:layout_marginBottom="8dp"
+            android:hint="Địa chỉ Email nhân viên">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edtEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:padding="12dp"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -123,12 +128,13 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:hint="Số điện thoại">
+            android:layout_marginBottom="16dp"
+            android:hint="Số điện thoại liên lạc">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edtPhone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:padding="12dp"
                 android:inputType="phone" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -136,75 +142,83 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Phân quyền hệ thống:"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="#333333"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginBottom="8dp" />
 
         <GridLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:columnCount="1"
-            android:rowCount="8">
+            android:columnCount="2"
+            android:alignmentMode="alignMargins">
 
             <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/cbTiepNhanHS"
+                android:id="@+id/cbTiepNhanHocSinh"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="12sp"
                 android:text="Tiếp nhận học sinh" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachLop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="12sp"
                 android:text="Lập danh sách lớp" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhMuc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh mục môn/khối/năm" />
+                android:textSize="12sp"
+                android:text="Lập danh mục" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/cbTraCuuHS"
+                android:id="@+id/cbTraCuuHocSinh"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="12sp"
                 android:text="Tra cứu học sinh" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/cbNhapDiem"
+                android:id="@+id/cbNhapBangDiem"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="12sp"
                 android:text="Nhập bảng điểm" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/cbLoaiKiemTra"
+                android:id="@+id/cbNhapLoaiKiemTra"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nhập danh sách loại kiểm tra" />
+                android:textSize="12sp"
+                android:text="Nhập loại kiểm tra" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbBaoCaoMon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập báo cáo tổng kết môn" />
+                android:textSize="12sp"
+                android:text="Báo cáo tổng kết môn" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbBaoCaoHocKy"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập báo cáo tổng kết học kỳ" />
+                android:textSize="12sp"
+                android:text="Báo cáo học kỳ" />
 
         </GridLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCreateAccount"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="24dp"
-            android:text="TẠO TÀI KHOẢN"
-            android:textSize="16sp"
+            android:layout_height="50dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="XÁC NHẬN TẠO TÀI KHOẢN"
+            android:textSize="14sp"
             android:textStyle="bold"
             app:cornerRadius="8dp" />
 
