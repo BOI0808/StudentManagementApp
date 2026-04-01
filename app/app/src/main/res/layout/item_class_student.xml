@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="12dp"
+    android:weightSum="10">
+
+    <TextView
+        android:id="@+id/tvSTT"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        tools:text="1"
+        android:textColor="@color/black" />
+
+    <TextView
+        android:id="@+id/tvMaHS"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:gravity="center"
+        tools:text="HS001"
+        android:textColor="@color/black" />
+
+    <TextView
+        android:id="@+id/tvTenHS"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="3.5"
+        tools:text="Nguyễn Văn A"
+        android:textColor="@color/black" />
+
+    <TextView
+        android:id="@+id/tvNgaySinh"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:gravity="center"
+        tools:text="15/08/2008"
+        android:textColor="@color/black" />
+
+    <ImageButton
+        android:id="@+id/btnXoaHocSinh"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.5"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_delete"
+        app:tint="#D32F2F" />
+
+</LinearLayout>
