@@ -25,7 +25,7 @@ exports.createBlock = async (req, res) => {
           existing[0].MaKhoiLop,
         ]);
         return res.json({
-          message: "Khối lớp đã được kích hoạt lại thành công",
+          message: "Tạo khối lớp thành công",
           MaKhoiLop: existing[0].MaKhoiLop,
         });
       }
@@ -74,9 +74,21 @@ exports.toggleBlockStatus = async (req, res) => {
       return res.status(404).json({ error: "Không tìm thấy khối lớp." });
     }
 
-    res.json({ message: "Cập nhật trạng thái khối lớp thành công!" });
+    res.json({ message: "Xóa khối lớp thành công!" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Lỗi hệ thống khi cập nhật khối lớp" });
+    res.status(500).json({ error: "Lỗi hệ thống khi xóa khối lớp" });
+  }
+};
+
+// API lấy danh sách khối lớp đang hoạt động
+exports.getActiveBlocks = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM khoilop WHERE TrangThai = 1 ORDER BY TenKhoiLop ASC"
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: "Lỗi khi lấy danh sách khối lớp." });
   }
 };
