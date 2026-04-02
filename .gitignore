@@ -10,7 +10,6 @@ android/*.iml
 .DS_Store
 Thumbs.db
 
-
 # Android Studio / IntelliJ files
 *.iml
 .idea/
