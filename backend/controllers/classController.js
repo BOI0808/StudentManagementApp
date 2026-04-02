@@ -36,9 +36,15 @@ exports.taoMoiLop = async (req, res) => {
       );
 
       if (existing.length > 0) {
-        throw new Error(
-          `Lớp ${TenLop} đã tồn tại trong Học kỳ ${hk} của niên khóa này.`
-        );
+        if (semesters.length === 2) {
+          throw new Error(
+            `Lớp ${TenLop} đã tồn tại trong cả 2 học kỳ của niên khóa này.`
+          );
+        } else {
+          throw new Error(
+            `Lớp ${TenLop} đã tồn tại trong Học kỳ ${hk} của niên khóa này.`
+          );
+        }
       }
 
       // 3. Sinh mã lớp gợi nhớ (Semantic ID)
@@ -52,11 +58,18 @@ exports.taoMoiLop = async (req, res) => {
     }
 
     await connection.commit();
-    res.json({ message: "Tạo lớp học cho cả niên khóa thành công!" });
+    let successMessage = "";
+    if (LoaiHocKy === 3) {
+      successMessage = `Tạo lớp ${TenLop} cho cả niên khóa ${NamHocBatDau}-${NamHocKetThuc} thành công!`;
+    } else {
+      successMessage = `Tạo lớp ${TenLop} cho Học kỳ ${LoaiHocKy} (${NamHocBatDau}-${NamHocKetThuc}) thành công!`;
+    }
+
+    res.json({ message: successMessage });
   } catch (err) {
     await connection.rollback();
     console.error(err);
-    res.status(400).json({ error: err.message || "Lỗi hệ thống khi tạo lớp." });
+    res.status(400).json({ error: err.message || "Học kỳ chưa tồn tại!" });
   } finally {
     connection.release();
   }
