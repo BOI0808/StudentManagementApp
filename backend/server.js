@@ -4,6 +4,13 @@ const studentRoutes = require("./routes/studentRoutes"); // Kết nối file rou
 const configRoutes = require("./routes/configRoutes");
 const gradeRoutes = require("./routes/gradeRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const authRoutes = require("./routes/authRoutes");
+const classRoutes = require("./routes/classRoutes");
+const subjectRoutes = require("./routes/subjectRoutes");
+const semesterRoutes = require("./routes/semesterRoutes");
+const testTypeRoutes = require("./routes/testTypeRoutes");
+const userRoutes = require("./routes/userRoutes");
+const blockRoutes = require("./routes/blockRoutes");
 
 const app = express();
 
@@ -17,6 +24,13 @@ app.use("/api/students", studentRoutes);
 app.use("/api/config", configRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/classes", classRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/semesters", semesterRoutes);
+app.use("/api/test-types", testTypeRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/blocks", blockRoutes);
 
 // API kiểm tra nhanh
 app.get("/", (req, res) => {
