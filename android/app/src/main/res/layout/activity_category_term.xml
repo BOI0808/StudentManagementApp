@@ -116,7 +116,7 @@
                     android:id="@+id/rbHocKyCaHai"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Học kỳ 1, 2" />
+                    android:text="Cả năm" />
             </RadioGroup>
 
             <com.google.android.material.button.MaterialButton
