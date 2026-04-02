@@ -1,38 +1,76 @@
 const db = require("../config/db");
 
-// API Lập danh sách lớp (BM6)
-exports.lapDanhSachLop = async (req, res) => {
-  const { MaLop, MaHocSinh } = req.body;
+// API Tạo mới lớp
+exports.taoMoiLop = async (req, res) => {
+  // Nhận thêm NamHocBatDau, NamHocKetThuc và LoaiHocKy (1, 2 hoặc 3)
+  const { TenLop, MaKhoiLop, NamHocBatDau, NamHocKetThuc, LoaiHocKy } =
+    req.body;
 
+  const connection = await db.getConnection();
   try {
-    // 1. Lấy sĩ số tối đa từ bảng thamso (QĐ6)
-    const [config] = await db.query(
-      "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'SiSoToiDa'"
-    );
-    const maxSiSo = config[0].gia_tri;
+    await connection.beginTransaction();
 
-    // 2. Tính sĩ số hiện tại của lớp
-    const [currentSiSo] = await db.query(
-      "SELECT COUNT(*) as count FROM chitietlop WHERE MaLop = ?",
-      [MaLop]
-    );
-
-    // 3. Kiểm tra nếu lớp đã đầy
-    if (currentSiSo[0].count >= maxSiSo) {
-      return res.status(400).json({
-        error: `Lớp đã đầy! Sĩ số tối đa là ${maxSiSo} học sinh.`,
-      });
+    if (!TenLop || !MaKhoiLop || !NamHocBatDau || !LoaiHocKy) {
+      return res
+        .status(400)
+        .json({ error: "Vui lòng nhập đầy đủ thông tin lớp học." });
     }
 
-    // 4. Lưu học sinh vào lớp (Bảng chitietlop)
-    await db.query("INSERT INTO chitietlop (MaLop, MaHocSinh) VALUES (?, ?)", [
-      MaLop,
-      MaHocSinh,
-    ]);
+    // 1. Xác định danh sách các học kỳ cần tạo
+    let semesters = [];
+    if (LoaiHocKy === 1) semesters = [1];
+    else if (LoaiHocKy === 2) semesters = [2];
+    else if (LoaiHocKy === 3) semesters = [1, 2]; // Cả năm
 
-    res.json({ message: "Xếp lớp cho học sinh thành công!" });
+    const shortYear = `${NamHocBatDau.toString().slice(
+      -2
+    )}${NamHocKetThuc.toString().slice(-2)}`;
+
+    for (const hk of semesters) {
+      const maHKNH = `HK${hk}-${shortYear}`;
+
+      // 2. Kiểm tra trùng lặp cho từng học kỳ
+      const [existing] = await connection.query(
+        "SELECT MaLop FROM lop WHERE TenLop = ? AND MaHocKyNamHoc = ?",
+        [TenLop, maHKNH]
+      );
+
+      if (existing.length > 0) {
+        if (semesters.length === 2) {
+          throw new Error(
+            `Lớp ${TenLop} đã tồn tại trong cả 2 học kỳ của niên khóa này.`
+          );
+        } else {
+          throw new Error(
+            `Lớp ${TenLop} đã tồn tại trong Học kỳ ${hk} của niên khóa này.`
+          );
+        }
+      }
+
+      // 3. Sinh mã lớp gợi nhớ (Semantic ID)
+      const MaLop = (TenLop.replace(/\s+/g, "") + maHKNH).toUpperCase();
+
+      // 4. Insert vào bảng lop
+      await connection.query(
+        "INSERT INTO lop (MaLop, TenLop, MaKhoiLop, MaHocKyNamHoc, SiSo) VALUES (?, ?, ?, ?, 0)",
+        [MaLop, TenLop, MaKhoiLop, maHKNH]
+      );
+    }
+
+    await connection.commit();
+    let successMessage = "";
+    if (LoaiHocKy === 3) {
+      successMessage = `Tạo lớp ${TenLop} cho cả niên khóa ${NamHocBatDau}-${NamHocKetThuc} thành công!`;
+    } else {
+      successMessage = `Tạo lớp ${TenLop} cho Học kỳ ${LoaiHocKy} (${NamHocBatDau}-${NamHocKetThuc}) thành công!`;
+    }
+
+    res.json({ message: successMessage });
   } catch (err) {
+    await connection.rollback();
     console.error(err);
-    res.status(500).json({ error: "Lỗi hệ thống khi lập danh sách lớp" });
+    res.status(400).json({ error: err.message || "Học kỳ chưa tồn tại!" });
+  } finally {
+    connection.release();
   }
 };

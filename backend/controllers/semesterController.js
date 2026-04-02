@@ -107,14 +107,22 @@ exports.deleteHocKyNamHoc = async (req, res) => {
 // API lấy danh sách tất cả học kỳ năm học (để đổ vào bảng BM2)
 exports.getAllHocKyNamHoc = async (req, res) => {
   try {
-    // Truy vấn lấy dữ liệu và sắp xếp theo năm giảm dần, học kỳ tăng dần
+    // Lấy thông tin cần thiết để hiển thị và để lưu
     const [rows] = await db.query(
-      "SELECT * FROM hocky_namhoc ORDER BY NamHocBatDau DESC, TenHocKy ASC"
+      `SELECT MaHocKyNamHoc, TenHocKy, NamHocBatDau, NamHocKetThuc 
+       FROM hocky_namhoc 
+       ORDER BY NamHocBatDau DESC, TenHocKy ASC`
     );
 
-    res.json(rows);
+    // Trả về danh sách đã được format nhẹ để Giang dễ hiển thị trên Android
+    const dropdownData = rows.map((item) => ({
+      ma: item.MaHocKyNamHoc,
+      hienThi: `${item.TenHocKy} (${item.NamHocBatDau}-${item.NamHocKetThuc})`,
+    }));
+
+    res.json(dropdownData);
   } catch (err) {
-    console.error("Lỗi lấy danh sách học kỳ:", err);
-    res.status(500).json({ error: "Lỗi hệ thống khi lấy danh sách học kỳ." });
+    console.error("Lỗi lấy dropdown năm học:", err);
+    res.status(500).json({ error: "Lỗi hệ thống khi lấy danh sách năm học." });
   }
 };

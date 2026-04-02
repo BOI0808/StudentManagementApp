@@ -3,6 +3,6 @@ const router = express.Router();
 const classController = require("../controllers/classController");
 
 // Endpoint: POST /api/classes/lap-danh-sach-lop
-router.post("/lap-danh-sach-lop", classController.lapDanhSachLop);
+router.post("/lap-danh-sach-lop", classController.taoMoiLop);
 
 module.exports = router;
