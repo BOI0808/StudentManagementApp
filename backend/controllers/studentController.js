@@ -35,12 +35,9 @@ exports.tiepNhanHocSinh = async (req, res) => {
 
     // 1. Kiểm tra dữ liệu rỗng (Thêm DiaChi vào đây nhé Khôi)
     if (!HoTen || !NgaySinh || !MaGioiTinh || !DiaChi) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Vui lòng nhập đầy đủ: Họ tên, Ngày sinh, Giới tính và Địa chỉ.",
-        });
+      return res.status(400).json({
+        error: "Vui lòng nhập đầy đủ: Họ tên, Ngày sinh, Giới tính và Địa chỉ.",
+      });
     }
 
     // 2. Chuẩn hóa ngày tháng trước khi tính toán và query
@@ -62,11 +59,9 @@ exports.tiepNhanHocSinh = async (req, res) => {
     const age = new Date().getFullYear() - dateObj.getFullYear();
     if (age < minAge || age > maxAge) {
       await connection.rollback();
-      return res
-        .status(400)
-        .json({
-          error: `Tuổi học sinh (${age}) không hợp lệ (QĐ: ${minAge}-${maxAge}).`,
-        });
+      return res.status(400).json({
+        error: `Tuổi học sinh (${age}) không hợp lệ (QĐ: ${minAge}-${maxAge}).`,
+      });
     }
 
     // 5. KIỂM TRA TRÙNG LẶP HỒ SƠ (Dùng formattedDate để chính xác 100%)
@@ -111,6 +106,67 @@ exports.tiepNhanHocSinh = async (req, res) => {
         .json({ error: "Mã giới tính không hợp lệ (GT1, GT2 hoặc GT3)." });
     }
     res.status(500).json({ error: "Lỗi hệ thống khi tiếp nhận hồ sơ." });
+  } finally {
+    connection.release();
+  }
+};
+
+//API thêm học sinh vào lớp
+exports.themHocSinhVaoLop = async (req, res) => {
+  const { MaLop, MaHocSinh } = req.body;
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // 1. Lấy sĩ số tối đa và sĩ số hiện tại của lớp đó
+    const [[config]] = await connection.query(
+      "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'SiSoToiDa'"
+    );
+    const [[lopInfo]] = await connection.query(
+      "SELECT SiSo, MaHocKyNamHoc FROM lop WHERE MaLop = ?",
+      [MaLop]
+    );
+
+    if (lopInfo.SiSo >= config.gia_tri) {
+      await connection.rollback();
+      return res
+        .status(400)
+        .json({ error: `Lớp đã đầy (Tối đa ${config.gia_tri} HS).` });
+    }
+
+    // 2. Kiểm tra xem học sinh này đã có lớp nào trong CÙNG HỌC KỲ đó chưa
+    const [isAssigned] = await connection.query(
+      `SELECT ctl.MaLop FROM chitietlop ctl 
+       JOIN lop l ON ctl.MaLop = l.MaLop 
+       WHERE ctl.MaHocSinh = ? AND l.MaHocKyNamHoc = ?`,
+      [MaHocHinh, lopInfo.MaHocKyNamHoc]
+    );
+
+    if (isAssigned.length > 0) {
+      await connection.rollback();
+      return res
+        .status(400)
+        .json({
+          error:
+            "Học sinh này đã được xếp vào một lớp khác trong học kỳ này rồi.",
+        });
+    }
+
+    // 3. Thực hiện thêm vào bảng chitietlop và cập nhật SiSo ở bảng lop
+    await connection.query(
+      "INSERT INTO chitietlop (MaLop, MaHocSinh) VALUES (?, ?)",
+      [MaLop, MaHocHinh]
+    );
+    await connection.query("UPDATE lop SET SiSo = SiSo + 1 WHERE MaLop = ?", [
+      MaLop,
+    ]);
+
+    await connection.commit();
+    res.json({ message: "Xếp lớp thành công!", SiSoMoi: lopInfo.SiSo + 1 });
+  } catch (err) {
+    await connection.rollback();
+    res.status(500).json({ error: "Lỗi khi xếp lớp cho học sinh." });
   } finally {
     connection.release();
   }
