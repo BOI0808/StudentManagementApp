@@ -29,18 +29,27 @@ const generateMaHocSinh = async (connection) => {
 exports.tiepNhanHocSinh = async (req, res) => {
   const { HoTen, NgaySinh, MaGioiTinh, DiaChi, Email } = req.body;
 
-  const connection = await db.getConnection(); // Lấy connection để dùng chung cho hàm sinh mã
+  const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
 
-    // 1. Kiểm tra dữ liệu rỗng
-    if (!HoTen || !NgaySinh || !MaGioiTinh) {
+    // 1. Kiểm tra dữ liệu rỗng (Thêm DiaChi vào đây nhé Khôi)
+    if (!HoTen || !NgaySinh || !MaGioiTinh || !DiaChi) {
       return res
         .status(400)
-        .json({ error: "Vui lòng nhập đầy đủ thông tin bắt buộc." });
+        .json({
+          error:
+            "Vui lòng nhập đầy đủ: Họ tên, Ngày sinh, Giới tính và Địa chỉ.",
+        });
     }
 
-    // 2. Lấy quy định tuổi từ bảng ThamSo
+    // 2. Chuẩn hóa ngày tháng trước khi tính toán và query
+    const dateObj = new Date(NgaySinh);
+    if (isNaN(dateObj))
+      return res.status(400).json({ error: "Ngày sinh không đúng định dạng." });
+    const formattedDate = dateObj.toISOString().split("T")[0];
+
+    // 3. Lấy quy định tuổi từ bảng ThamSo
     const [config] = await connection.query(
       "SELECT ten_tham_so, gia_tri FROM thamso WHERE ten_tham_so IN ('TuoiToiThieu', 'TuoiToiDa')"
     );
@@ -49,40 +58,41 @@ exports.tiepNhanHocSinh = async (req, res) => {
     const maxAge =
       config.find((c) => c.ten_tham_so === "TuoiToiDa")?.gia_tri || 20;
 
-    // 3. Tính và kiểm tra tuổi
-    const age = new Date().getFullYear() - new Date(NgaySinh).getFullYear();
+    // 4. Kiểm tra điều kiện tuổi
+    const age = new Date().getFullYear() - dateObj.getFullYear();
     if (age < minAge || age > maxAge) {
       await connection.rollback();
-      return res.status(400).json({
-        error: `Tuổi học sinh (${age}) không hợp lệ. Phải từ ${minAge} đến ${maxAge} tuổi.`,
-      });
+      return res
+        .status(400)
+        .json({
+          error: `Tuổi học sinh (${age}) không hợp lệ (QĐ: ${minAge}-${maxAge}).`,
+        });
     }
 
-    // KIỂM TRA TRÙNG LẶP HỒ SƠ --
+    // 5. KIỂM TRA TRÙNG LẶP HỒ SƠ (Dùng formattedDate để chính xác 100%)
     const [existingStudent] = await connection.query(
       "SELECT MaHocSinh FROM hocsinh WHERE HoTen = ? AND NgaySinh = ? AND DiaChi = ?",
-      [HoTen.trim(), NgaySinh, DiaChi.trim()]
+      [HoTen.trim(), formattedDate, DiaChi.trim()]
     );
 
     if (existingStudent.length > 0) {
       await connection.rollback();
-      return res.status(400).json({
-        error:
-          "Học sinh này đã tồn tại trong hệ thống (Trùng Họ tên, Ngày sinh và Địa chỉ).",
-      });
+      return res
+        .status(400)
+        .json({ error: "Học sinh này đã tồn tại trong hệ thống." });
     }
 
-    // 4. Sinh mã học sinh "đẹp" theo ý Khôi (Ví dụ: HS260001)
+    // 6. Sinh mã học sinh "đẹp" (HS260001)
     const MaHocSinh = await generateMaHocSinh(connection);
 
-    // 5. Lưu vào database
+    // 7. Lưu vào database
     const query = `INSERT INTO hocsinh (MaHocSinh, HoTen, NgaySinh, MaGioiTinh, DiaChi, Email) VALUES (?, ?, ?, ?, ?, ?)`;
     await connection.query(query, [
       MaHocSinh,
       HoTen.trim(),
-      NgaySinh,
+      formattedDate,
       MaGioiTinh,
-      DiaChi,
+      DiaChi.trim(),
       Email,
     ]);
 
@@ -94,6 +104,12 @@ exports.tiepNhanHocSinh = async (req, res) => {
   } catch (err) {
     await connection.rollback();
     console.error("Lỗi tiếp nhận:", err);
+    // Bắt lỗi nếu MaGioiTinh chưa có trong DB
+    if (err.code === "ER_NO_REFERENCED_ROW_2") {
+      return res
+        .status(400)
+        .json({ error: "Mã giới tính không hợp lệ (GT1, GT2 hoặc GT3)." });
+    }
     res.status(500).json({ error: "Lỗi hệ thống khi tiếp nhận hồ sơ." });
   } finally {
     connection.release();

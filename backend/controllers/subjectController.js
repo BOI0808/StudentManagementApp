@@ -44,8 +44,7 @@ exports.createSubject = async (req, res) => {
           subject.MaMonHoc,
         ]);
         return res.json({
-          message:
-            "Môn học đã tồn tại trước đó và đã được kích hoạt lại thành công!",
+          message: "Lập danh mục môn học mới thành công!",
           MaMonHoc: subject.MaMonHoc,
         });
       }
@@ -87,14 +86,10 @@ exports.toggleSubjectStatus = async (req, res) => {
     }
 
     const message =
-      TrangThai === 0
-        ? "Đã chuyển môn học sang trạng thái ngưng dạy."
-        : "Đã kích hoạt lại môn học.";
+      TrangThai === 0 ? "Đã xóa môn học." : "Đã thêm môn học thành công.";
     res.json({ message });
   } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Lỗi hệ thống khi cập nhật trạng thái môn học." });
+    res.status(500).json({ error: "Lỗi hệ thống khi xóa môn học." });
   }
 };
 
