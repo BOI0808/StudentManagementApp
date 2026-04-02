@@ -9,3 +9,15 @@ android/*.iml
 
 .DS_Store
 Thumbs.db
+
+# Android Studio / IntelliJ files
+*.iml
+.idea/
+.gradle/
+local.properties
+apache-poi/*.jar
+
+# Tối ưu cho workspace.xml (file gây xung đột của Vinh)
+**/workspace.xml
+**/tasks.xml
+**/.shelf/
