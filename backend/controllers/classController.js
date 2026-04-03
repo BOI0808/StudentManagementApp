@@ -93,7 +93,7 @@ exports.getLopHoc = async (req, res) => {
       maLop: item.MaLop,
       tenLop: item.TenLop,
       siSoHienTai: item.SiSo,
-      hienThi: `${item.TenLop} - ${item.TenHocKy} (${item.NamHocBatDau}-${item.NamHocKetThuc})`,
+      hienThi: item.MaLop,
     }));
 
     res.json(dropdownData);
