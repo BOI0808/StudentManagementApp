@@ -87,7 +87,12 @@ exports.getActiveBlocks = async (req, res) => {
     const [rows] = await db.query(
       "SELECT * FROM khoilop WHERE TrangThai = 1 ORDER BY TenKhoiLop ASC"
     );
-    res.json(rows);
+    const dropdownData = rows.map((item) => ({
+      makhoilop: item.MaKhoiLop,
+      tenkhoilop: item.TenKhoiLop,
+    }));
+
+    res.json(dropdownData);
   } catch (err) {
     res.status(500).json({ error: "Lỗi khi lấy danh sách khối lớp." });
   }

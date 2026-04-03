@@ -117,7 +117,8 @@ exports.getAllHocKyNamHoc = async (req, res) => {
     // Trả về danh sách đã được format nhẹ để Giang dễ hiển thị trên Android
     const dropdownData = rows.map((item) => ({
       ma: item.MaHocKyNamHoc,
-      hienThi: `${item.TenHocKy} (${item.NamHocBatDau}-${item.NamHocKetThuc})`,
+      hocky: `${item.TenHocKy}`,
+      namhoc: `${item.NamHocBatDau}-${item.NamHocKetThuc}`,
     }));
 
     res.json(dropdownData);
