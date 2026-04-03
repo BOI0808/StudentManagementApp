@@ -64,6 +64,11 @@ exports.tiepNhanHocSinh = async (req, res) => {
       });
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(Email)) {
+      return res.status(400).json({ error: "Định dạng Email không hợp lệ." });
+    }
+
     // 5. KIỂM TRA TRÙNG LẶP HỒ SƠ (Dùng formattedDate để chính xác 100%)
     const [existingStudent] = await connection.query(
       "SELECT MaHocSinh FROM hocsinh WHERE HoTen = ? AND NgaySinh = ? AND DiaChi = ?",
@@ -145,12 +150,10 @@ exports.themHocSinhVaoLop = async (req, res) => {
 
     if (isAssigned.length > 0) {
       await connection.rollback();
-      return res
-        .status(400)
-        .json({
-          error:
-            "Học sinh này đã được xếp vào một lớp khác trong học kỳ này rồi.",
-        });
+      return res.status(400).json({
+        error:
+          "Học sinh này đã được xếp vào một lớp khác trong học kỳ này rồi.",
+      });
     }
 
     // 3. Thực hiện thêm vào bảng chitietlop và cập nhật SiSo ở bảng lop
