@@ -74,3 +74,31 @@ exports.taoMoiLop = async (req, res) => {
     connection.release();
   }
 };
+
+// API lấy danh sách lớp học để đổ vào thanh tìm kiếm/dropdown
+exports.getLopHoc = async (req, res) => {
+  try {
+    // JOIN với bảng hocky_namhoc để lấy tên học kỳ và năm học, đồng thời sắp xếp theo năm học mới nhất và tên lớp
+    const query = `
+      SELECT l.MaLop, l.TenLop, l.MaHocKyNamHoc, l.SiSo, hn.TenHocKy, hn.NamHocBatDau, hn.NamHocKetThuc
+      FROM lop l
+      JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc
+      ORDER BY hn.NamHocBatDau DESC, l.TenLop ASC
+    `;
+
+    const [rows] = await db.query(query);
+
+    // Format lại dữ liệu để Giang dễ hiển thị trên Android
+    const dropdownData = rows.map((item) => ({
+      maLop: item.MaLop,
+      tenLop: item.TenLop,
+      siSoHienTai: item.SiSo,
+      hienThi: `${item.TenLop} - ${item.TenHocKy} (${item.NamHocBatDau}-${item.NamHocKetThuc})`,
+    }));
+
+    res.json(dropdownData);
+  } catch (err) {
+    console.error("Lỗi lấy danh sách lớp:", err);
+    res.status(500).json({ error: "Lỗi hệ thống khi lấy danh sách lớp học." });
+  }
+};
