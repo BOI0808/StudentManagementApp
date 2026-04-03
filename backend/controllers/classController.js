@@ -102,3 +102,39 @@ exports.getLopHoc = async (req, res) => {
     res.status(500).json({ error: "Lỗi hệ thống khi lấy danh sách lớp học." });
   }
 };
+
+exports.searchLopHoc = async (req, res) => {
+  const { key } = req.query; // Nhận từ Giang gửi lên: ?key=10A1
+
+  try {
+    let query = `
+      SELECT l.MaLop, l.TenLop, hn.TenHocKy, hn.NamHocBatDau, hn.NamHocKetThuc
+      FROM lop l
+      JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc
+    `;
+
+    let params = [];
+
+    // Nếu có gõ từ khóa thì mới lọc, không thì lấy 10 cái mới nhất
+    if (key && key.trim() !== "") {
+      query += ` WHERE l.MaLop LIKE ? OR l.TenLop LIKE ?`;
+      params = [`%${key}%`, `%${key}%` || ""];
+    }
+
+    query += ` ORDER BY hn.NamHocBatDau DESC, l.TenLop ASC LIMIT 15`;
+
+    const [rows] = await db.query(query, params);
+
+    const dropdownData = rows.map((item) => ({
+      maLop: item.MaLop, // Cái này để Giang lưu ngầm
+      tenLop: item.TenLop,
+      // Hiển thị vừa có mã vừa có thông tin năm học cho chắc ăn
+      hienThi: `${item.MaLop} - ${item.TenLop} (${item.NamHocBatDau}-${item.NamHocKetThuc})`,
+    }));
+
+    res.json(dropdownData);
+  } catch (err) {
+    console.error("Lỗi search lớp:", err);
+    res.status(500).json({ error: "Lỗi hệ thống khi tìm lớp học." });
+  }
+};
