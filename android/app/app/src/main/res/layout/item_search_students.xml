@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvSTT"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="@drawable/ic_launcher_background"
+                android:gravity="center"
+                android:text="1"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:backgroundTint="#1976D2"
+                android:layout_marginEnd="8dp"/>
+
+            <TextView
+                android:id="@+id/tvTenHS"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Nguyễn Văn A"
+                android:textColor="#333333"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvMaHS"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HS001"
+                android:textColor="#E91E63"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvLopNamHoc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lớp: 10A1  |  Năm học: 2025-2026"
+            android:textColor="#757575"
+            android:textSize="14sp"
+            android:layout_marginBottom="12dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F0F8FF"
+            android:padding="8dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HK I" android:textSize="12sp"/>
+                <TextView android:id="@+id/tvTB1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="8.5" android:textStyle="bold" android:textColor="#4CAF50"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HK II" android:textSize="12sp"/>
+                <TextView android:id="@+id/tvTB2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="9.0" android:textStyle="bold" android:textColor="#4CAF50"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Cả năm" android:textSize="12sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/tvTBCN" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="8.8" android:textStyle="bold" android:textColor="#F44336"/>
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
