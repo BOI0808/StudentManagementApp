@@ -147,7 +147,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:columnCount="1"
-            android:rowCount="11">
+            android:rowCount="12">
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbTiepNhanHS"
@@ -214,6 +214,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Lập báo cáo tổng kết học kỳ" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbCaiDatThamSo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cài đặt tham số hệ thống" />
 
         </GridLayout>
 

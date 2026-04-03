@@ -80,6 +80,11 @@
           <theme>@style/Theme.StudentManagementApp</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_system_parameters.xml">
+        <config>
+          <theme>@style/Theme.StudentManagementApp</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_term_report.xml">
         <config>
           <theme>@style/Theme.StudentManagementApp</theme>
@@ -127,6 +132,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fcaf331a-e2d6-45bb-9df1-92950c44e25b" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_category_grade.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_category_subject.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_category_term.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_create_class.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_create_class_list.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_system_parameters.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/item_class_student.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/item_term_row.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deploymentTargetSelector.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
@@ -298,12 +313,12 @@
       <map>
         <entry key="com.example.studentmanagementapp">
           <value>
-            <CheckInfo lastCheckTimestamp="1775136021843" />
+            <CheckInfo lastCheckTimestamp="1775140239127" />
           </value>
         </entry>
         <entry key="com.example.studentmanagementapp.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1775136021845" />
+            <CheckInfo lastCheckTimestamp="1775140239097" />
           </value>
         </entry>
       </map>
