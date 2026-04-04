@@ -50,6 +50,11 @@
           <theme>@style/Theme.StudentManagementApp</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_edit_exam_type.xml">
+        <config>
+          <theme>@style/Theme.StudentManagementApp</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_edit_student.xml">
         <config>
           <theme>@style/Theme.StudentManagementApp</theme>
@@ -153,6 +158,7 @@
       <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_category_term.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_create_class.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_create_class_list.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_edit_exam_type.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_edit_student.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_system_parameters.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/app/src/main/res/layout/item_admin_user_row.xml" afterDir="false" />
