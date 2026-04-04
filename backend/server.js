@@ -21,7 +21,7 @@ app.use(express.json());
 // Kết nối các nhóm Route (Đây là nơi Vinh/Giang sẽ gọi API)
 // Đường dẫn sẽ là: http://localhost:3000/api/students/tiep-nhan-hoc-sinh và tương tự
 app.use("/api/students", studentRoutes);
-app.use("/api/config", configRoutes);
+app.use("/api/configs", configRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/auth", authRoutes);
