@@ -2,23 +2,16 @@ const db = require("../config/db");
 
 // Báo cáo tổng kết môn (BM10)
 exports.getBaoCaoTongKetMon = async (req, res) => {
-  // Giang sẽ gửi lên MaHocKyNamHoc và MaMonHoc từ Dropdown
   const { MaHocKyNamHoc, MaMonHoc } = req.query;
 
-  if (!MaHocKyNamHoc || !MaMonHoc) {
-    return res
-      .status(400)
-      .json({ error: "Vui lòng chọn đầy đủ học kỳ và môn học." });
-  }
-
   try {
-    // 1. Lấy chuẩn "Điểm Đạt" từ bảng tham số (mặc định là 5.0)
+    // 1. Lấy đúng tham số DiemDatMon vừa thêm
     const [ts] = await db.query(
-      "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'DiemDat'"
+      "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'DiemDatMon'"
     );
-    const diemDat = ts[0].gia_tri;
+    const diemDatMon = ts[0].gia_tri;
 
-    // 2. Truy vấn thống kê theo từng lớp dựa trên kết quả môn học
+    // 2. Query thống kê (giữ nguyên logic cũ nhưng dùng diemDatMon)
     const query = `
       SELECT 
         l.TenLop, 
@@ -33,7 +26,7 @@ exports.getBaoCaoTongKetMon = async (req, res) => {
       GROUP BY l.MaLop, l.TenLop, l.SiSo
     `;
 
-    const [rows] = await db.query(query, [diemDat, MaMonHoc, MaHocKyNamHoc]);
+    const [rows] = await db.query(query, [diemDatMon, MaMonHoc, MaHocKyNamHoc]);
 
     // 3. Tính tỉ lệ và format kết quả cho UI
     const reportData = rows.map((item) => {
