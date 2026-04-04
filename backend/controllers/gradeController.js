@@ -53,7 +53,6 @@ exports.getHocSinhNhapDiem = async (req, res) => {
 };
 
 exports.luuBangDiem = async (req, res) => {
-  // Nhận dữ liệu từ body do Giang gửi lên
   const { MaLop, MaMonHoc, MaLoaiKiemTra, DanhSachDiem } = req.body;
 
   if (
@@ -66,52 +65,77 @@ exports.luuBangDiem = async (req, res) => {
     return res.status(400).json({ error: "Dữ liệu gửi lên không hợp lệ." });
   }
 
-  const connection = await db.getConnection(); // Lấy connection để dùng Transaction
+  const connection = await db.getConnection();
 
   try {
-    await connection.beginTransaction(); // Bắt đầu giao dịch
+    await connection.beginTransaction();
+
+    // 0. Lấy MaHocKyNamHoc từ bảng lớp để đồng bộ sang ketqua_monhoc
+    const [classInfo] = await connection.query(
+      "SELECT MaHocKyNamHoc FROM lop WHERE MaLop = ?",
+      [MaLop]
+    );
+    const maHKNH = classInfo[0].MaHocKyNamHoc;
 
     for (const record of DanhSachDiem) {
       const { maHocSinh, diem, ghiChu } = record;
 
-      // 1. Kiểm tra điểm hợp lệ trong đoạn $0$ đến $10$
       if (diem < 0 || diem > 10) {
         throw new Error(`Học sinh ${maHocSinh} có điểm ${diem} không hợp lệ!`);
       }
 
-      // 2. Kiểm tra xem bản ghi này đã tồn tại chưa
+      // 1. Lưu/Cập nhật điểm vào bảng bangdiem
       const [existing] = await connection.query(
         "SELECT MaBangDiem FROM bangdiem WHERE MaLop = ? AND MaMonHoc = ? AND MaLoaiKiemTra = ? AND MaHocSinh = ?",
         [MaLop, MaMonHoc, MaLoaiKiemTra, maHocSinh]
       );
 
       if (existing.length > 0) {
-        // TRƯỜNG HỢP A: Đã có điểm -> Cập nhật (Update)
         await connection.query(
           "UPDATE bangdiem SET Diem = ?, GhiChu = ? WHERE MaBangDiem = ?",
           [diem, ghiChu, existing[0].MaBangDiem]
         );
       } else {
-        // TRƯỜNG HỢP B: Chưa có điểm -> Thêm mới (Insert)
-        // Tạo mã bản ghi (giới hạn 10 ký tự theo SQL)
         const MaBangDiem = "BD" + Date.now().toString().slice(-8);
-
         await connection.query(
           "INSERT INTO bangdiem (MaBangDiem, MaLop, MaMonHoc, MaLoaiKiemTra, MaHocSinh, Diem, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?)",
           [MaBangDiem, MaLop, MaMonHoc, MaLoaiKiemTra, maHocSinh, diem, ghiChu]
         );
       }
+
+      // 2. TÍNH TOÁN ĐIỂM TRUNG BÌNH MÔN NGAY LẬP TỨC
+      const [stats] = await connection.query(
+        `SELECT SUM(bd.Diem * lkt.HeSo) / SUM(lkt.HeSo) AS DiemTB 
+         FROM bangdiem bd 
+         JOIN loaihinhkiemtra lkt ON bd.MaLoaiKiemTra = lkt.MaLoaiKiemTra 
+         WHERE bd.MaHocSinh = ? AND bd.MaLop = ? AND bd.MaMonHoc = ?`,
+        [maHocSinh, MaLop, MaMonHoc]
+      );
+
+      const diemTB = stats[0].DiemTB
+        ? parseFloat(stats[0].DiemTB).toFixed(1)
+        : 0;
+
+      // 3. Cập nhật vào bảng ketqua_monhoc
+      await connection.query(
+        `INSERT INTO ketqua_monhoc (MaHocSinh, MaMonHoc, MaHocKyNamHoc, DiemTrungBinhMon) 
+         VALUES (?, ?, ?, ?) 
+         ON DUPLICATE KEY UPDATE DiemTrungBinhMon = VALUES(DiemTrungBinhMon)`,
+        [maHocSinh, MaMonHoc, maHKNH, diemTB]
+      );
     }
 
-    await connection.commit(); // Thành công hết thì xác nhận lưu vào DB
-    res.json({ message: "Đã lưu bảng điểm thành công!" });
+    await connection.commit();
+    res.json({
+      message: "Đã lưu bảng điểm và cập nhật điểm trung bình môn thành công!",
+    });
   } catch (err) {
-    await connection.rollback(); // Có bất kỳ lỗi nào thì hoàn tác toàn bộ
-    console.error("Lỗi lưu bảng điểm:", err);
+    await connection.rollback();
+    console.error("Lỗi lưu điểm:", err);
     res
       .status(400)
       .json({ error: err.message || "Lỗi hệ thống khi lưu điểm." });
   } finally {
-    connection.release(); // Giải phóng connection
+    connection.release();
   }
 };
