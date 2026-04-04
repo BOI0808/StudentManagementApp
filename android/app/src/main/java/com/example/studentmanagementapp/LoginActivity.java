@@ -32,12 +32,19 @@ public class LoginActivity extends AppCompatActivity {
                 String username = edtUsername.getText().toString().trim();
                 String password = edtPassword.getText().toString().trim();
 
-                // Kiểm tra tài khoản admin (Ví dụ: admin/admin)
+                // Kiểm tra tài khoản admin
                 if (username.equals("admin") && password.equals("admin")) {
                     Intent intent = new Intent(LoginActivity.this, AdminCreateUserActivity.class);
                     startActivity(intent);
                     finish();
-                } else {
+                } 
+                // Kiểm tra tài khoản staff
+                else if (username.equals("staff") && password.equals("staff")) {
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    startActivity(intent);
+                    finish();
+                } 
+                else {
                     Toast.makeText(LoginActivity.this, "Tên đăng nhập hoặc mật khẩu không đúng", Toast.LENGTH_SHORT).show();
                 }
             }
