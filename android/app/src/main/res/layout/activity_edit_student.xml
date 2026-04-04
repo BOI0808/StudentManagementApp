@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F5F5"
-    tools:context=".TiepNhanHocSinhActivity">
+    tools:context=".EditStudentActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -32,18 +32,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="Hồ Sơ Học Sinh"
+                android:text="Sửa Hồ Sơ Học Sinh"
                 android:textColor="#1976D2"
-                android:textSize="24sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
         </RelativeLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="#FFFFFF"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="#FFFFFF">
+            app:cardElevation="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -56,67 +57,76 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
-                    android:hint="Họ và tên">
+                    android:hint="Mã học sinh (Nhập để tìm kiếm)">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/edtHoTen"
+                    <AutoCompleteTextView
+                        android:id="@+id/autoCompleteMaHS"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:completionThreshold="1"
+                        android:inputType="text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginBottom="16dp"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:hint="Họ và tên học sinh">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/edtTenHS"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:enabled="false"
                         android:inputType="textPersonName" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView
+                    android:id="@+id/tvLabelGioiTinh"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Giới tính:"
-                    android:textColor="#555555"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp"/>
+                    android:textColor="#9E9E9E"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp" />
 
                 <RadioGroup
                     android:id="@+id/rgGioiTinh"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginBottom="16dp">
 
                     <RadioButton
                         android:id="@+id/rbNam"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Nam"
-                        android:layout_marginEnd="16dp"
-                        android:checked="true"/>
+                        android:enabled="false"
+                        android:layout_marginEnd="32dp" />
 
                     <RadioButton
                         android:id="@+id/rbNu"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="16dp"
-                        android:text="Nữ" />
+                        android:text="Nữ"
+                        android:enabled="false"
+                        android:layout_marginEnd="32dp" />
 
                     <RadioButton
                         android:id="@+id/rbKhac"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Khác" />
+                        android:text="Khác"
+                        android:enabled="false" />
                 </RadioGroup>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilGioiTinhKhac"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:visibility="gone"
-                    android:hint="Nhập giới tính của bạn">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/edtGioiTinhKhac"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-                </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -126,10 +136,12 @@
                     app:endIconDrawable="@android:drawable/ic_menu_today"
                     app:endIconMode="custom"
                     android:hint="Ngày sinh">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtNgaySinh"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:enabled="false"
                         android:focusable="false"
                         android:inputType="none" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -140,10 +152,12 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     android:hint="Địa chỉ">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtDiaChi"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:enabled="false"
                         android:inputType="textPostalAddress" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -153,33 +167,23 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="24dp"
                     android:hint="Email">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:enabled="false"
                         android:inputType="textEmailAddress" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSuaHoSo"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:id="@+id/btnLuuCapNhat"
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
-                    android:layout_marginBottom="12dp"
-                    android:text="SỬA HỒ SƠ HỌC SINH"
-                    android:textColor="#1976D2"
+                    android:text="LƯU THAY ĐỔI"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    app:cornerRadius="8dp"
-                    app:strokeColor="#1976D2" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnTiepNhan"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:text="TIẾP NHẬN HỌC SINH"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
+                    android:enabled="false"
                     app:cornerRadius="8dp" />
 
             </LinearLayout>
