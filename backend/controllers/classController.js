@@ -103,38 +103,38 @@ exports.getLopHoc = async (req, res) => {
   }
 };
 
-exports.searchLopHoc = async (req, res) => {
-  const { key } = req.query; // Nhận từ Giang gửi lên: ?key=10A1
+// API Gợi ý mã lớp dựa trên từ khóa người dùng nhập
+exports.searchMaLop = async (req, res) => {
+  const { key } = req.query; // Nhận từ khóa Giang gửi lên: ?key=10
 
   try {
-    let query = `
-      SELECT l.MaLop, l.TenLop, hn.TenHocKy, hn.NamHocBatDau, hn.NamHocKetThuc
-      FROM lop l
-      JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc
-    `;
-
-    let params = [];
-
-    // Nếu có gõ từ khóa thì mới lọc, không thì lấy 10 cái mới nhất
-    if (key && key.trim() !== "") {
-      query += ` WHERE l.MaLop LIKE ? OR l.TenLop LIKE ?`;
-      params = [`%${key}%`, `%${key}%` || ""];
+    if (!key || key.trim() === "") {
+      return res.json([]); // Nếu chưa gõ gì thì không hiện gợi ý
     }
 
-    query += ` ORDER BY hn.NamHocBatDau DESC, l.TenLop ASC LIMIT 15`;
+    const searchKey = `%${key.trim()}%`;
 
-    const [rows] = await db.query(query, params);
+    // JOIN để lấy thêm thông tin năm học giúp giáo viên dễ phân biệt
+    const query = `
+      SELECT l.MaLop, l.TenLop, hn.NamHocBatDau, hn.NamHocKetThuc 
+      FROM lop l 
+      JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc
+      WHERE l.MaLop LIKE ? OR l.TenLop LIKE ?
+      ORDER BY hn.NamHocBatDau DESC 
+      LIMIT 10
+    `;
 
-    const dropdownData = rows.map((item) => ({
-      maLop: item.MaLop, // Cái này để Giang lưu ngầm
-      tenLop: item.TenLop,
-      // Hiển thị vừa có mã vừa có thông tin năm học cho chắc ăn
-      hienThi: `${item.MaLop} - ${item.TenLop} (${item.NamHocBatDau}-${item.NamHocKetThuc})`,
+    const [rows] = await db.query(query, [searchKey, searchKey]);
+
+    // Trả về dữ liệu để Giang hiển thị dưới dạng list gợi ý
+    const result = rows.map((item) => ({
+      maLop: item.MaLop,
+      hienThi: `${item.MaLop} (${item.TenLop} - ${item.NamHocBatDau}-${item.NamHocKetThuc})`,
     }));
 
-    res.json(dropdownData);
+    res.json(result);
   } catch (err) {
-    console.error("Lỗi search lớp:", err);
-    res.status(500).json({ error: "Lỗi hệ thống khi tìm lớp học." });
+    console.error("Lỗi search mã lớp:", err);
+    res.status(500).json({ error: "Lỗi hệ thống khi tìm kiếm lớp." });
   }
 };
