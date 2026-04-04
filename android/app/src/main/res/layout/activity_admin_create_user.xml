@@ -153,81 +153,94 @@
                 android:id="@+id/cbTiepNhanHS"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tiếp nhận học sinh" />
+                android:text="Tiếp nhận học sinh (1)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachLop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách lớp" />
+                android:text="Lập danh sách lớp (2)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachHSChoLop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách học sinh cho lớp" />
+                android:text="Lập danh sách học sinh cho lớp (3)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachNamHoc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách Năm học" />
+                android:text="Lập danh sách Năm học (4)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachKhoiLop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách Khối lớp" />
+                android:text="Lập danh sách Khối lớp (5)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachMonHoc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách Môn học" />
+                android:text="Lập danh sách Môn học (6)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbTraCuuHS"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tra cứu học sinh" />
+                android:text="Tra cứu học sinh (7)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbNhapDiem"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nhập bảng điểm" />
+                android:text="Nhập bảng điểm (8)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLoaiKiemTra"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nhập danh sách loại kiểm tra" />
+                android:text="Nhập danh sách loại kiểm tra (9)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbBaoCaoMon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập báo cáo tổng kết môn" />
+                android:text="Lập báo cáo tổng kết môn (10)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbBaoCaoHocKy"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập báo cáo tổng kết học kỳ" />
+                android:text="Lập báo cáo tổng kết học kỳ (11)" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbCaiDatThamSo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cài đặt tham số hệ thống" />
+                android:text="Cài đặt tham số hệ thống (12)" />
 
         </GridLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnXemDanhSach"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="8dp"
+            android:text="XEM DANH SÁCH TÀI KHOẢN"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="8dp"
+            app:strokeColor="#1976D2"
+            android:textColor="#1976D2" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCreateAccount"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginTop="32dp"
             android:layout_marginBottom="24dp"
             android:text="TẠO TÀI KHOẢN"
             android:textSize="16sp"
