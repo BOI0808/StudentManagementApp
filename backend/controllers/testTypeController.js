@@ -116,6 +116,22 @@ exports.softDeleteLoaiKT = async (req, res) => {
   }
 };
 
+// Thêm vào controllers/loaiKiemTraController.js
+exports.getLoaiKTDetail = async (req, res) => {
+  const { MaLoaiKiemTra } = req.params;
+  try {
+    const [rows] = await db.query(
+      "SELECT TenLoaiKiemTra, HeSo FROM loaihinhkiemtra WHERE MaLoaiKiemTra = ? AND TrangThai = 1",
+      [MaLoaiKiemTra]
+    );
+    if (rows.length === 0)
+      return res.status(404).json({ error: "Không tìm thấy!" });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Lỗi hệ thống." });
+  }
+};
+
 // API Cập nhật riêng hệ số của một loại kiểm tra
 exports.updateHeSoLoaiKT = async (req, res) => {
   const { MaLoaiKiemTra } = req.params; // MaLoaiKiemTra

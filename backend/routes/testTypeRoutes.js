@@ -12,5 +12,9 @@ router.patch(
   "/cap-nhat-he-so/:MaLoaiKiemTra",
   testTypeController.updateHeSoLoaiKT
 );
+router.get(
+  "/chi-tiet-loai-kiem-tra/:MaLoaiKiemTra",
+  testTypeController.getLoaiKTDetail
+);
 
 module.exports = router;
