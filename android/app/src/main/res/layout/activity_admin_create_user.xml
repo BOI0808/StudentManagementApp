@@ -67,7 +67,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:enabled="false"
-                android:text="Hệ thống tự động phát sinh"
+                android:text="Tự động"
                 android:textStyle="italic" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -153,73 +153,73 @@
                 android:id="@+id/cbTiepNhanHS"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tiếp nhận học sinh (1)" />
+                android:text="Tiếp nhận học sinh" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachLop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách lớp (2)" />
+                android:text="Lập danh sách lớp" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachHSChoLop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách học sinh cho lớp (3)" />
+                android:text="Lập danh sách học sinh cho lớp" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachNamHoc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách Năm học (4)" />
+                android:text="Lập danh sách Năm học" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachKhoiLop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách Khối lớp (5)" />
+                android:text="Lập danh sách Khối lớp" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLapDanhSachMonHoc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập danh sách Môn học (6)" />
+                android:text="Lập danh sách Môn học" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbTraCuuHS"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tra cứu học sinh (7)" />
+                android:text="Tra cứu học sinh" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbNhapDiem"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nhập bảng điểm (8)" />
+                android:text="Nhập bảng điểm" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbLoaiKiemTra"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nhập danh sách loại kiểm tra (9)" />
+                android:text="Nhập danh sách loại kiểm tra" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbBaoCaoMon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập báo cáo tổng kết môn (10)" />
+                android:text="Lập báo cáo tổng kết môn" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbBaoCaoHocKy"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lập báo cáo tổng kết học kỳ (11)" />
+                android:text="Lập báo cáo tổng kết học kỳ" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/cbCaiDatThamSo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cài đặt tham số hệ thống (12)" />
+                android:text="Cài đặt tham số hệ thống" />
 
         </GridLayout>
 
