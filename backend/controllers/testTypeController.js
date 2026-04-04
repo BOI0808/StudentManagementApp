@@ -1,51 +1,157 @@
 const db = require("../config/db");
 
-// BM8: Nhập danh sách các loại hình kiểm tra [cite: 301]
-exports.createTestType = async (req, res) => {
-  const { TenLoaiKiemTra, HeSo } = req.body; // D1 [cite: 319, 326]
+const generateMaLoaiKT = (ten) => {
+  // 1. Loại bỏ dấu tiếng Việt và chuyển sang chữ hoa
+  let str = ten
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
 
+  // 2. Viết tắt các từ thông dụng (Phút -> P, Tiết -> T)
+  str = str.replace(/PHUT/g, "P").replace(/TIET/g, "T");
+
+  // 3. Lấy các chữ số và chữ cái đầu của mỗi từ còn lại
+  const words = str.split(/\s+/);
+  const result = words
+    .map((word) => {
+      const numbers = word.match(/\d+/g); // Giữ lại số (như 15, 1)
+      if (numbers) return numbers.join("");
+      return word.charAt(0); // Lấy chữ cái đầu
+    })
+    .join("");
+
+  // 4. Ghép tiền tố KT và giới hạn 10 ký tự
+  return ("KT" + result).slice(0, 10);
+};
+
+// 1. Lấy danh sách đang hoạt động để đổ vào bảng
+exports.getAllActiveLoaiKT = async (req, res) => {
   try {
-    // 1. Kiểm tra rỗng và tính hợp lệ của hệ số (QĐ8) [cite: 304, 329]
-    if (!TenLoaiKiemTra || HeSo === undefined) {
-      return res
-        .status(400)
-        .json({ error: "Vui lòng nhập đầy đủ tên và hệ số." });
-    }
-    if (parseFloat(HeSo) <= 0) {
-      return res.status(400).json({ error: "Hệ số phải là số dương." });
-    }
-
-    // 2. Kiểm tra trùng lặp tên (QĐ7) [cite: 303, 329]
-    const [existing] = await db.query(
-      "SELECT * FROM loaihinhkiemtra WHERE TenLoaiKiemTra = ?",
-      [TenLoaiKiemTra]
+    // Chỉ lấy những loại có TrangThai = 1
+    const [rows] = await db.query(
+      "SELECT MaLoaiKiemTra, TenLoaiKiemTra, HeSo FROM loaihinhkiemtra WHERE TrangThai = 1"
     );
-    if (existing.length > 0) {
-      return res
-        .status(400)
-        .json({ error: "Tên loại hình kiểm tra này đã tồn tại." });
-    }
-
-    // 3. Lưu xuống cơ sở dữ liệu (B6 thuật toán)
-    const MaLoaiKiemTra = "KT" + Date.now().toString().slice(-4);
-    await db.query(
-      "INSERT INTO loaihinhkiemtra (MaLoaiKiemTra, TenLoaiKiemTra, HeSo) VALUES (?, ?, ?)",
-      [MaLoaiKiemTra, TenLoaiKiemTra, HeSo]
-    );
-
-    res.json({ message: "Thêm loại hình kiểm tra thành công!", MaLoaiKiemTra });
+    res.json(rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Lỗi hệ thống khi thêm loại hình kiểm tra" });
+    res.status(500).json({ error: "Lỗi khi lấy danh sách loại kiểm tra." });
   }
 };
 
-// Hàm lấy danh sách để hiển thị cho Vinh/Giang chọn khi nhập điểm [cite: 484-485]
-exports.getAllTestTypes = async (req, res) => {
+// 2. Thêm mới loại hình kiểm tra
+exports.createLoaiKT = async (req, res) => {
+  const { TenLoaiKiemTra, HeSo } = req.body;
+
+  if (!TenLoaiKiemTra || !HeSo) {
+    return res.status(400).json({ error: "Vui lòng nhập tên và hệ số." });
+  }
+
   try {
-    const [rows] = await db.query("SELECT * FROM loaihinhkiemtra");
-    res.json(rows);
+    // 1. Kiểm tra xem tên này đã tồn tại trong DB chưa
+    const [existing] = await db.query(
+      "SELECT MaLoaiKiemTra, TrangThai FROM loaihinhkiemtra WHERE TenLoaiKiemTra = ?",
+      [TenLoaiKiemTra]
+    );
+
+    if (existing.length > 0) {
+      const item = existing[0];
+
+      // TRƯỜNG HỢP A: Đang ngưng hoạt động (TrangThai = 0) -> Bật lại
+      if (item.TrangThai === 0) {
+        await db.query(
+          "UPDATE loaihinhkiemtra SET TrangThai = 1, HeSo = ? WHERE MaLoaiKiemTra = ?",
+          [HeSo, item.MaLoaiKiemTra]
+        );
+        return res.json({
+          message: "Thêm loại kiểm tra mới thành công!",
+          MaLoaiKiemTra: item.MaLoaiKiemTra,
+        });
+      }
+
+      // TRƯỜNG HỢP B: Đang hoạt động rồi (TrangThai = 1) -> Báo lỗi trùng
+      else {
+        return res.status(400).json({
+          error: "Loại kiểm tra này đã tồn tại và đang hoạt động.",
+        });
+      }
+    }
+
+    // 2. TRƯỜNG HỢP C: Chưa từng tồn tại -> Thêm mới hoàn toàn
+    const MaLoaiKiemTra = generateMaLoaiKT(TenLoaiKiemTra);
+
+    const query = `
+      INSERT INTO loaihinhkiemtra (MaLoaiKiemTra, TenLoaiKiemTra, HeSo, TrangThai) 
+      VALUES (?, ?, ?, 1)
+    `;
+
+    await db.query(query, [MaLoaiKiemTra, TenLoaiKiemTra, HeSo]);
+
+    res.json({
+      message: "Thêm loại kiểm tra mới thành công!",
+      MaLoaiKiemTra: MaLoaiKiemTra,
+    });
   } catch (err) {
-    res.status(500).json({ error: "Lỗi lấy danh sách loại hình kiểm tra" });
+    // Xử lý lỗi trùng Mã (nếu hàm generate sinh ra mã trùng với loại khác)
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.status(400).json({
+        error: "Mã viết tắt bị trùng, vui lòng đặt tên khác một chút.",
+      });
+    }
+    res.status(500).json({ error: "Lỗi hệ thống khi xử lý loại kiểm tra." });
+  }
+};
+
+// 3. Xóa mềm (Soft Delete) khi nhấn icon thùng rác
+exports.softDeleteLoaiKT = async (req, res) => {
+  const { MaLoaiKiemTra } = req.params; // MaLoaiKiemTra
+
+  try {
+    // Không DELETE thật mà chỉ UPDATE TrangThai về 0
+    await db.query(
+      "UPDATE loaihinhkiemtra SET TrangThai = 0 WHERE MaLoaiKiemTra = ?",
+      [MaLoaiKiemTra]
+    );
+    res.json({ message: "Đã xóa loại hình kiểm tra này." });
+  } catch (err) {
+    res.status(500).json({ error: "Lỗi khi cập nhật trạng thái xóa." });
+  }
+};
+
+// API Cập nhật riêng hệ số của một loại kiểm tra
+exports.updateHeSoLoaiKT = async (req, res) => {
+  const { MaLoaiKiemTra } = req.params; // MaLoaiKiemTra
+  const { HeSo } = req.body;
+
+  // 1. Kiểm tra tính hợp lệ của hệ số
+  if (HeSo === undefined || HeSo === null || isNaN(HeSo)) {
+    return res
+      .status(400)
+      .json({ error: "Hệ số không hợp lệ. Vui lòng nhập một con số." });
+  }
+
+  if (HeSo <= 0) {
+    return res.status(400).json({ error: "Hệ số phải lớn hơn 0." });
+  }
+
+  try {
+    // 2. Thực hiện cập nhật trong database
+    const [result] = await db.query(
+      "UPDATE loaihinhkiemtra SET HeSo = ? WHERE MaLoaiKiemTra = ? AND TrangThai = 1",
+      [HeSo, MaLoaiKiemTra]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        error: "Không tìm thấy loại kiểm tra hoặc loại này đã bị xóa.",
+      });
+    }
+
+    res.json({
+      message: "Cập nhật hệ số thành công!",
+      MaLoaiKiemTra: MaLoaiKiemTra,
+      HeSoMoi: HeSo,
+    });
+  } catch (err) {
+    console.error("Lỗi cập nhật hệ số:", err);
+    res.status(500).json({ error: "Lỗi hệ thống khi cập nhật dữ liệu." });
   }
 };
