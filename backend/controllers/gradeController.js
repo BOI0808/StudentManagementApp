@@ -76,12 +76,24 @@ exports.luuBangDiem = async (req, res) => {
       [MaLop]
     );
     const maHKNH = classInfo[0].MaHocKyNamHoc;
+    // Trong hàm luuBangDiem của Khôi
+    const [range] = await connection.query(
+      "SELECT ten_tham_so, gia_tri FROM thamso WHERE ten_tham_so IN ('DiemToiThieu', 'DiemToiDa')"
+    );
+
+    // Chuyển mảng thành object để dễ gọi: { DiemToiThieu: 0, DiemToiDa: 10 }
+    const limits = range.reduce((obj, item) => {
+      obj[item.ten_tham_so] = item.gia_tri;
+      return obj;
+    }, {});
 
     for (const record of DanhSachDiem) {
       const { maHocSinh, diem, ghiChu } = record;
 
-      if (diem < 0 || diem > 10) {
-        throw new Error(`Học sinh ${maHocSinh} có điểm ${diem} không hợp lệ!`);
+      if (diem < limits.DiemToiThieu || diem > limits.DiemToiDa) {
+        throw new Error(
+          `Điểm phải nằm trong khoảng từ ${limits.DiemToiThieu} đến ${limits.DiemToiDa}`
+        );
       }
 
       // 1. Lưu/Cập nhật điểm vào bảng bangdiem
