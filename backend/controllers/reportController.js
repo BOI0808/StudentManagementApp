@@ -49,49 +49,61 @@ exports.getBaoCaoTongKetMon = async (req, res) => {
   }
 };
 
-// Báo cáo tổng kết học kỳ (BM11) (done)
-exports.getBaoCaoHocKy = async (req, res) => {
-  const { MaHocKyNamHoc } = req.query;
+// Báo cáo tổng kết học kỳ
+exports.getBaoCaoTongKetHocKy = async (req, res) => {
+  const { MaHocKyNamHoc } = req.query; // Giang gửi mã học kỳ từ Dropdown
 
-  // Kiểm tra nếu tham số bị trống (Tránh lỗi NULL trong SQL của Khôi)
   if (!MaHocKyNamHoc) {
-    return res.status(400).json({ error: "Vui lòng chọn Mã học kỳ năm học." });
+    return res
+      .status(400)
+      .json({ error: "Vui lòng chọn học kỳ để xem báo cáo." });
   }
 
   try {
+    // 1. Lấy điểm đạt hệ thống
+    const [ts] = await db.query(
+      "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'DiemDat'"
+    );
+    const diemDat = ts[0].gia_tri;
+
+    // 2. Query tổng hợp: Tính GPA học kỳ và đếm số lượng đạt theo lớp
     const query = `
       SELECT 
         l.TenLop, 
-        COUNT(DISTINCT ctl.MaHocSinh) as SiSo,
-        COUNT(DISTINCT hs_dat.MaHocSinh) as SoLuongDat
+        l.SiSo,
+        COUNT(CASE WHEN student_gpa.GPA_HocKy >= ? THEN 1 END) AS SoLuongDat
       FROM lop l
       LEFT JOIN chitietlop ctl ON l.MaLop = ctl.MaLop
       LEFT JOIN (
-        -- Tìm danh sách học sinh đạt tất cả các môn (Min >= 5)
-        SELECT kq.MaHocSinh
-        FROM ketqua_monhoc kq
-        WHERE kq.MaHocKyNamHoc = ?
-        GROUP BY kq.MaHocSinh
-        HAVING MIN(kq.DiemTrungBinhMon) >= 5
-      ) hs_dat ON ctl.MaHocSinh = hs_dat.MaHocSinh
+        -- Tính GPA trung bình các môn của mỗi học sinh trong học kỳ đó
+        SELECT MaHocSinh, MaHocKyNamHoc, AVG(DiemTrungBinhMon) AS GPA_HocKy
+        FROM ketqua_monhoc
+        GROUP BY MaHocSinh, MaHocKyNamHoc
+      ) AS student_gpa ON ctl.MaHocSinh = student_gpa.MaHocSinh 
+        AND student_gpa.MaHocKyNamHoc = l.MaHocKyNamHoc
       WHERE l.MaHocKyNamHoc = ?
-      GROUP BY l.MaLop, l.TenLop`;
+      GROUP BY l.MaLop, l.TenLop, l.SiSo
+    `;
 
-    const [rows] = await db.query(query, [MaHocKyNamHoc, MaHocKyNamHoc]);
+    const [rows] = await db.query(query, [diemDat, MaHocKyNamHoc]);
 
-    const reportData = rows.map((row) => ({
-      TenLop: row.TenLop,
-      SiSo: row.SiSo,
-      SoLuongDat: row.SoLuongDat,
-      TiLe:
-        row.SiSo > 0
-          ? ((row.SoLuongDat / row.SiSo) * 100).toFixed(2) + "%"
-          : "0%",
-    }));
+    // 3. Format dữ liệu trả về cho Giang đổ vào bảng
+    const finalReport = rows.map((item) => {
+      const siSo = item.SiSo || 0;
+      const soLuongDat = item.SoLuongDat || 0;
+      const tiLe = siSo > 0 ? ((soLuongDat / siSo) * 100).toFixed(2) : 0;
 
-    res.json(reportData);
+      return {
+        lop: item.TenLop,
+        siSo: siSo,
+        soLuongDat: soLuongDat,
+        tiLe: `${tiLe}%`,
+      };
+    });
+
+    res.json(finalReport);
   } catch (err) {
-    console.error("Lỗi MySQL:", err);
-    res.status(500).json({ error: "Lỗi hệ thống khi lập báo cáo học kỳ" });
+    console.error("Lỗi báo cáo học kỳ:", err);
+    res.status(500).json({ error: "Lỗi hệ thống khi lập báo cáo học kỳ." });
   }
 };
