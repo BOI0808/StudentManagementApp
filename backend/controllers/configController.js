@@ -25,6 +25,7 @@ exports.updateThamSo = async (req, res) => {
     SiSoToiThieu,
     SiSoToiDa,
     DiemDatMon,
+    DiemDat,
     DiemToiThieu,
     DiemToiDa,
   } = req.body;
@@ -50,11 +51,12 @@ exports.updateThamSo = async (req, res) => {
         WHEN 'SiSoToiThieu' THEN ?
         WHEN 'SiSoToiDa' THEN ?
         WHEN 'DiemDatMon' THEN ?
+        WHEN 'DiemDat' THEN ?
         WHEN 'DiemToiThieu' THEN ?
         WHEN 'DiemToiDa' THEN ?
         ELSE gia_tri
       END
-      WHERE ten_tham_so IN ('TuoiToiThieu', 'TuoiToiDa', 'SiSoToiThieu', 'SiSoToiDa', 'DiemDatMon', 'DiemToiThieu', 'DiemToiDa')
+      WHERE ten_tham_so IN ('TuoiToiThieu', 'TuoiToiDa', 'SiSoToiThieu', 'SiSoToiDa', 'DiemDatMon', 'DiemDat', 'DiemToiThieu', 'DiemToiDa')
     `;
 
     await db.query(query, [
@@ -63,6 +65,7 @@ exports.updateThamSo = async (req, res) => {
       SiSoToiThieu,
       SiSoToiDa,
       DiemDatMon,
+      DiemDat,
       DiemToiThieu,
       DiemToiDa,
     ]);
