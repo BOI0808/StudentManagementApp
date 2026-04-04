@@ -108,7 +108,10 @@ exports.luuBangDiem = async (req, res) => {
           [diem, ghiChu, existing[0].MaBangDiem]
         );
       } else {
-        const MaBangDiem = "BD" + Date.now().toString().slice(-8);
+        const MaBangDiem =
+          "BD" +
+          Date.now().toString().slice(-6) +
+          i.toString().padStart(2, "0");
         await connection.query(
           "INSERT INTO bangdiem (MaBangDiem, MaLop, MaMonHoc, MaLoaiKiemTra, MaHocSinh, Diem, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?)",
           [MaBangDiem, MaLop, MaMonHoc, MaLoaiKiemTra, maHocSinh, diem, ghiChu]
