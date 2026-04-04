@@ -67,7 +67,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:enabled="false"
-                android:text="Hệ thống tự động phát sinh"
+                android:text="Tự động"
                 android:textStyle="italic" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -224,10 +224,23 @@
         </GridLayout>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCreateAccount"
+            android:id="@+id/btnXemDanhSach"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginTop="32dp"
+            android:layout_marginBottom="8dp"
+            android:text="XEM DANH SÁCH TÀI KHOẢN"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="8dp"
+            app:strokeColor="#1976D2"
+            android:textColor="#1976D2" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCreateAccount"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
             android:layout_marginBottom="24dp"
             android:text="TẠO TÀI KHOẢN"
             android:textSize="16sp"
