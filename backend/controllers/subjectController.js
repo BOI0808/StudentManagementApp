@@ -97,7 +97,11 @@ exports.toggleSubjectStatus = async (req, res) => {
 exports.getActiveSubjects = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM monhoc WHERE TrangThai = 1");
-    res.json(rows);
+    const dropdownData = rows.map((item) => ({
+      mamonhoc: item.MaMonHoc,
+      tenmonhoc: `${item.TenMonHoc}`,
+    }));
+    res.json(dropdownData);
   } catch (err) {
     res.status(500).json({ error: "Lỗi khi lấy danh sách môn học." });
   }

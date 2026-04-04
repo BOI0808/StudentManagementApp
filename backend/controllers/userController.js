@@ -29,9 +29,61 @@ exports.createUser = async (req, res) => {
   const { HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, DanhSachQuyen } =
     req.body;
 
+  // 1. Kiểm tra không được để trống (Trim để tránh chỉ nhập dấu cách)
+  if (
+    !HoTen?.trim() ||
+    !TenDangNhap?.trim() ||
+    !MatKhau ||
+    !Email?.trim() ||
+    !SoDienThoai?.trim()
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Vui lòng nhập đầy đủ thông tin bắt buộc." });
+  }
+
+  // 2. Kiểm tra định dạng Email (Regex chuẩn)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(Email)) {
+    return res.status(400).json({ error: "Định dạng Email không hợp lệ." });
+  }
+
+  // 3. Kiểm tra Số điện thoại (10 số, đầu số Việt Nam)
+  const phoneRegex = /^(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/;
+  if (!phoneRegex.test(SoDienThoai)) {
+    return res
+      .status(400)
+      .json({ error: "Số điện thoại không đúng định dạng Việt Nam." });
+  }
+
+  // 4. Kiểm tra Tên đăng nhập (Từ 5-20 ký tự, không dấu cách, không ký tự đặc biệt)
+  const userRegex = /^[a-zA-Z0-9_]{5,20}$/;
+  if (!userRegex.test(TenDangNhap)) {
+    return res.status(400).json({
+      error:
+        "Tên đăng nhập phải từ 5-20 ký tự, không chứa khoảng trắng hoặc ký tự đặc biệt.",
+    });
+  }
+
+  // 5. Độ mạnh mật khẩu (Tối thiểu 6 ký tự)
+  if (MatKhau.length < 6) {
+    return res.status(400).json({ error: "Mật khẩu phải có ít nhất 6 ký tự." });
+  }
+
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
+
+    // Kiểm tra trùng lặp
+    const [existing] = await connection.query(
+      "SELECT MaSo FROM nguoidung WHERE TenDangNhap = ? OR Email = ?",
+      [TenDangNhap.trim(), Email.trim()]
+    );
+    if (existing.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "Tên đăng nhập hoặc Email đã được sử dụng." });
+    }
 
     // 1. Tự động sinh MaSo "đẹp"
     const MaSo = await generateMaSo(connection);
