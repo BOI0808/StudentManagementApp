@@ -21,6 +21,24 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".AdminCreateUserActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AdminUserListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ChangePasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ReceiveStudentsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CreateClassActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CreateClassListActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
     </application>
