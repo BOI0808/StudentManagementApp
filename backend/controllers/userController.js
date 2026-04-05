@@ -121,3 +121,133 @@ exports.createUser = async (req, res) => {
     connection.release(); // Giải phóng kết nối (Quan trọng)
   }
 };
+
+exports.getAllAccounts = async (req, res) => {
+  try {
+    // 1. Thêm nd.Email vào danh sách các cột cần lấy
+    const query = `
+      SELECT 
+        nd.MaSo, 
+        nd.HoTen, 
+        nd.Email, 
+        nd.SoDienThoai, 
+        nd.TenDangNhap, 
+        GROUP_CONCAT(ndq.MaCN) AS DS_Quyen
+      FROM nguoidung nd
+      LEFT JOIN nguoidung_quyen ndq ON nd.MaSo = ndq.MaSo
+      WHERE nd.TrangThai = 1 
+      GROUP BY nd.MaSo
+    `;
+
+    const [rows] = await db.query(query);
+
+    // 2. Trình bày dữ liệu sạch sẽ cho Giang (Android)
+    const result = rows.map((user) => ({
+      MaSo: user.MaSo,
+      HoTen: user.HoTen,
+      Email: user.Email, // Đã thêm Email vào đây
+      SoDienThoai: user.SoDienThoai,
+      TenDangNhap: user.TenDangNhap,
+      QuyenHeThong: user.DS_Quyen ? `{${user.DS_Quyen}}` : "{}",
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error("Lỗi lấy danh sách tài khoản:", err);
+    res.status(500).json({ error: "Lỗi hệ thống khi tải dữ liệu." });
+  }
+};
+
+exports.updateAccount = async (req, res) => {
+  const { id } = req.params;
+  // 1. SỬA LỖI: Lấy thêm Email và TenDangNhap từ req.body
+  const { HoTen, SoDienThoai, TenDangNhap, Email, MatKhau, DanhSachQuyen } =
+    req.body;
+
+  // 2. SỬA LOGIC: Kiểm tra các trường bắt buộc (bỏ qua MatKhau ở bước này)
+  if (
+    !HoTen?.trim() ||
+    !TenDangNhap?.trim() ||
+    !Email?.trim() ||
+    !SoDienThoai?.trim()
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Vui lòng nhập đầy đủ thông tin bắt buộc." });
+  }
+
+  // Validation Regex giữ nguyên như của Khôi (Rất tốt)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(Email))
+    return res.status(400).json({ error: "Email không hợp lệ." });
+
+  const phoneRegex = /^(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/;
+  if (!phoneRegex.test(SoDienThoai))
+    return res.status(400).json({ error: "SĐT không hợp lệ." });
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 3. SỬA SQL: Cập nhật thêm TenDangNhap và Email
+    let updateQuery =
+      "UPDATE nguoidung SET HoTen = ?, SoDienThoai = ?, TenDangNhap = ?, Email = ? ";
+    let queryParams = [HoTen, SoDienThoai, TenDangNhap, Email];
+
+    // 4. SỬA LOGIC: Chỉ validate và update MatKhau nếu nó thực sự thay đổi
+    if (MatKhau && MatKhau !== "********") {
+      if (MatKhau.length < 6) {
+        throw new Error("Mật khẩu mới phải có ít nhất 6 ký tự.");
+      }
+      updateQuery += ", MatKhau = ? ";
+      queryParams.push(MatKhau);
+    }
+
+    updateQuery += " WHERE MaSo = ?";
+    queryParams.push(id);
+
+    await connection.query(updateQuery, queryParams);
+
+    // Logic xử lý quyền cũ/mới của Khôi rất chuẩn, giữ nguyên
+    if (DanhSachQuyen && Array.isArray(DanhSachQuyen)) {
+      await connection.query("DELETE FROM nguoidung_quyen WHERE MaSo = ?", [
+        id,
+      ]);
+      if (DanhSachQuyen.length > 0) {
+        const quyenValues = DanhSachQuyen.map((maCN) => [id, maCN]);
+        await connection.query(
+          "INSERT INTO nguoidung_quyen (MaSo, MaCN) VALUES ?",
+          [quyenValues]
+        );
+      }
+    }
+
+    await connection.commit();
+    res.json({ message: "Cập nhật tài khoản và quyền hạn thành công!" });
+  } catch (err) {
+    await connection.rollback();
+    res
+      .status(400)
+      .json({ error: err.message || "Lỗi hệ thống khi cập nhật." });
+  } finally {
+    connection.release();
+  }
+};
+
+exports.softDeleteAccount = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [result] = await db.query(
+      "UPDATE nguoidung SET TrangThai = 0 WHERE MaSo = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Không tìm thấy tài khoản." });
+    }
+
+    res.json({ message: "Đã ngưng hoạt động tài khoản này thành công!" });
+  } catch (err) {
+    res.status(500).json({ error: "Lỗi hệ thống khi xóa tài khoản." });
+  }
+};
