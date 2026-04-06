@@ -24,7 +24,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/configs", configRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/reports", reportRoutes);
-app.use("/api/auth", authRoutes);
+app.use("/api/auths", authRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/semesters", semesterRoutes);
