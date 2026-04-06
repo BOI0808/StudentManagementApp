@@ -148,107 +148,73 @@ exports.searchHocSinh = async (req, res) => {
   }
 };
 
-// API lấy danh sách học sinh của một lớp cụ thể
-exports.getHocSinhTheoLop = async (req, res) => {
-  const { MaLop } = req.params; // Lấy mã lớp từ URL
-
-  try {
-    // JOIN bảng chitietlop và hocsinh để lấy thông tin
-    const query = `
-      SELECT 
-        hs.MaHocSinh, 
-        hs.HoTen, 
-        DATE_FORMAT(hs.NgaySinh, '%d/%m/%Y') AS NgaySinh
-      FROM chitietlop ctl
-      JOIN hocsinh hs ON ctl.MaHocSinh = hs.MaHocSinh
-      WHERE ctl.MaLop = ?
-      ORDER BY hs.HoTen ASC
-    `;
-
-    const [rows] = await db.query(query, [MaLop]);
-
-    // Trả về danh sách học sinh
-    res.json(rows);
-  } catch (err) {
-    console.error("Lỗi lấy danh sách học sinh theo lớp:", err);
-    res.status(500).json({ error: "Lỗi hệ thống khi tải danh sách học sinh." });
-  }
-};
-
-//API thêm học sinh vào lớp
-exports.themHocSinhVaoLop = async (req, res) => {
-  const { MaLop, MaHocSinh } = req.body;
+exports.updateHocSinh = async (req, res) => {
+  const { MaHocSinh, HoTen, NgaySinh, MaGioiTinh, DiaChi, Email } = req.body;
   const connection = await db.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    // 1. Kiểm tra đầu vào
-    if (!MaLop || !MaHocSinh) {
-      return res.status(400).json({ error: "Thiếu Mã lớp hoặc Mã học sinh." });
+    // 1. Kiểm tra dữ liệu đầu vào
+    if (!MaHocSinh || !HoTen || !NgaySinh || !MaGioiTinh || !DiaChi) {
+      return res
+        .status(400)
+        .json({ error: "Vui lòng nhập đầy đủ thông tin học sinh." });
     }
 
-    // 2. Lấy Sĩ số tối đa từ bảng thamso (QĐ6)
-    const [[config]] = await connection.query(
-      "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'SiSoToiDa'"
-    );
+    // 2. Kiểm tra định dạng ngày và tính tuổi
+    const dateObj = new Date(NgaySinh);
+    if (isNaN(dateObj))
+      return res.status(400).json({ error: "Ngày sinh không hợp lệ." });
+    const formattedDate = dateObj.toISOString().split("T")[0];
 
-    // 3. Lấy Sĩ số hiện tại và Học kỳ của lớp này
-    const [[lopInfo]] = await connection.query(
-      "SELECT SiSo, MaHocKyNamHoc FROM lop WHERE MaLop = ?",
-      [MaLop]
+    // Lấy quy định tuổi từ database
+    const [config] = await connection.query(
+      "SELECT ten_tham_so, gia_tri FROM thamso WHERE ten_tham_so IN ('TuoiToiThieu', 'TuoiToiDa')"
     );
+    const minAge =
+      config.find((c) => c.ten_tham_so === "TuoiToiThieu")?.gia_tri || 15;
+    const maxAge =
+      config.find((c) => c.ten_tham_so === "TuoiToiDa")?.gia_tri || 20;
 
-    if (!lopInfo) {
-      throw new Error("Lớp học không tồn tại.");
+    const age = new Date().getFullYear() - dateObj.getFullYear();
+    if (age < minAge || age > maxAge) {
+      throw new Error(
+        `Tuổi học sinh (${age}) không phù hợp quy định (${minAge}-${maxAge}).`
+      );
     }
 
-    // 4. KIỂM TRA ĐIỀU KIỆN 1: Lớp đã đầy chưa?
-    if (lopInfo.SiSo >= config.gia_tri) {
-      await connection.rollback();
-      return res.status(400).json({
-        error: `Lớp đã đầy! Sĩ số tối đa quy định là ${config.gia_tri} học sinh.`,
-      });
-    }
-
-    // 5. KIỂM TRA ĐIỀU KIỆN 2: Học sinh đã có lớp trong học kỳ này chưa?
-    const [isAssigned] = await connection.query(
-      `SELECT ctl.MaLop FROM chitietlop ctl 
-       JOIN lop l ON ctl.MaLop = l.MaLop 
-       WHERE ctl.MaHocSinh = ? AND l.MaHocKyNamHoc = ?`,
-      [MaHocSinh, lopInfo.MaHocKyNamHoc]
-    );
-
-    if (isAssigned.length > 0) {
-      await connection.rollback();
-      return res.status(400).json({
-        error: `Học sinh này đã được xếp vào lớp ${isAssigned[0].MaLop} trong cùng học kỳ.`,
-      });
-    }
-
-    // 6. THỰC HIỆN: Thêm vào bảng chi tiết và cập nhật sĩ số bảng lop
-    await connection.query(
-      "INSERT INTO chitietlop (MaLop, MaHocSinh) VALUES (?, ?)",
-      [MaLop, MaHocSinh]
-    );
-    await connection.query("UPDATE lop SET SiSo = SiSo + 1 WHERE MaLop = ?", [
-      MaLop,
+    // 3. Cập nhật vào bảng hocsinh
+    const query = `
+      UPDATE hocsinh 
+      SET HoTen = ?, NgaySinh = ?, MaGioiTinh = ?, DiaChi = ?, Email = ? 
+      WHERE MaHocSinh = ?
+    `;
+    const [result] = await connection.query(query, [
+      HoTen.trim(),
+      formattedDate,
+      MaGioiTinh,
+      DiaChi.trim(),
+      Email,
+      MaHocSinh,
     ]);
 
+    if (result.affectedRows === 0) {
+      throw new Error("Không tìm thấy học sinh để cập nhật.");
+    }
+
     await connection.commit();
-    res.json({
-      message: "Thêm học sinh vào lớp thành công!",
-      siSoMoi: lopInfo.SiSo + 1,
-    });
+    res.json({ message: "Cập nhật hồ sơ học sinh thành công!" });
   } catch (err) {
     await connection.rollback();
-    console.error(err);
-    res.status(500).json({ error: err.message || "Lỗi hệ thống khi xếp lớp." });
+    console.error("Lỗi cập nhật hồ sơ:", err);
+    res
+      .status(400)
+      .json({ error: err.message || "Lỗi hệ thống khi cập nhật." });
   } finally {
     connection.release();
   }
 };
-
 // API Xóa học sinh khỏi lớp (Cập nhật lại sĩ số)
 exports.xoaHocSinhKhoiLop = async (req, res) => {
   const { MaLop, MaHocSinh } = req.body;
@@ -289,80 +255,6 @@ exports.xoaHocSinhKhoiLop = async (req, res) => {
     res.status(500).json({ error: "Lỗi hệ thống khi thực hiện xóa." });
   } finally {
     connection.release();
-  }
-};
-
-// API Gợi ý Mã học sinh dựa trên từ khóa nhập vào
-exports.searchMaHocSinh = async (req, res) => {
-  const { key } = req.query; // Nhận từ Giang: ?key=HS
-
-  try {
-    if (!key || key.trim() === "") {
-      return res.json([]);
-    }
-
-    const searchKey = `%${key.trim()}%`;
-
-    // Tìm kiếm trong bảng hocsinh
-    const query = `
-      SELECT MaHocSinh, HoTen 
-      FROM hocsinh 
-      WHERE MaHocSinh LIKE ? OR HoTen LIKE ?
-      LIMIT 10
-    `;
-
-    const [rows] = await db.query(query, [searchKey, searchKey]);
-
-    // Trả về định dạng để Giang dễ đổ vào danh sách gợi ý
-    const result = rows.map((item) => ({
-      maHocSinh: item.MaHocSinh,
-      hoTen: item.HoTen,
-      hienThi: `${item.MaHocSinh}`,
-    }));
-
-    res.json(result);
-  } catch (err) {
-    console.error("Lỗi tìm mã học sinh:", err);
-    res.status(500).json({ error: "Lỗi hệ thống khi tìm mã học sinh." });
-  }
-};
-
-// API Gợi ý Tên học sinh + Ngày sinh
-exports.searchTenHocSinh = async (req, res) => {
-  const { key } = req.query;
-
-  try {
-    if (!key || key.trim() === "") {
-      return res.json([]);
-    }
-
-    const searchKey = `%${key.trim()}%`;
-
-    // Lấy Tên, Ngày sinh (đã format) và Mã
-    const query = `
-      SELECT 
-        HoTen, 
-        DATE_FORMAT(NgaySinh, '%d/%m/%Y') AS NgaySinh, 
-        MaHocSinh 
-      FROM hocsinh 
-      WHERE HoTen LIKE ? 
-      ORDER BY HoTen ASC 
-      LIMIT 10
-    `;
-
-    const [rows] = await db.query(query, [searchKey]);
-
-    // Format dữ liệu trả về: Tên + Ngày sinh
-    const result = rows.map((item) => ({
-      hoTen: item.HoTen,
-      maHocSinh: item.MaHocSinh, // Vẫn trả về mã để Giang xử lý logic
-      hienThi: `${item.HoTen} - ${item.NgaySinh}`, // Đây là chuỗi hiện lên UI
-    }));
-
-    res.json(result);
-  } catch (err) {
-    console.error("Lỗi gợi ý tên học sinh:", err);
-    res.status(500).json({ error: "Lỗi hệ thống khi gợi ý tên." });
   }
 };
 
