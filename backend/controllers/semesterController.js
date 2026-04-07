@@ -104,7 +104,7 @@ exports.deleteHocKyNamHoc = async (req, res) => {
   }
 };
 
-// API lấy danh sách tất cả học kỳ năm học (để đổ vào bảng BM2)
+// API lấy danh sách tất cả học kỳ năm học
 exports.getAllHocKyNamHoc = async (req, res) => {
   try {
     // Lấy thông tin cần thiết để hiển thị và để lưu

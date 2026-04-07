@@ -6,11 +6,6 @@ const testTypeController = require("../controllers/testTypeController");
 router.post("/lap-loai-kiem-tra", testTypeController.createLoaiKT);
 // Endpoint: GET /api/test-types/danh-sach-loai-kiem-tra
 router.get("/danh-sach-loai-kiem-tra", testTypeController.getAllActiveLoaiKT);
-// Endpoint: GET /api/test-types/chi-tiet-loai-kiem-tra/:MaLoaiKiemTra
-router.get(
-  "/chi-tiet-loai-kiem-tra/:MaLoaiKiemTra",
-  testTypeController.getLoaiKTDetail
-);
 // Endpoint: PATCH /api/test-types/xoa-loai-kiem-tra/:MaLoaiKiemTra
 router.patch(
   "/xoa-loai-kiem-tra/:MaLoaiKiemTra",

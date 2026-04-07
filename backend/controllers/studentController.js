@@ -263,21 +263,22 @@ exports.traCuuHocSinh = async (req, res) => {
   const { maLop, maHocSinh, hoTen } = req.query;
 
   try {
-    // 1. Câu query "khủng" để lấy thông tin học sinh, lớp và tính điểm trung bình
     let query = `
       SELECT 
         hs.MaHocSinh, 
         hs.HoTen, 
         l.TenLop, 
         CONCAT(hn.NamHocBatDau, '-', hn.NamHocKetThuc) AS NamHoc,
-        -- Tính GPA HK1
-        (SELECT ROUND(AVG(Diem), 1) FROM bangdiem bd 
-         JOIN hocky_namhoc hnk ON bd.MaHocKyNamHoc = hnk.MaHocKyNamHoc 
-         WHERE bd.MaHocSinh = hs.MaHocSinh AND hnk.LoaiHocKy = 1) AS HK1,
-        -- Tính GPA HK2
-        (SELECT ROUND(AVG(Diem), 1) FROM bangdiem bd 
-         JOIN hocky_namhoc hnk ON bd.MaHocKyNamHoc = hnk.MaHocKyNamHoc 
-         WHERE bd.MaHocSinh = hs.MaHocSinh AND hnk.LoaiHocKy = 2) AS HK2
+        -- SỬA LỖI: Phải JOIN qua bảng 'lop' để lấy MaHocKyNamHoc
+        (SELECT ROUND(AVG(bd.Diem), 1) FROM bangdiem bd 
+         JOIN lop l_in ON bd.MaLop = l_in.MaLop
+         JOIN hocky_namhoc hnk ON l_in.MaHocKyNamHoc = hnk.MaHocKyNamHoc 
+         WHERE bd.MaHocSinh = hs.MaHocSinh AND hnk.TenHocKy LIKE '%1%') AS HK1,
+        
+        (SELECT ROUND(AVG(bd.Diem), 1) FROM bangdiem bd 
+         JOIN lop l_in ON bd.MaLop = l_in.MaLop
+         JOIN hocky_namhoc hnk ON l_in.MaHocKyNamHoc = hnk.MaHocKyNamHoc 
+         WHERE bd.MaHocSinh = hs.MaHocSinh AND hnk.TenHocKy LIKE '%2%') AS HK2
       FROM hocsinh hs
       JOIN chitietlop ctl ON hs.MaHocSinh = ctl.MaHocSinh
       JOIN lop l ON ctl.MaLop = l.MaLop
@@ -286,29 +287,25 @@ exports.traCuuHocSinh = async (req, res) => {
     `;
 
     let params = [];
-
-    // 2. Lọc động theo UI
-    if (maLop && maLop.trim() !== "") {
+    if (maLop?.trim()) {
       query += " AND l.MaLop = ?";
       params.push(maLop.trim());
     }
-    if (maHocSinh && maHocSinh.trim() !== "") {
+    if (maHocSinh?.trim()) {
       query += " AND hs.MaHocSinh = ?";
       params.push(maHocSinh.trim());
     }
-    if (hoTen && hoTen.trim() !== "") {
+    if (hoTen?.trim()) {
       query += " AND hs.HoTen LIKE ?";
       params.push(`%${hoTen.trim()}%`);
     }
 
     const [rows] = await db.query(query, params);
 
-    // 3. Xử lý logic điểm Cả năm và giá trị null bằng Javascript cho nhẹ SQL
     const finalResult = rows.map((item) => {
       const hk1 = item.HK1 || 0;
       const hk2 = item.HK2 || 0;
-
-      // Công thức tính điểm cả năm chuẩn: HK2 hệ số 2
+      // Công thức: $GPA = (HK1 + HK2 \times 2) / 3$
       const caNam = (hk1 + hk2 * 2) / 3;
 
       return {
@@ -324,7 +321,12 @@ exports.traCuuHocSinh = async (req, res) => {
 
     res.json(finalResult);
   } catch (err) {
-    console.error("Lỗi tra cứu tổng hợp:", err);
-    res.status(500).json({ error: "Lỗi hệ thống khi tra cứu dữ liệu." });
+    console.error("Lỗi SQL:", err.sqlMessage); // Hiện lỗi chi tiết ra console để debug
+    res
+      .status(500)
+      .json({
+        error: "Lỗi hệ thống khi tra cứu dữ liệu.",
+        details: err.sqlMessage,
+      });
   }
 };

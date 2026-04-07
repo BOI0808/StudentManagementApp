@@ -24,6 +24,7 @@ exports.getBaoCaoTongKetMon = async (req, res) => {
         AND kq.MaHocKyNamHoc = l.MaHocKyNamHoc
       WHERE l.MaHocKyNamHoc = ?
       GROUP BY l.MaLop, l.TenLop, l.SiSo
+      ORDER BY l.TenLop ASC
     `;
 
     const [rows] = await db.query(query, [diemDatMon, MaMonHoc, MaHocKyNamHoc]);
@@ -32,7 +33,7 @@ exports.getBaoCaoTongKetMon = async (req, res) => {
     const reportData = rows.map((item) => {
       const siSo = item.SiSo || 0;
       const soLuongDat = item.SoLuongDat || 0;
-      const tiLe = siSo > 0 ? ((soLuongDat / siSo) * 100).toFixed(2) : 0;
+      const tiLe = siSo > 0 ? ((soLuongDat / siSo) * 100).toFixed(1) : 0;
 
       return {
         lop: item.TenLop,
