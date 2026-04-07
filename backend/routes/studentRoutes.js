@@ -6,7 +6,7 @@ const studentController = require("../controllers/studentController");
 router.post("/tiep-nhan-hoc-sinh", studentController.tiepNhanHocSinh);
 // Endpoint: GET /api/students/search?key=Nguyen
 router.get("/search", studentController.searchHocSinh);
-// Endpoint: GET /api/students/ket-qua-tra-cuu?maLop=?&hoten=?
+// Endpoint: GET /api/students/ket-qua-tra-cuu?maLop=...&hoTen=...&maHocSinh=...
 router.get("/ket-qua-tra-cuu", studentController.traCuuHocSinh);
 // Endpoint: PUT /api/students/cap-nhat-hoc-sinh
 router.put("/cap-nhat-hoc-sinh", studentController.updateHocSinh);
