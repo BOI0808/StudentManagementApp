@@ -58,8 +58,7 @@ exports.toggleBlockStatus = async (req, res) => {
       );
       if (linkedClasses.length > 0) {
         return res.status(400).json({
-          error:
-            "Không thể ngưng hoạt động khối này vì đang có lớp học thuộc khối.",
+          error: "Không thể xóa khối này vì đang có lớp học thuộc khối.",
         });
       }
     }
