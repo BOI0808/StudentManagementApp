@@ -32,12 +32,23 @@ app.use("/api/test-types", testTypeRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/blocks", blockRoutes);
 
-// API kiểm tra nhanh
-app.get("/", (req, res) => {
-  res.send("Server Backend Modular đã sẵn sàng!");
-});
+const pool = require("./config/db"); // Import pool từ file db.js
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
-});
+async function startServer() {
+  try {
+    // Thử thực hiện một truy vấn đơn giản để kiểm tra kết nối
+    await pool.query("SELECT 1");
+    console.log("✅ Kết nối Database thành công!");
+
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("❌ Không thể kết nối Database. Server không thể khởi động.");
+    console.error(error.message);
+    process.exit(1); // Dừng tiến trình Node.js với mã lỗi
+  }
+}
+
+startServer();
