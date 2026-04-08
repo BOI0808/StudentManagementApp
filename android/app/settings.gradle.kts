@@ -23,5 +23,3 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "StudentManagementApp"
-include(":app")
- 
