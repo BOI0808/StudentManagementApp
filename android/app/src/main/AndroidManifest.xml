@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -10,7 +12,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.StudentManagementApp">
+        android:theme="@style/Theme.StudentManagementApp"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -33,10 +36,43 @@
             android:name=".ReceiveStudentsActivity"
             android:exported="false" />
         <activity
+            android:name=".EditStudentActivity"
+            android:exported="false" />
+        <activity
             android:name=".CreateClassActivity"
             android:exported="false" />
         <activity
             android:name=".CreateClassListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CategoryTermActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CategoryGradeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CategorySubjectActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SearchStudentsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".GradeEntryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ExamTypeManagementActivity"
+            android:exported="false" />
+        <activity
+            android:name=".EditExamTypeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SubjectReportActivity"
+            android:exported="false" />
+        <activity
+            android:name=".TermReportActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SystemParametersActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

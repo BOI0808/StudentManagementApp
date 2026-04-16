@@ -44,7 +44,7 @@ exports.updateThamSo = async (req, res) => {
   try {
     // Sử dụng CASE WHEN để cập nhật nhiều dòng chỉ với 1 câu query (tối ưu hiệu năng)
     const query = `
-      UPDATE thamso 
+      UPDATE thamso
       SET gia_tri = CASE ten_tham_so
         WHEN 'TuoiToiThieu' THEN ?
         WHEN 'TuoiToiDa' THEN ?

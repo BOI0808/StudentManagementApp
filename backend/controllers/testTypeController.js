@@ -79,7 +79,7 @@ exports.createLoaiKT = async (req, res) => {
     const MaLoaiKiemTra = generateMaLoaiKT(TenLoaiKiemTra);
 
     const query = `
-      INSERT INTO loaihinhkiemtra (MaLoaiKiemTra, TenLoaiKiemTra, HeSo, TrangThai) 
+      INSERT INTO loaihinhkiemtra (MaLoaiKiemTra, TenLoaiKiemTra, HeSo, TrangThai)
       VALUES (?, ?, ?, 1)
     `;
 
@@ -116,16 +116,13 @@ exports.softDeleteLoaiKT = async (req, res) => {
   }
 };
 
-// API Cập nhật riêng hệ số của một loại kiểm tra
+// API Cập nhật tên và hệ số của một loại kiểm tra
 exports.updateHeSoLoaiKT = async (req, res) => {
-  const { MaLoaiKiemTra } = req.params; // MaLoaiKiemTra
-  const { HeSo } = req.body;
+  const { MaLoaiKiemTra } = req.params;
+  const { TenLoaiKiemTra, HeSo } = req.body;
 
-  // 1. Kiểm tra tính hợp lệ của hệ số
-  if (HeSo === undefined || HeSo === null || isNaN(HeSo)) {
-    return res
-      .status(400)
-      .json({ error: "Hệ số không hợp lệ. Vui lòng nhập một con số." });
+  if (!TenLoaiKiemTra || HeSo === undefined || HeSo === null || isNaN(HeSo)) {
+    return res.status(400).json({ error: "Dữ liệu không hợp lệ. Vui lòng nhập tên và hệ số." });
   }
 
   if (HeSo <= 0) {
@@ -133,10 +130,10 @@ exports.updateHeSoLoaiKT = async (req, res) => {
   }
 
   try {
-    // 2. Thực hiện cập nhật trong database
+    // Cập nhật cả TenLoaiKiemTra và HeSo
     const [result] = await db.query(
-      "UPDATE loaihinhkiemtra SET HeSo = ? WHERE MaLoaiKiemTra = ? AND TrangThai = 1",
-      [HeSo, MaLoaiKiemTra]
+      "UPDATE loaihinhkiemtra SET TenLoaiKiemTra = ?, HeSo = ? WHERE MaLoaiKiemTra = ? AND TrangThai = 1",
+      [TenLoaiKiemTra, HeSo, MaLoaiKiemTra]
     );
 
     if (result.affectedRows === 0) {
@@ -146,12 +143,13 @@ exports.updateHeSoLoaiKT = async (req, res) => {
     }
 
     res.json({
-      message: "Cập nhật hệ số thành công!",
+      message: "Cập nhật thành công!",
       MaLoaiKiemTra: MaLoaiKiemTra,
+      TenMoi: TenLoaiKiemTra,
       HeSoMoi: HeSo,
     });
   } catch (err) {
-    console.error("Lỗi cập nhật hệ số:", err);
+    console.error("Lỗi cập nhật loại kiểm tra:", err);
     res.status(500).json({ error: "Lỗi hệ thống khi cập nhật dữ liệu." });
   }
 };
