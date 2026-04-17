@@ -124,7 +124,21 @@ exports.createUser = async (req, res) => {
 
 exports.getAllAccounts = async (req, res) => {
   try {
-    // 1. Thêm nd.Email vào danh sách các cột cần lấy
+    const rightsMap = {
+      "CNTNHS": "1",
+      "CNLDSL": "2",
+      "CNLDSHSCL": "3",
+      "CNLDSNH": "4",
+      "CNLDSKL": "5",
+      "CNLDSMH": "6",
+      "CNTCHS": "7",
+      "CNNBD": "8",
+      "CNNDSCLKT": "9",
+      "CNLBCTKM": "10",
+      "CNLBCTKHK": "11",
+      "CNCDTSHT": "12"
+    };
+
     const query = `
       SELECT 
         nd.MaSo, 
@@ -132,6 +146,7 @@ exports.getAllAccounts = async (req, res) => {
         nd.Email, 
         nd.SoDienThoai, 
         nd.TenDangNhap, 
+        nd.MatKhau,
         GROUP_CONCAT(ndq.MaCN) AS DS_Quyen
       FROM nguoidung nd
       LEFT JOIN nguoidung_quyen ndq ON nd.MaSo = ndq.MaSo
@@ -141,15 +156,35 @@ exports.getAllAccounts = async (req, res) => {
 
     const [rows] = await db.query(query);
 
-    // 2. Trình bày dữ liệu sạch sẽ cho Giang (Android)
-    const result = rows.map((user) => ({
-      MaSo: user.MaSo,
-      HoTen: user.HoTen,
-      Email: user.Email, // Đã thêm Email vào đây
-      SoDienThoai: user.SoDienThoai,
-      TenDangNhap: user.TenDangNhap,
-      QuyenHeThong: user.DS_Quyen ? `{${user.DS_Quyen}}` : "{}",
-    }));
+    const result = rows.map((user) => {
+      let mappedRights = "";
+      if (user.DS_Quyen) {
+        const codes = user.DS_Quyen.split(",");
+        const nums = codes
+          .map(code => parseInt(rightsMap[code.trim().toUpperCase()])) // Chuyển sang số để sort chính xác
+          .filter(n => !isNaN(n))
+          .sort((a, b) => a - b); // SẮP XẾP TĂNG DẦN
+          
+        mappedRights = `{${nums.join(",")}}`;
+      } else {
+        mappedRights = "{}";
+      }
+
+      // 2. Đặc cách cho tài khoản ADMIN luôn hiện full 12 số
+      if (user.MaSo && user.MaSo.startsWith("ADMIN")) {
+        mappedRights = "{1,2,3,4,5,6,7,8,9,10,11,12}";
+      }
+
+      return {
+        MaSo: user.MaSo,
+        HoTen: user.HoTen,
+        Email: user.Email,
+        SoDienThoai: user.SoDienThoai,
+        TenDangNhap: user.TenDangNhap,
+        MatKhau: user.MatKhau, // Đã thêm mật khẩu vào đây
+        QuyenHeThong: mappedRights // Trả về dạng số {1,2,3}
+      };
+    });
 
     res.json(result);
   } catch (err) {

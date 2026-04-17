@@ -73,6 +73,7 @@ exports.getLopHoc = async (req, res) => {
       tenLop: item.TenLop,
       siSoHienTai: item.SiSo,
       hienThi: item.MaLop,
+      maHocKyNamHoc: item.MaHocKyNamHoc, // Thêm trường này để App lọc theo HK
     }));
 
     res.json(dropdownData);
@@ -146,81 +147,54 @@ exports.getHocSinhTheoLop = async (req, res) => {
 };
 
 exports.luuDanhSachLop = async (req, res) => {
-  const { MaLop, DanhSachMaHS } = req.body; // DanhSachMaHS là một mảng: ["HS001", "HS002"]
+  const { MaLop, DanhSachMaHS } = req.body;
   const connection = await db.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    // 1. Kiểm tra đầu vào
-    if (!MaLop || !Array.isArray(DanhSachMaHS) || DanhSachMaHS.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "Dữ liệu không hợp lệ hoặc danh sách trống." });
-    }
-
-    // 2. Lấy tham số Sĩ số tối đa và thông tin lớp hiện tại
-    const [[config]] = await connection.query(
-      "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'SiSoToiDa'"
-    );
-    const [[lopInfo]] = await connection.query(
-      "SELECT SiSo, MaHocKyNamHoc, TenLop FROM lop WHERE MaLop = ?",
-      [MaLop]
-    );
+    // 1. Lấy quy định sĩ số tối đa và thông tin học kỳ của lớp
+    const [[config]] = await connection.query("SELECT gia_tri FROM thamso WHERE ten_tham_so = 'SiSoToiDa'");
+    const [[lopInfo]] = await connection.query("SELECT MaHocKyNamHoc, TenLop FROM lop WHERE MaLop = ?", [MaLop]);
 
     if (!lopInfo) throw new Error("Lớp học không tồn tại.");
 
-    // 3. KIỂM TRA ĐIỀU KIỆN 1: Tổng sĩ số sau khi thêm có vượt mức không?
-    if (lopInfo.SiSo + DanhSachMaHS.length > config.gia_tri) {
-      throw new Error(
-        `Không thể lưu! Tổng sĩ số sẽ vượt quá mức tối đa (${config.gia_tri}).`
-      );
+    // 2. Kiểm tra sĩ số mới có vượt mức không
+    if (DanhSachMaHS.length > config.gia_tri) {
+      throw new Error(`Danh sách vượt quá sĩ số tối đa cho phép (${config.gia_tri}).`);
     }
 
-    // 4. KIỂM TRA ĐIỀU KIỆN 2: Duyệt mảng để kiểm tra từng học sinh
+    // 3. Kiểm tra từng học sinh trong danh sách MỚI gửi lên
+    // Một học sinh chỉ có thể ở lớp hiện tại HOẶC chưa có lớp nào khác trong cùng học kỳ
     for (const MaHocSinh of DanhSachMaHS) {
-      // Kiểm tra xem học sinh đã có lớp trong học kỳ này chưa
-      const [isAssigned] = await connection.query(
+      const [otherClass] = await connection.query(
         `SELECT ctl.MaLop FROM chitietlop ctl 
          JOIN lop l ON ctl.MaLop = l.MaLop 
-         WHERE ctl.MaHocSinh = ? AND l.MaHocKyNamHoc = ?`,
-        [MaHocSinh, lopInfo.MaHocKyNamHoc]
+         WHERE ctl.MaHocSinh = ? AND l.MaHocKyNamHoc = ? AND ctl.MaLop != ?`,
+        [MaHocSinh, lopInfo.MaHocKyNamHoc, MaLop]
       );
-
-      if (isAssigned.length > 0) {
-        // Lấy tên học sinh để báo lỗi cho rõ ràng (tùy chọn)
-        const [[hs]] = await connection.query(
-          "SELECT HoTen FROM hocsinh WHERE MaHocSinh = ?",
-          [MaHocSinh]
-        );
-        throw new Error(
-          `Học sinh ${hs.HoTen} (${MaHocSinh}) đã có lớp ${isAssigned[0].MaLop} trong học kỳ này.`
-        );
+      if (otherClass.length > 0) {
+        throw new Error(`Học sinh mã ${MaHocSinh} đã thuộc lớp khác (${otherClass[0].MaLop}) trong học kỳ này.`);
       }
     }
 
-    // 5. THỰC HIỆN: Insert hàng loạt và Update sĩ số một lần duy nhất
-    const values = DanhSachMaHS.map((ma) => [MaLop, ma]);
-    await connection.query(
-      "INSERT INTO chitietlop (MaLop, MaHocSinh) VALUES ?",
-      [values]
-    );
+    // 4. THỰC HIỆN ĐỒNG BỘ (SYNC): Xóa sạch danh sách cũ của lớp này, nạp lại danh sách mới
+    await connection.query("DELETE FROM chitietlop WHERE MaLop = ?", [MaLop]);
 
-    await connection.query("UPDATE lop SET SiSo = SiSo + ? WHERE MaLop = ?", [
-      DanhSachMaHS.length,
-      MaLop,
-    ]);
+    if (DanhSachMaHS.length > 0) {
+      const values = DanhSachMaHS.map((ma) => [MaLop, ma]);
+      await connection.query("INSERT INTO chitietlop (MaLop, MaHocSinh) VALUES ?", [values]);
+    }
+
+    // 5. Cập nhật lại Sĩ số chính xác cho lớp dựa trên số lượng nạp vào
+    await connection.query("UPDATE lop SET SiSo = ? WHERE MaLop = ?", [DanhSachMaHS.length, MaLop]);
 
     await connection.commit();
-    res.json({
-      message: `Đã lưu danh sách vào lớp ${lopInfo.TenLop} thành công!`,
-    });
+    res.json({ message: `Đã lưu danh sách lớp ${lopInfo.TenLop} thành công!` });
   } catch (err) {
     await connection.rollback();
-    console.error("Lỗi lưu danh sách lớp:", err);
-    res
-      .status(400)
-      .json({ error: err.message || "Lỗi hệ thống khi lưu danh sách." });
+    console.error("Lỗi đồng bộ danh sách lớp:", err);
+    res.status(400).json({ error: err.message || "Lỗi hệ thống khi lưu danh sách." });
   } finally {
     connection.release();
   }

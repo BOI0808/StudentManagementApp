@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="#F5F5F5"
     android:orientation="vertical"
-    tools:context=".TraCuuHocSinhActivity">
+    tools:context=".SearchStudentsActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -62,7 +62,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:completionThreshold="1"
-                    android:inputType="text" />
+                    android:importantForAutofill="no"
+                    android:inputType="text|textNoSuggestions" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <LinearLayout
@@ -80,11 +81,13 @@
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:hint="Mã HS">
-                    <com.google.android.material.textfield.TextInputEditText
+                    <AutoCompleteTextView
                         android:id="@+id/edtSearchMaHS"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text" />
+                        android:completionThreshold="1"
+                        android:importantForAutofill="no"
+                        android:inputType="text|textNoSuggestions" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -94,11 +97,13 @@
                     android:layout_marginStart="8dp"
                     android:layout_weight="2"
                     android:hint="Tên học sinh">
-                    <com.google.android.material.textfield.TextInputEditText
+                    <AutoCompleteTextView
                         android:id="@+id/edtSearchTen"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPersonName" />
+                        android:completionThreshold="1"
+                        android:importantForAutofill="no"
+                        android:inputType="textPersonName|textNoSuggestions" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
