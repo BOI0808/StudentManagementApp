@@ -77,6 +77,10 @@ public interface ApiService {
     @PUT("api/students/cap-nhat-hoc-sinh")
     Call<Map<String, String>> updateStudent(@Body Student student);
 
+    @Multipart
+    @POST("api/students/import-excel")
+    Call<Map<String, String>> importStudentExcel(@Part MultipartBody.Part file);
+
     // VI. Lập danh mục học kỳ năm học
     @GET("api/semesters/danh-sach-hoc-ky-nam-hoc")
     Call<List<Map<String, String>>> getSemesterList();

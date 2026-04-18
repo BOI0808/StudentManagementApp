@@ -43,19 +43,43 @@ exports.importUsersExcel = async (req, res) => {
   try {
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
-    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    const worksheet = workbook.Sheets[sheetName];
+
+    // 1. Chuyển đổi sang JSON và chuẩn hóa Key (xóa khoảng trắng thừa ở tiêu đề)
+    const rawData = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
+    const data = rawData.map((row) => {
+      const newRow = {};
+      Object.keys(row).forEach((key) => {
+        newRow[key.trim()] = row[key];
+      });
+      return newRow;
+    });
 
     let errors = [];
     let usersToInsert = [];
     let usernamesInFile = new Set();
     let emailsInFile = new Set();
 
-    // GIAI ĐOẠN 1: Validate toàn bộ dữ liệu trong file
+    // GIAI ĐOẠN 1: Validate toàn bộ dữ liệu
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
-      const rowIndex = i + 2; // Dòng 1 là tiêu đề
-      const { HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, DanhSachQuyen } =
-        row;
+      const rowIndex = i + 2;
+
+      // ÁNH XẠ THÔNG MINH: Hỗ trợ cả tiếng Việt (có dấu/có cách) và tiếng Anh
+      const HoTen = String(
+        row["Họ và tên"] || row["Họ tên"] || row.HoTen || ""
+      ).trim();
+      const TenDangNhap = String(
+        row["Tên đăng nhập"] || row.TenDangNhap || ""
+      ).trim();
+      const MatKhau = String(row["Mật khẩu"] || row.MatKhau || "").trim();
+      const Email = String(row["Email"] || row.Email || "").trim();
+      const SoDienThoai = String(
+        row["Số điện thoại"] || row.SoDienThoai || row.SĐT || ""
+      ).trim();
+      const DanhSachQuyen = String(
+        row["Quyền hạn"] || row.DanhSachQuyen || row.Quyen || ""
+      ).trim();
 
       // 1. Kiểm tra thiếu thông tin bắt buộc
       if (!HoTen || !TenDangNhap || !MatKhau || !Email || !SoDienThoai) {
@@ -66,96 +90,87 @@ exports.importUsersExcel = async (req, res) => {
         continue;
       }
 
-      const trimmedUsername = TenDangNhap.toString().trim();
-      const trimmedEmail = Email.toString().trim();
-      const trimmedPhone = SoDienThoai.toString().trim();
-
       // 2. Kiểm tra định dạng
-      if (!validateUsername(trimmedUsername)) {
+      if (!validateUsername(TenDangNhap)) {
         errors.push({
           row: rowIndex,
           message: "Tên đăng nhập không hợp lệ (5-20 ký tự, không dấu cách).",
         });
       }
-      if (!validateEmail(trimmedEmail)) {
+      if (!validateEmail(Email)) {
         errors.push({
           row: rowIndex,
           message: "Định dạng Email không hợp lệ.",
         });
       }
-      if (!validatePhone(trimmedPhone)) {
+      if (!validatePhone(SoDienThoai)) {
         errors.push({
           row: rowIndex,
-          message: "Số điện thoại không đúng định dạng Việt Nam.",
+          message: "Số điện thoại không đúng định dạng VN.",
         });
       }
-      if (MatKhau.toString().length < 6) {
+      if (MatKhau.length < 6) {
         errors.push({
           row: rowIndex,
           message: "Mật khẩu phải từ 6 ký tự trở lên.",
         });
       }
 
-      // 3. Kiểm tra trùng lặp ngay trong file Excel
-      if (usernamesInFile.has(trimmedUsername)) {
+      // 3. Kiểm tra trùng lặp trong file
+      if (usernamesInFile.has(TenDangNhap)) {
         errors.push({
           row: rowIndex,
-          message: `Tên đăng nhập '${trimmedUsername}' bị lặp trong file.`,
+          message: `Tên đăng nhập '${TenDangNhap}' bị lặp trong file.`,
         });
       }
-      if (emailsInFile.has(trimmedEmail)) {
+      if (emailsInFile.has(Email)) {
         errors.push({
           row: rowIndex,
-          message: `Email '${trimmedEmail}' bị lặp trong file.`,
+          message: `Email '${Email}' bị lặp trong file.`,
         });
       }
-      usernamesInFile.add(trimmedUsername);
-      emailsInFile.add(trimmedEmail);
+      usernamesInFile.add(TenDangNhap);
+      emailsInFile.add(Email);
 
-      // 4. Kiểm tra trùng lặp trong Database
+      // 4. Kiểm tra trùng lặp trong DB
       const [existing] = await connection.query(
         "SELECT TenDangNhap, Email FROM nguoidung WHERE TenDangNhap = ? OR Email = ? LIMIT 1",
-        [trimmedUsername, trimmedEmail]
+        [TenDangNhap, Email]
       );
 
       if (existing.length > 0) {
-        if (existing[0].TenDangNhap === trimmedUsername) {
+        if (existing[0].TenDangNhap === TenDangNhap) {
           errors.push({
             row: rowIndex,
-            message: `Tên đăng nhập '${trimmedUsername}' đã tồn tại trên hệ thống.`,
+            message: `Tên đăng nhập '${TenDangNhap}' đã tồn tại trên hệ thống.`,
           });
         } else {
           errors.push({
             row: rowIndex,
-            message: `Email '${trimmedEmail}' đã tồn tại trên hệ thống.`,
+            message: `Email '${Email}' đã tồn tại trên hệ thống.`,
           });
         }
       }
 
-      // Lưu trữ dữ liệu sạch vào mảng tạm nếu chưa thấy lỗi cho dòng này
-      // (Dù có lỗi ta vẫn chạy hết vòng lặp để bắt toàn bộ lỗi)
       usersToInsert.push({
-        HoTen: HoTen.toString().trim(),
-        TenDangNhap: trimmedUsername,
-        MatKhau: MatKhau.toString(),
-        Email: trimmedEmail,
-        SoDienThoai: trimmedPhone,
-        DanhSachQuyen: DanhSachQuyen ? DanhSachQuyen.toString() : "",
+        HoTen,
+        TenDangNhap,
+        MatKhau,
+        Email,
+        SoDienThoai,
+        DanhSachQuyen,
       });
     }
 
-    // Nếu có bất kỳ lỗi nào, trả về danh sách lỗi và KHÔNG insert gì cả
     if (errors.length > 0) {
       return res.status(400).json({ success: false, errors: errors });
     }
 
-    // GIAI ĐOẠN 2: Thực hiện insert vào Database trong Transaction
+    // GIAI ĐOẠN 2: Insert (Transaction)
     await connection.beginTransaction();
 
     for (const user of usersToInsert) {
       const MaSo = await generateMaSo(connection);
-
-      // 1. Thêm vào bảng nguoidung
       await connection.query(
         "INSERT INTO nguoidung (MaSo, HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, PhanQuyen) VALUES (?, ?, ?, ?, ?, ?, ?)",
         [
@@ -169,7 +184,6 @@ exports.importUsersExcel = async (req, res) => {
         ]
       );
 
-      // 2. Thêm quyền vào bảng nguoidung_quyen
       if (user.DanhSachQuyen) {
         const quyenCodes = user.DanhSachQuyen.split(",")
           .map((q) => q.trim().toUpperCase())

@@ -140,12 +140,22 @@
           <theme>@style/Theme.StudentManagementApp</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/src/main/res/layout/item_student_import_row.xml">
+        <config>
+          <theme>@style/Theme.StudentManagementApp</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/src/main/res/layout/item_term_row.xml">
         <config>
           <theme>@style/Theme.StudentManagementApp</theme>
         </config>
       </layout>
       <layout url="file://$PROJECT_DIR$/src/main/res/layout/layout_excel_preview.xml">
+        <config>
+          <theme>@style/Theme.StudentManagementApp</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/src/main/res/layout/layout_student_preview.xml">
         <config>
           <theme>@style/Theme.StudentManagementApp</theme>
         </config>
@@ -157,17 +167,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/res/drawable/bottom_sheet_background.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/res/layout/item_excel_import_row.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/res/layout/layout_excel_preview.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/res/layout/item_student_import_row.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/res/layout/layout_student_preview.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/libs.versions.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/ReceiveStudentsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/ReceiveStudentsActivity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_admin_create_user.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_admin_create_user.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_receive_students.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_receive_students.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/layout_excel_preview.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/layout_excel_preview.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/controllers/studentController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/studentController.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../backend/controllers/userController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/userController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/routes/studentRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/studentRoutes.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
