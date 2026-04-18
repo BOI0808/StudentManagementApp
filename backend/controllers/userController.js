@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const xlsx = require("xlsx");
 
 const generateMaSo = async (connection) => {
   // 1. Mặc định tiền tố là Giáo Viên
@@ -23,6 +24,105 @@ const generateMaSo = async (connection) => {
 
   // 4. Kết quả: GV + 26 + 001 = GV26001
   return `${prefix}${year}${nextNumber.toString().padStart(3, "0")}`;
+};
+
+exports.importUsersExcel = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "Vui lòng đính kèm file Excel." });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const userRegex = /^[a-zA-Z0-9_]{5,20}$/;
+
+    let successCount = 0;
+    let errorLog = [];
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      // Thêm trường DanhSachQuyen từ Excel
+      const { HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, DanhSachQuyen } =
+        row;
+
+      if (!HoTen || !TenDangNhap || !MatKhau || !Email) {
+        errorLog.push(`Dòng ${i + 2}: Thiếu thông tin bắt buộc.`);
+        continue;
+      }
+
+      if (!emailRegex.test(Email) || !userRegex.test(TenDangNhap)) {
+        errorLog.push(
+          `Dòng ${i + 2}: Định dạng Email hoặc Tên đăng nhập không đúng.`
+        );
+        continue;
+      }
+
+      const [existing] = await connection.query(
+        "SELECT MaSo FROM nguoidung WHERE TenDangNhap = ? OR Email = ?",
+        [TenDangNhap.toString().trim(), Email.toString().trim()]
+      );
+
+      if (existing.length > 0) {
+        errorLog.push(`Dòng ${i + 2}: Tên đăng nhập hoặc Email đã tồn tại.`);
+        continue;
+      }
+
+      const MaSo = await generateMaSo(connection);
+
+      // 1. Thêm tài khoản
+      await connection.query(
+        "INSERT INTO nguoidung (MaSo, HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, PhanQuyen) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          MaSo,
+          HoTen.trim(),
+          TenDangNhap.trim(),
+          MatKhau,
+          Email.trim(),
+          SoDienThoai,
+          "Giáo Viên",
+        ]
+      );
+
+      // 2. Xử lý quyền từ file Excel
+      // Mong đợi dạng: "CNNBD,CNTCHS,CNTNHS"
+      if (DanhSachQuyen) {
+        const quyenCodes = DanhSachQuyen.toString()
+          .split(",")
+          .map((q) => q.trim().toUpperCase())
+          .filter((q) => q !== ""); // Loại bỏ khoảng trắng thừa
+
+        if (quyenCodes.length > 0) {
+          const quyenValues = quyenCodes.map((maCN) => [MaSo, maCN]);
+
+          // Lưu ý: Khôi nên dặn người dùng nhập đúng mã MaCN trong bảng chucnang
+          await connection.query(
+            "INSERT INTO nguoidung_quyen (MaSo, MaCN) VALUES ?",
+            [quyenValues]
+          );
+        }
+      }
+
+      successCount++;
+    }
+
+    await connection.commit();
+    res.json({
+      message: `Đã nhập thành công ${successCount} tài khoản!`,
+      errors: errorLog.length > 0 ? errorLog : null,
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error("Lỗi Import:", err);
+    res.status(500).json({ error: "Lỗi hệ thống khi xử lý file Excel." });
+  } finally {
+    connection.release();
+  }
 };
 
 exports.createUser = async (req, res) => {
@@ -125,18 +225,18 @@ exports.createUser = async (req, res) => {
 exports.getAllAccounts = async (req, res) => {
   try {
     const rightsMap = {
-      "CNTNHS": "1",
-      "CNLDSL": "2",
-      "CNLDSHSCL": "3",
-      "CNLDSNH": "4",
-      "CNLDSKL": "5",
-      "CNLDSMH": "6",
-      "CNTCHS": "7",
-      "CNNBD": "8",
-      "CNNDSCLKT": "9",
-      "CNLBCTKM": "10",
-      "CNLBCTKHK": "11",
-      "CNCDTSHT": "12"
+      CNTNHS: "1",
+      CNLDSL: "2",
+      CNLDSHSCL: "3",
+      CNLDSNH: "4",
+      CNLDSKL: "5",
+      CNLDSMH: "6",
+      CNTCHS: "7",
+      CNNBD: "8",
+      CNNDSCLKT: "9",
+      CNLBCTKM: "10",
+      CNLBCTKHK: "11",
+      CNCDTSHT: "12",
     };
 
     const query = `
@@ -161,10 +261,10 @@ exports.getAllAccounts = async (req, res) => {
       if (user.DS_Quyen) {
         const codes = user.DS_Quyen.split(",");
         const nums = codes
-          .map(code => parseInt(rightsMap[code.trim().toUpperCase()])) // Chuyển sang số để sort chính xác
-          .filter(n => !isNaN(n))
+          .map((code) => parseInt(rightsMap[code.trim().toUpperCase()])) // Chuyển sang số để sort chính xác
+          .filter((n) => !isNaN(n))
           .sort((a, b) => a - b); // SẮP XẾP TĂNG DẦN
-          
+
         mappedRights = `{${nums.join(",")}}`;
       } else {
         mappedRights = "{}";
@@ -182,7 +282,7 @@ exports.getAllAccounts = async (req, res) => {
         SoDienThoai: user.SoDienThoai,
         TenDangNhap: user.TenDangNhap,
         MatKhau: user.MatKhau, // Đã thêm mật khẩu vào đây
-        QuyenHeThong: mappedRights // Trả về dạng số {1,2,3}
+        QuyenHeThong: mappedRights, // Trả về dạng số {1,2,3}
       };
     });
 
