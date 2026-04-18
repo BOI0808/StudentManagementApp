@@ -34,6 +34,9 @@ public class CreateClassListActivity extends AppCompatActivity {
     private GenericAdapter<Student> adapter;
     private String selectedMaLop = "";
     private Student selectedStudentToAdd = null;
+    
+    // Biến cờ để ngăn tự động hiện dropdown sau khi đã chọn
+    private boolean isProgrammaticChange = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +106,12 @@ public class CreateClassListActivity extends AppCompatActivity {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Nếu thay đổi do code (sau khi chọn), không gọi API
+                if (isProgrammaticChange) {
+                    isProgrammaticChange = false;
+                    return;
+                }
+
                 if (s.length() >= 2) {
                     ApiClient.getApiService().searchStudent(s.toString()).enqueue(new Callback<>() {
                         @Override
@@ -118,7 +127,11 @@ public class CreateClassListActivity extends AppCompatActivity {
                                 
                                 autoHocSinh.setOnItemClickListener((p, v, pos, i) -> {
                                     selectedStudentToAdd = list.get(pos);
-                                    autoHocSinh.setText(selectedStudentToAdd.getHoTen());
+                                    
+                                    // Bật cờ đánh dấu thay đổi do code
+                                    isProgrammaticChange = true;
+                                    autoHocSinh.setText(selectedStudentToAdd.getHoTen(), false);
+                                    autoHocSinh.dismissDropDown(); // Đảm bảo đóng ngay dropdown
                                 });
                             }
                         }
@@ -143,6 +156,7 @@ public class CreateClassListActivity extends AppCompatActivity {
                         s.setMaHocSinh(m.get("MaHocSinh"));
                         s.setHoTen(m.get("HoTen"));
                         s.setNgaySinh(m.get("NgaySinh"));
+                        s.setMaGioiTinh(m.get("MaGioiTinh"));
                         listHocSinhSelected.add(s);
                     }
                     adapter.notifyDataSetChanged();
@@ -158,6 +172,12 @@ public class CreateClassListActivity extends AppCompatActivity {
             ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
             ((TextView) itemView.findViewById(R.id.tvMaHS)).setText(student.getMaHocSinh());
             ((TextView) itemView.findViewById(R.id.tvTenHS)).setText(student.getHoTen());
+            
+            String gt = "Nam";
+            if ("GT2".equals(student.getMaGioiTinh())) gt = "Nữ";
+            else if ("GT3".equals(student.getMaGioiTinh())) gt = "Khác";
+            ((TextView) itemView.findViewById(R.id.tvGioiTinh)).setText(gt);
+            
             ((TextView) itemView.findViewById(R.id.tvNgaySinh)).setText(student.getNgaySinh());
             
             itemView.findViewById(R.id.btnXoaHocSinh).setOnClickListener(v -> {
@@ -174,7 +194,6 @@ public class CreateClassListActivity extends AppCompatActivity {
             return;
         }
         
-        // Kiểm tra trùng trong danh sách
         for (Student s : listHocSinhSelected) {
             if (s.getMaHocSinh() != null && s.getMaHocSinh().equals(selectedStudentToAdd.getMaHocSinh())) {
                 Toast.makeText(this, "Học sinh này đã có trong danh sách", Toast.LENGTH_SHORT).show();
@@ -184,6 +203,9 @@ public class CreateClassListActivity extends AppCompatActivity {
 
         listHocSinhSelected.add(selectedStudentToAdd);
         adapter.notifyDataSetChanged();
+        
+        // Reset ô nhập liệu
+        isProgrammaticChange = true;
         autoHocSinh.setText("");
         selectedStudentToAdd = null;
     }
