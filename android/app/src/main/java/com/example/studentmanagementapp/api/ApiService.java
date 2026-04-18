@@ -8,6 +8,7 @@ import com.example.studentmanagementapp.model.Subject;
 import com.example.studentmanagementapp.model.User;
 import java.util.List;
 import java.util.Map;
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -17,6 +18,8 @@ import retrofit2.http.PUT;
 import retrofit2.http.PATCH;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
+import retrofit2.http.Multipart;
+import retrofit2.http.Part;
 
 public interface ApiService {
 
@@ -32,6 +35,10 @@ public interface ApiService {
 
     @DELETE("api/users/xoa-tai-khoan/{id}")
     Call<Map<String, String>> deleteAccount(@Path("id") String id);
+
+    @Multipart
+    @POST("api/users/import-excel")
+    Call<Map<String, String>> importExcel(@Part MultipartBody.Part file);
 
     // II. Đăng nhập & đổi mật khẩu
     @POST("api/auths/dang-nhap")
