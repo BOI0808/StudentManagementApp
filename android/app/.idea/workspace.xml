@@ -167,11 +167,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CreateClassListActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CreateClassListActivity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_create_class_list.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_create_class_list.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/res/layout/item_class_student.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/item_class_student.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../backend/controllers/classController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/classController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/routes/classRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/classRoutes.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -346,12 +348,12 @@
       <map>
         <entry key="com.example.studentmanagementapp">
           <value>
-            <CheckInfo lastCheckTimestamp="1776487044963" />
+            <CheckInfo lastCheckTimestamp="1776650166081" />
           </value>
         </entry>
         <entry key="com.example.studentmanagementapp.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1776487044963" />
+            <CheckInfo lastCheckTimestamp="1776650166024" />
           </value>
         </entry>
       </map>
