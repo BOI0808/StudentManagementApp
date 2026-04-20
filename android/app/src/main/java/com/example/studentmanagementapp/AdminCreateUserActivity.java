@@ -113,23 +113,48 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                 Sheet sheet = workbook.getSheetAt(0);
                 DataFormatter formatter = new DataFormatter();
 
+                // 1. Tìm vị trí cột dựa trên Header (Hàng 0)
+                Row headerRow = sheet.getRow(0);
+                if (headerRow == null) throw new Exception("File Excel không có dữ liệu tiêu đề.");
+
+                int idxHoTen = -1, idxUsername = -1, idxMatKhau = -1, idxEmail = -1, idxSdt = -1, idxQuyen = -1;
+
+                for (Cell cell : headerRow) {
+                    String title = formatter.formatCellValue(cell).trim().toLowerCase();
+                    if (title.contains("họ và tên") || title.contains("hoten") || title.equals("họ tên")) idxHoTen = cell.getColumnIndex();
+                    else if (title.contains("tên đăng nhập") || title.contains("tendangnhap") || title.contains("username") || title.contains("tài khoản")) idxUsername = cell.getColumnIndex();
+                    else if (title.contains("mật khẩu") || title.contains("matkhau") || title.contains("password")) idxMatKhau = cell.getColumnIndex();
+                    else if (title.contains("email")) idxEmail = cell.getColumnIndex();
+                    else if (title.contains("số điện thoại") || title.contains("sodienthoai") || title.equals("sđt") || title.equals("phone")) idxSdt = cell.getColumnIndex();
+                    else if (title.contains("quyền hạn") || title.contains("quyenhan") || title.contains("quyen") || title.contains("rights")) idxQuyen = cell.getColumnIndex();
+                }
+
+                // Kiểm tra xem các cột bắt buộc có tồn tại không
+                if (idxHoTen == -1 || idxUsername == -1 || idxMatKhau == -1) {
+                    throw new Exception("Không tìm thấy các cột bắt buộc trong file (Họ tên, Tên đăng nhập, Mật khẩu). Vui lòng kiểm tra lại tiêu đề cột.");
+                }
+
+                // 2. Đọc dữ liệu từ các hàng tiếp theo
                 for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                     Row row = sheet.getRow(i);
                     if (row == null) continue;
 
                     User user = new User();
-                    user.setHoTen(formatter.formatCellValue(row.getCell(0)));
-                    user.setTenDangNhap(formatter.formatCellValue(row.getCell(1)));
-                    user.setMatKhau(formatter.formatCellValue(row.getCell(2)));
-                    user.setEmail(formatter.formatCellValue(row.getCell(3)));
-                    user.setSoDienThoai(formatter.formatCellValue(row.getCell(4)));
+                    user.setHoTen(formatter.formatCellValue(row.getCell(idxHoTen)).trim());
+                    user.setTenDangNhap(formatter.formatCellValue(row.getCell(idxUsername)).trim());
+                    user.setMatKhau(formatter.formatCellValue(row.getCell(idxMatKhau)).trim());
                     
-                    String rightsStr = formatter.formatCellValue(row.getCell(5));
-                    if (rightsStr != null && !rightsStr.isEmpty()) {
-                        user.setDanhSachQuyen(Arrays.asList(rightsStr.split(",")));
+                    if (idxEmail != -1) user.setEmail(formatter.formatCellValue(row.getCell(idxEmail)).trim());
+                    if (idxSdt != -1) user.setSoDienThoai(formatter.formatCellValue(row.getCell(idxSdt)).trim());
+                    
+                    if (idxQuyen != -1) {
+                        String rightsStr = formatter.formatCellValue(row.getCell(idxQuyen)).trim();
+                        if (!rightsStr.isEmpty()) {
+                            user.setDanhSachQuyen(Arrays.asList(rightsStr.split(",")));
+                        }
                     }
                     
-                    if (user.getTenDangNhap() != null && !user.getTenDangNhap().trim().isEmpty()) {
+                    if (!user.getTenDangNhap().isEmpty()) {
                         usersFromExcel.add(user);
                     }
                 }
@@ -155,42 +180,21 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         File destinationFile = new File(getCacheDir(), "import_cache.xlsx");
         int maxRetries = 3;
         int retryCount = 0;
-        Exception lastException = null;
-
         while (retryCount < maxRetries) {
             try (InputStream is = getContentResolver().openInputStream(uri);
                  FileOutputStream os = new FileOutputStream(destinationFile)) {
-                
-                if (is == null) throw new Exception("Không thể mở tệp từ nguồn cung cấp.");
-                
+                if (is == null) throw new Exception("Không thể mở tệp.");
                 byte[] buffer = new byte[8192];
                 int length;
-                while ((length = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, length);
-                }
+                while ((length = is.read(buffer)) != -1) os.write(buffer, 0, length);
                 os.flush();
-                
-                if (destinationFile.exists() && destinationFile.length() > 0) {
-                    return destinationFile;
-                } else {
-                    throw new Exception("Tệp sao chép bị trống (0 bytes).");
-                }
+                if (destinationFile.length() > 0) return destinationFile;
             } catch (Exception e) {
                 retryCount++;
-                lastException = e;
-                if (retryCount < maxRetries) Thread.sleep(500);
+                Thread.sleep(500);
             }
         }
-
-        if (isGoogleDriveUri(uri)) {
-            throw new Exception("Không thể đọc file từ Drive. Vui lòng tải file về máy rồi thử lại.");
-        }
-        throw new Exception("Lỗi truy cập tệp sau " + maxRetries + " lần thử: " + (lastException != null ? lastException.getLocalizedMessage() : "Không rõ"));
-    }
-
-    private boolean isGoogleDriveUri(Uri uri) {
-        return uri != null && uri.getAuthority() != null && 
-               uri.getAuthority().contains("com.google.android.apps.docs");
+        throw new Exception("Lỗi truy cập tệp.");
     }
 
     private String getFileName(Uri uri) {
@@ -203,12 +207,7 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                 }
             }
         }
-        if (result == null) {
-            result = uri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) result = result.substring(cut + 1);
-        }
-        return result;
+        return (result != null) ? result : "temp.xlsx";
     }
 
     private void showPreviewDialog(List<User> users) {
@@ -283,11 +282,8 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                         JSONObject errorObj = errorsArray.getJSONObject(i);
                         int row = errorObj.optInt("row", -1);
                         String message = errorObj.optString("message", "Lỗi không xác định");
-                        if (row != -1) {
-                            errorList.add("Dòng " + row + ": " + message);
-                        } else {
-                            errorList.add(message);
-                        }
+                        if (row != -1) errorList.add("Dòng " + row + ": " + message);
+                        else errorList.add(message);
                     }
                 } else if (jsonObject.has("error")) {
                     errorList.add(jsonObject.getString("error"));
@@ -296,22 +292,13 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         } catch (Exception e) {
             errorList.add("Lỗi hệ thống: " + response.code());
         }
-        if (errorList.isEmpty()) errorList.add("Lỗi không xác định từ Server (" + response.code() + ")");
         return errorList;
     }
 
     private void showValidationErrorDialog(List<String> errors) {
         StringBuilder sb = new StringBuilder();
-        for (String err : errors) {
-            sb.append("• ").append(err).append("\n");
-        }
-
-        new AlertDialog.Builder(this)
-                .setTitle("Thông báo lỗi Import")
-                .setMessage(sb.toString().trim())
-                .setPositiveButton("Đã hiểu", null)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
+        for (String err : errors) sb.append("• ").append(err).append("\n");
+        new AlertDialog.Builder(this).setTitle("Thông báo lỗi Import").setMessage(sb.toString().trim()).setPositiveButton("Đã hiểu", null).show();
     }
 
     private void checkEditMode() {
@@ -319,14 +306,12 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         if (editingUser != null) {
             if (tvTitle != null) tvTitle.setText("Cập Nhật Tài Khoản");
             btnCreateAccount.setText("CẬP NHẬT TÀI KHOẢN");
-            
             edtFullName.setText(editingUser.getHoTen());
             edtUsername.setText(editingUser.getTenDangNhap());
             edtUsername.setEnabled(false);
             edtPassword.setText(editingUser.getMatKhau());
             edtEmail.setText(editingUser.getEmail());
             edtPhone.setText(editingUser.getSoDienThoai());
-            
             setPermissions(editingUser.getDanhSachQuyen());
         }
     }
@@ -339,7 +324,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                     R.id.cbBaoCaoHocKy, R.id.cbCaiDatThamSo};
         String[] codes = {"CNTNHS", "CNLDSL", "CNLDSHSCL", "CNLDSNH", "CNLDSKL", "CNLDSMH",
                          "CNTCHS", "CNNBD", "CNNDSCLKT", "CNLBCTKM", "CNLBCTKHK", "CNCDTSHT"};
-        
         for (int i = 0; i < ids.length; i++) {
             CheckBox cb = findViewById(ids[i]);
             if (cb != null) cb.setChecked(permissions.contains(codes[i]));
@@ -385,15 +369,12 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                     Toast.makeText(AdminCreateUserActivity.this, "Thành công!", Toast.LENGTH_SHORT).show();
                     if (editingUser != null) finish(); else resetFields();
                 } else {
-                    // PHẦN SỬA ĐỔI: Parse lỗi từ errorBody
                     try {
                         ResponseBody errorBody = response.errorBody();
                         if (errorBody != null) {
                             JSONObject jsonError = new JSONObject(errorBody.string());
                             String errorMsg = jsonError.optString("error", "Lỗi xử lý dữ liệu");
                             Toast.makeText(AdminCreateUserActivity.this, errorMsg, Toast.LENGTH_LONG).show();
-                        } else {
-                            Toast.makeText(AdminCreateUserActivity.this, "Lỗi server: " + response.code(), Toast.LENGTH_SHORT).show();
                         }
                     } catch (Exception e) {
                         Toast.makeText(AdminCreateUserActivity.this, "Lỗi server: " + response.code(), Toast.LENGTH_SHORT).show();

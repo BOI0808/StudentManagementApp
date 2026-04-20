@@ -7,6 +7,7 @@ import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -30,9 +31,13 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -50,7 +55,6 @@ public class CreateClassListActivity extends AppCompatActivity {
     private String selectedMaLop = "";
     private Student selectedStudentToAdd = null;
     
-    // Bản đồ lưu trữ lỗi: Key = MaHocSinh, Value = Thông báo lỗi
     private final Map<String, String> mapErrors = new HashMap<>();
     
     private boolean isProgrammaticChange = false;
@@ -61,7 +65,7 @@ public class CreateClassListActivity extends AppCompatActivity {
             uri -> {
                 if (uri != null) {
                     selectedFileUri = uri;
-                    processExcelFile(uri);
+                    new Thread(() -> processExcelFile(uri)).start();
                 }
             }
     );
@@ -99,51 +103,134 @@ public class CreateClassListActivity extends AppCompatActivity {
     private void processExcelFile(Uri uri) {
         try {
             File tempFile = copyUriToInternalStorage(uri);
+            List<Student> studentsFromExcel = new ArrayList<>();
+            
             try (Workbook workbook = WorkbookFactory.create(tempFile)) {
                 Sheet sheet = workbook.getSheetAt(0);
                 DataFormatter formatter = new DataFormatter();
-                
-                listHocSinhSelected.clear();
-                mapErrors.clear();
+
+                Row headerRow = sheet.getRow(0);
+                if (headerRow == null) throw new Exception("File Excel không có dữ liệu tiêu đề.");
+
+                int idxMaHS = -1, idxHoTen = -1, idxGioiTinh = -1, idxNgaySinh = -1;
+
+                for (Cell cell : headerRow) {
+                    String title = formatter.formatCellValue(cell).trim().toLowerCase();
+                    if (title.contains("mã học sinh") || title.contains("mahs") || title.equals("mã hs")) idxMaHS = cell.getColumnIndex();
+                    else if (title.contains("họ và tên") || title.contains("hoten") || title.equals("họ tên")) idxHoTen = cell.getColumnIndex();
+                    else if (title.contains("giới tính") || title.contains("gioitinh") || title.contains("gender")) idxGioiTinh = cell.getColumnIndex();
+                    else if (title.contains("ngày sinh") || title.contains("ngaysinh") || title.contains("birthday")) idxNgaySinh = cell.getColumnIndex();
+                }
+
+                if (idxMaHS == -1 || idxHoTen == -1) {
+                    throw new Exception("Không tìm thấy các cột bắt buộc trong file (Mã HS, Họ tên). Vui lòng kiểm tra lại tiêu đề cột.");
+                }
 
                 for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                     Row row = sheet.getRow(i);
                     if (row == null) continue;
 
-                    String maHS = formatter.formatCellValue(row.getCell(0)).trim();
-                    String hoTen = formatter.formatCellValue(row.getCell(1)).trim();
+                    String maHS = formatter.formatCellValue(row.getCell(idxMaHS)).trim();
+                    String hoTen = formatter.formatCellValue(row.getCell(idxHoTen)).trim();
                     if (maHS.isEmpty() || hoTen.isEmpty()) continue;
 
-                    Student s = new Student();
-                    s.setMaHocSinh(maHS);
-                    s.setHoTen(hoTen);
-                    s.setNgaySinh(formatter.formatCellValue(row.getCell(2)).trim());
+                    Student student = new Student();
+                    student.setMaHocSinh(maHS);
+                    student.setHoTen(hoTen);
                     
-                    String gtRaw = formatter.formatCellValue(row.getCell(3)).trim();
-                    if (gtRaw.equalsIgnoreCase("Nam")) s.setMaGioiTinh("GT1");
-                    else if (gtRaw.equalsIgnoreCase("Nữ") || gtRaw.equalsIgnoreCase("Nu")) s.setMaGioiTinh("GT2");
-                    else s.setMaGioiTinh("GT3");
-
-                    listHocSinhSelected.add(s);
+                    if (idxNgaySinh != -1) {
+                        Cell dateCell = row.getCell(idxNgaySinh);
+                        if (dateCell != null && dateCell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(dateCell)) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                            student.setNgaySinh(sdf.format(dateCell.getDateCellValue()));
+                        } else {
+                            String rawDate = formatter.formatCellValue(dateCell).trim();
+                            student.setNgaySinh(formatDateString(rawDate));
+                        }
+                    }
+                    
+                    if (idxGioiTinh != -1) {
+                        String genderText = formatter.formatCellValue(row.getCell(idxGioiTinh)).trim();
+                        if (genderText.equalsIgnoreCase("Nam") || genderText.equalsIgnoreCase("GT1")) student.setMaGioiTinh("GT1");
+                        else if (genderText.equalsIgnoreCase("Nữ") || genderText.equalsIgnoreCase("Nu") || genderText.equalsIgnoreCase("GT2")) student.setMaGioiTinh("GT2");
+                        else student.setMaGioiTinh("GT3");
+                    } else {
+                        student.setMaGioiTinh("GT1");
+                    }
+                    
+                    studentsFromExcel.add(student);
                 }
             }
-            adapter.notifyDataSetChanged();
-            Toast.makeText(this, "Đã nạp danh sách từ Excel", Toast.LENGTH_SHORT).show();
+            
+            if (!studentsFromExcel.isEmpty()) {
+                runOnUiThread(() -> {
+                    Map<String, Student> uniqueMap = new LinkedHashMap<>();
+                    for (Student s : listHocSinhSelected) {
+                        if (s.getMaHocSinh() != null) uniqueMap.put(s.getMaHocSinh(), s);
+                    }
+                    for (Student s : studentsFromExcel) {
+                        if (s.getMaHocSinh() != null) uniqueMap.put(s.getMaHocSinh(), s);
+                    }
+                    
+                    listHocSinhSelected.clear();
+                    listHocSinhSelected.addAll(uniqueMap.values());
+                    adapter.notifyDataSetChanged();
+                    Toast.makeText(CreateClassListActivity.this, "Đã import " + studentsFromExcel.size() + " học sinh", Toast.LENGTH_SHORT).show();
+                });
+            }
+
         } catch (Exception e) {
-            Toast.makeText(this, "Lỗi đọc file Excel", Toast.LENGTH_SHORT).show();
+            Log.e("ExcelError", "Lỗi xử lý file: ", e);
+            runOnUiThread(() -> new AlertDialog.Builder(CreateClassListActivity.this)
+                    .setTitle("Lỗi đọc file")
+                    .setMessage(e.getMessage())
+                    .setPositiveButton("OK", null)
+                    .show());
         }
     }
 
-    private File copyUriToInternalStorage(Uri uri) throws Exception {
-        File dest = new File(getCacheDir(), "import_temp_class.xlsx");
-        try (InputStream is = getContentResolver().openInputStream(uri);
-             FileOutputStream os = new FileOutputStream(dest)) {
-            byte[] buffer = new byte[8192];
-            int len;
-            while ((len = is.read(buffer)) != -1) os.write(buffer, 0, len);
-            os.flush();
+    private String formatDateString(String rawDate) {
+        if (rawDate == null || rawDate.isEmpty()) return "";
+        try {
+            // Thử parse các định dạng phổ biến
+            String[] formats = {"dd/MM/yyyy", "dd-MM-yyyy", "yyyy-MM-dd", "MM/dd/yyyy"};
+            for (String f : formats) {
+                try {
+                    SimpleDateFormat inputSdf = new SimpleDateFormat(f, Locale.getDefault());
+                    Date date = inputSdf.parse(rawDate);
+                    if (date != null) {
+                        SimpleDateFormat outputSdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        return outputSdf.format(date);
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            Log.e("DateFormat", "Error parsing date: " + rawDate);
         }
-        return dest;
+        return rawDate; // Trả về nguyên bản nếu không parse được
+    }
+
+    private File copyUriToInternalStorage(Uri uri) throws Exception {
+        File destinationFile = new File(getCacheDir(), "import_temp_class.xlsx");
+        int maxRetries = 3;
+        int retryCount = 0;
+        Exception lastException = null;
+        while (retryCount < maxRetries) {
+            try (InputStream is = getContentResolver().openInputStream(uri);
+                 FileOutputStream os = new FileOutputStream(destinationFile)) {
+                if (is == null) throw new Exception("Không thể mở tệp.");
+                byte[] buffer = new byte[8192];
+                int length;
+                while ((length = is.read(buffer)) != -1) os.write(buffer, 0, length);
+                os.flush();
+                if (destinationFile.length() > 0) return destinationFile;
+            } catch (Exception e) {
+                lastException = e;
+                retryCount++;
+                Thread.sleep(500);
+            }
+        }
+        throw new Exception("Lỗi truy cập tệp: " + (lastException != null ? lastException.getLocalizedMessage() : "Không rõ"));
     }
 
     private void setupClassAutocomplete() {
@@ -224,7 +311,8 @@ public class CreateClassListActivity extends AppCompatActivity {
                         Student s = new Student();
                         s.setMaHocSinh(m.get("MaHocSinh"));
                         s.setHoTen(m.get("HoTen"));
-                        s.setNgaySinh(m.get("NgaySinh"));
+                        String rawDate = m.get("NgaySinh");
+                        s.setNgaySinh(formatDateString(rawDate));
                         s.setMaGioiTinh(m.get("MaGioiTinh"));
                         listHocSinhSelected.add(s);
                     }
@@ -248,13 +336,12 @@ public class CreateClassListActivity extends AppCompatActivity {
             ((TextView) itemView.findViewById(R.id.tvGioiTinh)).setText(gt);
             ((TextView) itemView.findViewById(R.id.tvNgaySinh)).setText(student.getNgaySinh());
             
-            // LOGIC HIỂN THỊ LỖI CHỮ ĐỎ (THAY THẾ THÔNG BÁO ANDROID)
             TextView tvError = itemView.findViewById(R.id.tvError);
             String maHS = student.getMaHocSinh();
             if (maHS != null && mapErrors.containsKey(maHS)) {
                 tvError.setText(mapErrors.get(maHS));
                 tvError.setVisibility(View.VISIBLE);
-                itemView.setBackgroundColor(android.graphics.Color.parseColor("#FFEBEE")); // Nền đỏ nhạt
+                itemView.setBackgroundColor(android.graphics.Color.parseColor("#FFEBEE"));
             } else {
                 tvError.setVisibility(View.GONE);
                 itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
@@ -284,7 +371,6 @@ public class CreateClassListActivity extends AppCompatActivity {
     private void saveClassList() {
         if (selectedMaLop.isEmpty() || listHocSinhSelected.isEmpty()) return;
 
-        // Reset lỗi trước khi lưu
         mapErrors.clear(); 
         adapter.notifyDataSetChanged();
 
@@ -312,13 +398,10 @@ public class CreateClassListActivity extends AppCompatActivity {
                             JSONArray arr = json.getJSONArray("errors");
                             for (int i = 0; i < arr.length(); i++) {
                                 JSONObject obj = arr.getJSONObject(i);
-                                // Lưu lỗi vào Map để Adapter hiển thị dòng chữ đỏ
                                 mapErrors.put(obj.getString("maHocSinh"), obj.getString("message"));
                             }
-                            // Cập nhật lại UI để hiện dòng chữ đỏ, KHÔNG HIỆN THÔNG BÁO POPUP
                             adapter.notifyDataSetChanged();
                         } else {
-                            // Chỉ hiện Toast cho các lỗi hệ thống khác không phải lỗi trùng lớp
                             Toast.makeText(CreateClassListActivity.this, json.optString("error", "Lưu thất bại"), Toast.LENGTH_SHORT).show();
                         }
                     } catch (Exception e) {

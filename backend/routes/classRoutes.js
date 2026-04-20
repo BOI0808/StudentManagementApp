@@ -9,12 +9,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post("/lap-danh-sach-lop", classController.taoMoiLop);
 // Endpoint: POST /api/classes/luu-danh-sach-lop
 router.post("/luu-danh-sach-lop", classController.luuDanhSachLop);
-// Endpoint: POST /api/classes/import-excel
-router.post(
-  "/import-excel",
-  upload.single("file"),
-  classController.importStudentToClassExcel
-);
 // Endpoint: GET /api/classes/danh-sach-lop
 router.get("/danh-sach-lop", classController.getLopHoc);
 // Endpoint: GET /api/classes/tim-kiem-ma-lop?key=10A1HK1-2627

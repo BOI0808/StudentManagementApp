@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.studentmanagementapp.api.ApiClient;
 import com.example.studentmanagementapp.model.Student;
+import com.example.studentmanagementapp.model.User;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
@@ -137,22 +138,44 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                 Sheet sheet = workbook.getSheetAt(0);
                 DataFormatter formatter = new DataFormatter();
 
+                // 1. Tìm vị trí cột dựa trên Header (Hàng 0)
+                Row headerRow = sheet.getRow(0);
+                if (headerRow == null) throw new Exception("File Excel không có dữ liệu tiêu đề.");
+
+                int idxHoTen = -1, idxGioiTinh = -1, idxNgaySinh = -1, idxDiaChi = -1, idxEmail = -1;
+
+                for (Cell cell : headerRow) {
+                    String title = formatter.formatCellValue(cell).trim().toLowerCase();
+                    if (title.contains("họ và tên") || title.contains("hoten") || title.equals("họ tên")) idxHoTen = cell.getColumnIndex();
+                    else if (title.contains("giới tính") || title.contains("gioitinh") || title.contains("gender")) idxGioiTinh = cell.getColumnIndex();
+                    else if (title.contains("ngày sinh") || title.contains("ngaysinh") || title.contains("birthday")) idxNgaySinh = cell.getColumnIndex();
+                    else if (title.contains("địa chỉ") || title.contains("diachi") || title.contains("address")) idxDiaChi = cell.getColumnIndex();
+                    else if (title.contains("email")) idxEmail = cell.getColumnIndex();
+                }
+
+                // Kiểm tra xem các cột bắt buộc có tồn tại không (Họ tên, Ngày sinh, Giới tính)
+                if (idxHoTen == -1 || idxNgaySinh == -1 || idxGioiTinh == -1) {
+                    throw new Exception("Không tìm thấy các cột bắt buộc trong file (Họ tên, Ngày sinh, Giới tính). Vui lòng kiểm tra lại tiêu đề cột.");
+                }
+
+                // 2. Đọc dữ liệu từ các hàng tiếp theo
                 for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                     Row row = sheet.getRow(i);
                     if (row == null) continue;
 
                     Student student = new Student();
-                    student.setHoTen(formatter.formatCellValue(row.getCell(0)));
-                    student.setNgaySinh(formatter.formatCellValue(row.getCell(1)));
+                    student.setHoTen(formatter.formatCellValue(row.getCell(idxHoTen)).trim());
                     
-                    // Giới tính xử lý từ text sang Mã (Nam -> GT1, Nữ -> GT2, Khác -> GT3)
-                    String genderText = formatter.formatCellValue(row.getCell(2)).trim();
-                    if (genderText.equalsIgnoreCase("Nam")) student.setMaGioiTinh("GT1");
-                    else if (genderText.equalsIgnoreCase("Nữ")) student.setMaGioiTinh("GT2");
+                    // Xử lý Giới tính: Nam -> GT1, Nữ -> GT2, Khác -> GT3
+                    String genderText = formatter.formatCellValue(row.getCell(idxGioiTinh)).trim();
+                    if (genderText.equalsIgnoreCase("Nam") || genderText.equalsIgnoreCase("GT1")) student.setMaGioiTinh("GT1");
+                    else if (genderText.equalsIgnoreCase("Nữ") || genderText.equalsIgnoreCase("Nu") || genderText.equalsIgnoreCase("GT2")) student.setMaGioiTinh("GT2");
                     else student.setMaGioiTinh("GT3");
+
+                    student.setNgaySinh(formatter.formatCellValue(row.getCell(idxNgaySinh)).trim());
                     
-                    student.setDiaChi(formatter.formatCellValue(row.getCell(3)));
-                    student.setEmail(formatter.formatCellValue(row.getCell(4)));
+                    if (idxDiaChi != -1) student.setDiaChi(formatter.formatCellValue(row.getCell(idxDiaChi)).trim());
+                    if (idxEmail != -1) student.setEmail(formatter.formatCellValue(row.getCell(idxEmail)).trim());
                     
                     if (!student.getHoTen().isEmpty()) {
                         studentsFromExcel.add(student);
@@ -168,7 +191,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
 
         } catch (Exception e) {
             Log.e("ExcelError", "Lỗi xử lý file: ", e);
-            new AlertDialog.Builder(this).setTitle("Lỗi").setMessage(e.getMessage()).show();
+            new AlertDialog.Builder(this).setTitle("Lỗi đọc file").setMessage(e.getMessage()).show();
         }
     }
 
@@ -208,7 +231,6 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
         int maxRetries = 3;
         int retryCount = 0;
         Exception lastException = null;
-
         while (retryCount < maxRetries) {
             try (InputStream is = getContentResolver().openInputStream(uri);
                  FileOutputStream os = new FileOutputStream(destinationFile)) {
@@ -219,8 +241,8 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                 os.flush();
                 if (destinationFile.length() > 0) return destinationFile;
             } catch (Exception e) {
-                retryCount++;
                 lastException = e;
+                retryCount++;
                 Thread.sleep(500);
             }
         }
@@ -240,12 +262,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                 }
             }
         }
-        if (result == null) {
-            result = uri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) result = result.substring(cut + 1);
-        }
-        return result;
+        return (result != null) ? result : "temp.xlsx";
     }
 
     private void uploadExcelFile() {
