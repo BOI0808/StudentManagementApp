@@ -9,6 +9,7 @@ import com.example.studentmanagementapp.model.User;
 import java.util.List;
 import java.util.Map;
 import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -132,14 +133,23 @@ public interface ApiService {
     @GET("api/grades/nhap-diem/danh-sach")
     Call<List<Map<String, Object>>> getHocSinhNhapDiem(
         @Query("MaLop") String maLop,
-        @Query("MaMonHoc") String maMonHoc,
+        @Query("MaMonHoc") String maMon,
         @Query("MaLoaiKiemTra") String maLoai,
         @Query("MaHocKyNamHoc") String maHK
     );
 
-    // Endpoint sửa từ luu-bang-diem sang nhap-diem cho khớp Backend
     @POST("api/grades/nhap-diem")
     Call<Map<String, String>> saveGrades(@Body Map<String, Object> data);
+
+    @Multipart
+    @POST("api/grades/import-excel")
+    Call<Map<String, String>> importGradeExcel(
+        @Part MultipartBody.Part file,
+        @Part("MaLop") RequestBody maLop,
+        @Part("MaMonHoc") RequestBody maMon,
+        @Part("MaLoaiKiemTra") RequestBody maLoai,
+        @Part("MaHocKyNamHoc") RequestBody maHK
+    );
 
     // XI & XII. Báo cáo
     @GET("api/reports/bao-cao-mon")

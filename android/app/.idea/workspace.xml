@@ -170,10 +170,11 @@
   <component name="ChangeListManager">
     <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CreateClassListActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CreateClassListActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/ReceiveStudentsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/ReceiveStudentsActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/layout_excel_preview.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/layout_excel_preview.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/GradeEntryActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/GradeEntryActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_grade_entry.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_grade_entry.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/controllers/gradeController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/gradeController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/routes/gradeRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/gradeRoutes.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -348,12 +349,12 @@
       <map>
         <entry key="com.example.studentmanagementapp">
           <value>
-            <CheckInfo lastCheckTimestamp="1776650166081" />
+            <CheckInfo lastCheckTimestamp="1776751365588" />
           </value>
         </entry>
         <entry key="com.example.studentmanagementapp.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1776650166024" />
+            <CheckInfo lastCheckTimestamp="1776751365553" />
           </value>
         </entry>
       </map>

@@ -1,9 +1,6 @@
 const express = require("express");
-const multer = require("multer");
 const router = express.Router();
 const classController = require("../controllers/classController");
-
-const upload = multer({ storage: multer.memoryStorage() });
 
 // Endpoint: POST /api/classes/lap-danh-sach-lop
 router.post("/lap-danh-sach-lop", classController.taoMoiLop);

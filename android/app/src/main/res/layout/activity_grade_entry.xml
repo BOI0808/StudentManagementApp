@@ -209,14 +209,33 @@
         android:background="#FFFFFF"
         tools:listitem="@layout/item_grade_entry" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnLuuBangDiem"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_margin="16dp"
-        android:text="LƯU BẢNG ĐIỂM"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:cornerRadius="8dp" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnImportExcel"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="12dp"
+            android:text="IMPORT TỪ EXCEL"
+            android:textColor="#388E3C"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="8dp"
+            app:strokeColor="#388E3C" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLuuBangDiem"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="LƯU BẢNG ĐIỂM"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="8dp" />
+    </LinearLayout>
 
 </LinearLayout>
