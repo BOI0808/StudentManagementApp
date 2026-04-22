@@ -2,6 +2,7 @@ package com.example.studentmanagementapp;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,6 +23,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
     private TextInputEditText edtConfirmPassword;
     private MaterialButton btnCancel;
     private MaterialButton btnSavePassword;
+    private ImageButton btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +36,14 @@ public class ChangePasswordActivity extends AppCompatActivity {
         edtConfirmPassword = findViewById(R.id.edtConfirmPassword);
         btnCancel = findViewById(R.id.btnCancel);
         btnSavePassword = findViewById(R.id.btnSavePassword);
+        btnBack = findViewById(R.id.btnBack);
+
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         btnCancel.setOnClickListener(new View.OnClickListener() {
             @Override

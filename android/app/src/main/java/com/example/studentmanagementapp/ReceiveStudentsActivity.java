@@ -1,12 +1,14 @@
 package com.example.studentmanagementapp;
 
-import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +30,9 @@ import com.example.studentmanagementapp.model.Student;
 import com.example.studentmanagementapp.model.User;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textfield.TextInputEditText;
 import okhttp3.MediaType;
@@ -40,12 +45,14 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -55,9 +62,10 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
     private TextInputEditText edtHoTen, edtNgaySinh, edtDiaChi, edtEmail, edtGioiTinhKhac;
     private RadioGroup rgGioiTinh;
     private RadioButton rbNam, rbNu, rbKhac;
-    private TextInputLayout tilGioiTinhKhac;
-    private MaterialButton btnTiepNhan, btnSuaHoSo, btnImportExcel;
-    private ImageButton btnBack;
+    private TextInputLayout tilHoTen, tilNgaySinh, tilDiaChi, tilEmail, tilGioiTinhKhac;
+    private MaterialButton btnTiepNhan, btnSuaHoSo;
+    private ImageButton btnBack, btnImportExcel;
+    private LinearProgressIndicator progressIndicator;
     private Uri selectedFileUri;
 
     private final ActivityResultLauncher<String> filePickerLauncher = registerForActivityResult(
@@ -79,8 +87,14 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
 
         initViews();
         setupGenderLogic();
+        setupErrorClearing();
 
-        edtNgaySinh.setOnClickListener(v -> showDatePicker());
+        View.OnClickListener dateClickListener = v -> showDatePicker();
+        edtNgaySinh.setOnClickListener(dateClickListener);
+        if (tilNgaySinh != null) {
+            tilNgaySinh.setEndIconOnClickListener(dateClickListener);
+        }
+        
         btnBack.setOnClickListener(v -> finish());
         btnTiepNhan.setOnClickListener(v -> performSaveStudent());
         
@@ -98,15 +112,60 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
         edtDiaChi = findViewById(R.id.edtDiaChi);
         edtEmail = findViewById(R.id.edtEmail);
         edtGioiTinhKhac = findViewById(R.id.edtGioiTinhKhac);
+        
+        tilHoTen = findViewById(R.id.tilHoTen);
+        tilNgaySinh = findViewById(R.id.tilNgaySinh);
+        tilDiaChi = findViewById(R.id.tilDiaChi);
+        tilEmail = findViewById(R.id.tilEmail);
+        tilGioiTinhKhac = findViewById(R.id.tilGioiTinhKhac);
+        
         rgGioiTinh = findViewById(R.id.rgGioiTinh);
         rbNam = findViewById(R.id.rbNam);
         rbNu = findViewById(R.id.rbNu);
         rbKhac = findViewById(R.id.rbKhac);
-        tilGioiTinhKhac = findViewById(R.id.tilGioiTinhKhac);
+        
         btnTiepNhan = findViewById(R.id.btnTiepNhan);
         btnSuaHoSo = findViewById(R.id.btnSuaHoSo);
         btnImportExcel = findViewById(R.id.btnImportExcel);
         btnBack = findViewById(R.id.btnBack);
+        progressIndicator = findViewById(R.id.progressIndicator);
+    }
+
+    private void setupErrorClearing() {
+        edtHoTen.addTextChangedListener(new SimpleTextWatcher(tilHoTen));
+        edtNgaySinh.addTextChangedListener(new SimpleTextWatcher(tilNgaySinh));
+        edtDiaChi.addTextChangedListener(new SimpleTextWatcher(tilDiaChi));
+        edtEmail.addTextChangedListener(new SimpleTextWatcher(tilEmail));
+    }
+
+    private static class SimpleTextWatcher implements TextWatcher {
+        private final TextInputLayout layout;
+        public SimpleTextWatcher(TextInputLayout layout) { this.layout = layout; }
+        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            if (layout != null) layout.setError(null);
+        }
+        @Override public void afterTextChanged(Editable s) {}
+    }
+
+    private void showLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+        if (btnTiepNhan != null) {
+            btnTiepNhan.setEnabled(false);
+            btnTiepNhan.setText("Đang xử lý...");
+        }
+        if (btnImportExcel != null) btnImportExcel.setEnabled(false);
+        if (btnSuaHoSo != null) btnSuaHoSo.setEnabled(false);
+    }
+
+    private void hideLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+        if (btnTiepNhan != null) {
+            btnTiepNhan.setEnabled(true);
+            btnTiepNhan.setText("TIẾP NHẬN HỌC SINH");
+        }
+        if (btnImportExcel != null) btnImportExcel.setEnabled(true);
+        if (btnSuaHoSo != null) btnSuaHoSo.setEnabled(true);
     }
 
     private void setupGenderLogic() {
@@ -121,12 +180,21 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
     }
 
     private void showDatePicker() {
-        Calendar calendar = Calendar.getInstance();
-        DatePickerDialog dialog = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
-            String date = String.format(Locale.getDefault(), "%d-%02d-%02d", year, month + 1, dayOfMonth);
-            edtNgaySinh.setText(date);
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
-        dialog.show();
+        MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Chọn ngày sinh")
+                .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                .setInputMode(MaterialDatePicker.INPUT_MODE_CALENDAR)
+                .build();
+
+        datePicker.addOnPositiveButtonClickListener(selection -> {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String dateString = sdf.format(new Date(selection));
+            edtNgaySinh.setText(dateString);
+            if (tilNgaySinh != null) tilNgaySinh.setError(null);
+        });
+
+        datePicker.show(getSupportFragmentManager(), "DATE_PICKER");
     }
 
     private void processExcelFile(Uri uri) {
@@ -272,13 +340,17 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
             RequestBody requestFile = RequestBody.create(MediaType.parse("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), file);
             MultipartBody.Part body = MultipartBody.Part.createFormData("file", getFileName(selectedFileUri), requestFile);
 
-            btnImportExcel.setEnabled(false);
+            showLoading();
             ApiClient.getApiService().importStudentExcel(body).enqueue(new Callback<Map<String, String>>() {
                 @Override
                 public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
-                    btnImportExcel.setEnabled(true);
+                    hideLoading();
                     if (response.isSuccessful()) {
-                        Toast.makeText(ReceiveStudentsActivity.this, "Import học sinh thành công!", Toast.LENGTH_SHORT).show();
+                        new MaterialAlertDialogBuilder(ReceiveStudentsActivity.this)
+                                .setTitle("Thành công")
+                                .setMessage("Tiếp nhận học sinh từ Excel thành công!")
+                                .setPositiveButton("OK", null)
+                                .show();
                     } else {
                         List<String> errors = parseErrorResponse(response);
                         showValidationErrorDialog(errors);
@@ -286,7 +358,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                 }
                 @Override
                 public void onFailure(Call<Map<String, String>> call, Throwable t) {
-                    btnImportExcel.setEnabled(true);
+                    hideLoading();
                     Toast.makeText(ReceiveStudentsActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
@@ -320,25 +392,72 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
     private void showValidationErrorDialog(List<String> errors) {
         StringBuilder sb = new StringBuilder();
         for (String err : errors) sb.append("• ").append(err).append("\n");
-        new AlertDialog.Builder(this).setTitle("Lỗi Import").setMessage(sb.toString().trim()).setPositiveButton("OK", null).show();
+        
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Lỗi Import")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setMessage(sb.toString().trim())
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    private void resetFields() {
+        edtHoTen.setText("");
+        edtNgaySinh.setText("");
+        edtDiaChi.setText("");
+        edtEmail.setText("");
+        rbNam.setChecked(true);
+        edtGioiTinhKhac.setText("");
+        tilHoTen.setError(null);
+        tilNgaySinh.setError(null);
+        tilDiaChi.setError(null);
+        tilEmail.setError(null);
+        edtHoTen.requestFocus();
     }
 
     private void performSaveStudent() {
+        if (tilHoTen != null) tilHoTen.setError(null);
+        if (tilNgaySinh != null) tilNgaySinh.setError(null);
+        if (tilDiaChi != null) tilDiaChi.setError(null);
+        if (tilEmail != null) tilEmail.setError(null);
+
         String hoTen = (edtHoTen.getText() != null) ? edtHoTen.getText().toString().trim() : "";
         String ngaySinh = (edtNgaySinh.getText() != null) ? edtNgaySinh.getText().toString().trim() : "";
         String diaChi = (edtDiaChi.getText() != null) ? edtDiaChi.getText().toString().trim() : "";
         String email = (edtEmail.getText() != null) ? edtEmail.getText().toString().trim() : "";
         
+        boolean hasError = false;
+
+        if (hoTen.isEmpty()) {
+            if (tilHoTen != null) tilHoTen.setError("Họ và tên không được để trống");
+            hasError = true;
+        }
+
+        if (ngaySinh.isEmpty()) {
+            if (tilNgaySinh != null) tilNgaySinh.setError("Vui lòng chọn ngày sinh");
+            hasError = true;
+        }
+
+        if (diaChi.isEmpty()) {
+            if (tilDiaChi != null) tilDiaChi.setError("Địa chỉ không được để trống");
+            hasError = true;
+        }
+
+        if (email.isEmpty()) {
+            if (tilEmail != null) tilEmail.setError("Email không được để trống");
+            hasError = true;
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            if (tilEmail != null) tilEmail.setError("Email không hợp lệ");
+            hasError = true;
+        }
+
+        if (hasError) return;
+
         String maGioiTinh = "GT1";
         if (rbNu.isChecked()) {
             maGioiTinh = "GT2";
         } else if (rbKhac.isChecked()) {
             maGioiTinh = "GT3";
-        }
-
-        if (hoTen.isEmpty() || ngaySinh.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập đầy đủ các trường bắt buộc (*)", Toast.LENGTH_SHORT).show();
-            return;
         }
 
         Student student = new Student();
@@ -348,15 +467,35 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
         student.setEmail(email);
         student.setMaGioiTinh(maGioiTinh);
 
-        btnTiepNhan.setEnabled(false);
+        showLoading();
         ApiClient.getApiService().receiveStudent(student).enqueue(new Callback<Map<String, String>>() {
             @Override
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
-                btnTiepNhan.setEnabled(true);
+                hideLoading();
                 if (response.isSuccessful() && response.body() != null) {
                     String maHS = response.body().get("MaHocSinh");
-                    Toast.makeText(ReceiveStudentsActivity.this, "Tiếp nhận thành công! Mã HS: " + maHS, Toast.LENGTH_LONG).show();
-                    finish();
+                    String tenHS = hoTen;
+                    
+                    new MaterialAlertDialogBuilder(ReceiveStudentsActivity.this)
+                            .setTitle("Tiếp nhận thành công!")
+                            .setMessage("Học sinh " + tenHS + " đã được cấp mã " + maHS + ". Bạn có muốn xếp lớp cho học sinh này ngay bây giờ không?")
+                            .setPositiveButton("Xếp lớp ngay", (dialog, which) -> {
+                                try {
+                                    Class<?> targetClass = Class.forName("com.example.studentmanagementapp.CreateClassListActivity");
+                                    Intent intent = new Intent(ReceiveStudentsActivity.this, targetClass);
+                                    intent.putExtra("MaHocSinh", maHS);
+                                    intent.putExtra("HoTen", tenHS);
+                                    startActivity(intent);
+                                    finish();
+                                } catch (ClassNotFoundException e) {
+                                    Toast.makeText(ReceiveStudentsActivity.this, "Không tìm thấy màn hình lập danh sách lớp!", Toast.LENGTH_SHORT).show();
+                                    finish();
+                                }
+                            })
+                            .setNeutralButton("Tiếp nhận tiếp", (dialog, which) -> resetFields())
+                            .setNegativeButton("Đóng", (dialog, which) -> finish())
+                            .setCancelable(false)
+                            .show();
                 } else {
                     try (ResponseBody errorBody = response.errorBody()) {
                         if (errorBody != null) {
@@ -375,7 +514,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
-                btnTiepNhan.setEnabled(true);
+                hideLoading();
                 Toast.makeText(ReceiveStudentsActivity.this, "Không thể kết nối Server. Vui lòng kiểm tra mạng!", Toast.LENGTH_SHORT).show();
             }
         });

@@ -2,7 +2,8 @@ package com.example.studentmanagementapp;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,8 +14,8 @@ import com.example.studentmanagementapp.api.ApiClient;
 import com.example.studentmanagementapp.model.User;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import retrofit2.Call;
@@ -26,7 +27,10 @@ public class AdminUserListActivity extends AppCompatActivity {
     private RecyclerView rvUserList;
     private ImageButton btnBack, btnHelpRights;
     private MaterialButton btnAddUser;
-    private List<User> userList = new ArrayList<>();
+    private TextInputEditText edtSearch;
+    
+    private List<User> originalUserList = new ArrayList<>();
+    private List<User> filteredUserList = new ArrayList<>();
     private GenericAdapter<User> adapter;
 
     @Override
@@ -34,18 +38,36 @@ public class AdminUserListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_user_list);
 
+        initViews();
+        setupListeners();
+        loadUserList();
+    }
+
+    private void initViews() {
         rvUserList = findViewById(R.id.rvDanhSachNhanVien);
         btnBack = findViewById(R.id.btnBack);
         btnHelpRights = findViewById(R.id.btnHelpRights);
         btnAddUser = findViewById(R.id.btnLuuDanhSach);
+        edtSearch = findViewById(R.id.edtSearchUser);
 
         rvUserList.setLayoutManager(new LinearLayoutManager(this));
-        
+    }
+
+    private void setupListeners() {
         btnBack.setOnClickListener(v -> finish());
         btnHelpRights.setOnClickListener(v -> showRightsHelpDialog());
-        btnAddUser.setOnClickListener(v -> finish());
+        btnAddUser.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminUserListActivity.this, AdminCreateUserActivity.class);
+            startActivity(intent);
+        });
 
-        loadUserList();
+        edtSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterUserList(s.toString());
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void loadUserList() {
@@ -53,7 +75,9 @@ public class AdminUserListActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<User>> call, Response<List<User>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    userList = response.body();
+                    originalUserList = response.body();
+                    filteredUserList.clear();
+                    filteredUserList.addAll(originalUserList);
                     setupAdapter();
                 }
             }
@@ -65,8 +89,27 @@ public class AdminUserListActivity extends AppCompatActivity {
         });
     }
 
+    private void filterUserList(String query) {
+        filteredUserList.clear();
+        if (query.isEmpty()) {
+            filteredUserList.addAll(originalUserList);
+        } else {
+            String lowerCaseQuery = query.toLowerCase().trim();
+            for (User user : originalUserList) {
+                String name = (user.getHoTen() != null) ? user.getHoTen().toLowerCase() : "";
+                String code = (user.getMaSo() != null) ? user.getMaSo().toLowerCase() : "";
+                if (name.contains(lowerCaseQuery) || code.contains(lowerCaseQuery)) {
+                    filteredUserList.add(user);
+                }
+            }
+        }
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
     private void setupAdapter() {
-        adapter = new GenericAdapter<>(userList, R.layout.item_admin_user_row, (user, itemView, position) -> {
+        adapter = new GenericAdapter<>(filteredUserList, R.layout.item_admin_user_row, (user, itemView, position) -> {
             ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
             ((TextView) itemView.findViewById(R.id.tvMaNV)).setText(user.getMaSo() != null ? user.getMaSo() : "");
             ((TextView) itemView.findViewById(R.id.tvHoTen)).setText(user.getHoTen() != null ? user.getHoTen() : "");

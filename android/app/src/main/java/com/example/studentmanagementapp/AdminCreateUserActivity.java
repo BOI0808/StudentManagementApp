@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
@@ -22,6 +23,8 @@ import com.example.studentmanagementapp.api.ApiClient;
 import com.example.studentmanagementapp.model.User;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import org.apache.poi.ss.usermodel.*;
 import org.json.JSONArray;
@@ -45,9 +48,20 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
     private TextView btnLogout, tvTitle;
     private TextInputEditText edtFullName, edtUsername, edtPassword, edtEmail, edtPhone;
-    private MaterialButton btnCreateAccount, btnXemDanhSach, btnImportExcel;
+    private MaterialButton btnCreateAccount, btnXemDanhSach;
+    private ImageButton btnImportExcel;
+    private MaterialButton btnQuickAdmin, btnQuickTeacher, btnQuickManagement, btnQuickClear;
+    private LinearProgressIndicator loadingIndicator;
     private User editingUser = null;
     private Uri selectedFileUri;
+
+    private final int[] permissionIds = {R.id.cbTiepNhanHS, R.id.cbLapDanhSachLop, R.id.cbLapDanhSachHSChoLop, 
+                R.id.cbLapDanhSachNamHoc, R.id.cbLapDanhSachKhoiLop, R.id.cbLapDanhSachMonHoc,
+                R.id.cbTraCuuHS, R.id.cbNhapDiem, R.id.cbLoaiKiemTra, R.id.cbBaoCaoMon, 
+                R.id.cbBaoCaoHocKy, R.id.cbCaiDatThamSo};
+                
+    private final String[] permissionCodes = {"CNTNHS", "CNLDSL", "CNLDSHSCL", "CNLDSNH", "CNLDSKL", "CNLDSMH",
+                     "CNTCHS", "CNNBD", "CNNDSCLKT", "CNLBCTKM", "CNLBCTKHK", "CNCDTSHT"};
 
     private final ActivityResultLauncher<String> filePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
@@ -66,6 +80,12 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
         System.setProperty("java.io.tmpdir", getCacheDir().getAbsolutePath());
 
+        initViews();
+        setupListeners();
+        checkEditMode();
+    }
+
+    private void initViews() {
         btnLogout = findViewById(R.id.btnLogout);
         tvTitle = findViewById(R.id.tvTitle);
         edtFullName = findViewById(R.id.edtFullName);
@@ -76,7 +96,15 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         btnCreateAccount = findViewById(R.id.btnCreateAccount);
         btnXemDanhSach = findViewById(R.id.btnXemDanhSach);
         btnImportExcel = findViewById(R.id.btnImportExcel);
+        loadingIndicator = findViewById(R.id.loadingIndicator);
+        
+        btnQuickAdmin = findViewById(R.id.btnQuickAdmin);
+        btnQuickTeacher = findViewById(R.id.btnQuickTeacher);
+        btnQuickManagement = findViewById(R.id.btnQuickManagement);
+        btnQuickClear = findViewById(R.id.btnQuickClear);
+    }
 
+    private void setupListeners() {
         if (btnLogout != null) {
             btnLogout.setOnClickListener(v -> {
                 Intent intent = new Intent(AdminCreateUserActivity.this, LoginActivity.class);
@@ -101,7 +129,77 @@ public class AdminCreateUserActivity extends AppCompatActivity {
             btnImportExcel.setOnClickListener(v -> filePickerLauncher.launch("*/*"));
         }
 
-        checkEditMode();
+        btnQuickAdmin.setOnClickListener(v -> setQuickPermissions("ADMIN"));
+        btnQuickTeacher.setOnClickListener(v -> setQuickPermissions("TEACHER"));
+        btnQuickManagement.setOnClickListener(v -> setQuickPermissions("MANAGEMENT"));
+        btnQuickClear.setOnClickListener(v -> setQuickPermissions("CLEAR"));
+    }
+
+    private void setQuickPermissions(String role) {
+        List<String> targetCodes;
+        switch (role) {
+            case "ADMIN":
+                targetCodes = Arrays.asList(permissionCodes);
+                break;
+            case "TEACHER":
+                targetCodes = Arrays.asList("CNTNHS", "CNLDSL", "CNLDSHSCL", "CNTCHS", "CNNBD");
+                break;
+            case "MANAGEMENT":
+                targetCodes = Arrays.asList("CNLDSNH", "CNLDSKL", "CNLDSMH", "CNLBCTKM", "CNLBCTKHK", "CNCDTSHT");
+                break;
+            default:
+                targetCodes = new ArrayList<>();
+                break;
+        }
+
+        for (int i = 0; i < permissionIds.length; i++) {
+            CheckBox cb = findViewById(permissionIds[i]);
+            if (cb != null) {
+                cb.setChecked(targetCodes.contains(permissionCodes[i]));
+            }
+        }
+    }
+
+    private void showLoading() {
+        if (loadingIndicator != null) loadingIndicator.setVisibility(View.VISIBLE);
+        setInputsEnabled(false);
+        if (btnCreateAccount != null) btnCreateAccount.setText("Đang xử lý...");
+    }
+
+    private void hideLoading() {
+        if (loadingIndicator != null) loadingIndicator.setVisibility(View.GONE);
+        setInputsEnabled(true);
+        if (btnCreateAccount != null) {
+            btnCreateAccount.setText(editingUser != null ? "CẬP NHẬT TÀI KHOẢN" : "TẠO TÀI KHOẢN");
+        }
+    }
+
+    private void setInputsEnabled(boolean enabled) {
+        edtFullName.setEnabled(enabled);
+        if (editingUser == null) edtUsername.setEnabled(enabled);
+        edtPassword.setEnabled(enabled);
+        edtEmail.setEnabled(enabled);
+        edtPhone.setEnabled(enabled);
+        btnCreateAccount.setEnabled(enabled);
+        btnXemDanhSach.setEnabled(enabled);
+        btnImportExcel.setEnabled(enabled);
+        btnQuickAdmin.setEnabled(enabled);
+        btnQuickTeacher.setEnabled(enabled);
+        btnQuickManagement.setEnabled(enabled);
+        btnQuickClear.setEnabled(enabled);
+        
+        for (int id : permissionIds) {
+            CheckBox cb = findViewById(id);
+            if (cb != null) cb.setEnabled(enabled);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (editingUser == null) {
+            resetFields();
+        }
     }
 
     private void processExcelFile(Uri uri) {
@@ -245,11 +343,11 @@ public class AdminCreateUserActivity extends AppCompatActivity {
             RequestBody requestFile = RequestBody.create(MediaType.parse("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), file);
             MultipartBody.Part body = MultipartBody.Part.createFormData("file", getFileName(selectedFileUri), requestFile);
 
-            btnImportExcel.setEnabled(false);
+            showLoading();
             ApiClient.getApiService().importExcel(body).enqueue(new Callback<Map<String, String>>() {
                 @Override
                 public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
-                    btnImportExcel.setEnabled(true);
+                    hideLoading();
                     if (response.isSuccessful()) {
                         Toast.makeText(AdminCreateUserActivity.this, "Import thành công!", Toast.LENGTH_SHORT).show();
                     } else {
@@ -260,7 +358,7 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<Map<String, String>> call, Throwable t) {
-                    btnImportExcel.setEnabled(true);
+                    hideLoading();
                     Toast.makeText(AdminCreateUserActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
@@ -318,15 +416,9 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
     private void setPermissions(List<String> permissions) {
         if (permissions == null) return;
-        int[] ids = {R.id.cbTiepNhanHS, R.id.cbLapDanhSachLop, R.id.cbLapDanhSachHSChoLop, 
-                    R.id.cbLapDanhSachNamHoc, R.id.cbLapDanhSachKhoiLop, R.id.cbLapDanhSachMonHoc,
-                    R.id.cbTraCuuHS, R.id.cbNhapDiem, R.id.cbLoaiKiemTra, R.id.cbBaoCaoMon, 
-                    R.id.cbBaoCaoHocKy, R.id.cbCaiDatThamSo};
-        String[] codes = {"CNTNHS", "CNLDSL", "CNLDSHSCL", "CNLDSNH", "CNLDSKL", "CNLDSMH",
-                         "CNTCHS", "CNNBD", "CNNDSCLKT", "CNLBCTKM", "CNLBCTKHK", "CNCDTSHT"};
-        for (int i = 0; i < ids.length; i++) {
-            CheckBox cb = findViewById(ids[i]);
-            if (cb != null) cb.setChecked(permissions.contains(codes[i]));
+        for (int i = 0; i < permissionIds.length; i++) {
+            CheckBox cb = findViewById(permissionIds[i]);
+            if (cb != null) cb.setChecked(permissions.contains(permissionCodes[i]));
         }
     }
 
@@ -356,7 +448,7 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         user.setSoDienThoai(phone);
         user.setDanhSachQuyen(permissions);
 
-        btnCreateAccount.setEnabled(false);
+        showLoading();
         Call<Map<String, String>> call = (editingUser != null) ? 
                 ApiClient.getApiService().updateAccount(editingUser.getMaSo(), user) :
                 ApiClient.getApiService().createAccount(user);
@@ -364,10 +456,27 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         call.enqueue(new Callback<Map<String, String>>() {
             @Override
             public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
-                btnCreateAccount.setEnabled(true);
+                hideLoading();
                 if (response.isSuccessful()) {
-                    Toast.makeText(AdminCreateUserActivity.this, "Thành công!", Toast.LENGTH_SHORT).show();
-                    if (editingUser != null) finish(); else resetFields();
+                    String action = (editingUser != null) ? "cập nhật" : "tạo mới";
+                    String message = "Đã " + action + " tài khoản cho " + fullName + " thành công!";
+
+                    new MaterialAlertDialogBuilder(AdminCreateUserActivity.this)
+                            .setTitle("Thành công")
+                            .setMessage(message)
+                            .setCancelable(false)
+                            .setNeutralButton("Xem danh sách", (dialog, which) -> {
+                                Intent intent = new Intent(AdminCreateUserActivity.this, AdminUserListActivity.class);
+                                startActivity(intent);
+                            })
+                            .setPositiveButton((editingUser != null) ? "Đóng" : "Tạo tiếp", (dialog, which) -> {
+                                if (editingUser != null) {
+                                    finish();
+                                } else {
+                                    resetFields();
+                                }
+                            })
+                            .show();
                 } else {
                     try {
                         ResponseBody errorBody = response.errorBody();
@@ -384,7 +493,7 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<Map<String, String>> call, Throwable t) {
-                btnCreateAccount.setEnabled(true);
+                hideLoading();
                 Toast.makeText(AdminCreateUserActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
             }
         });
@@ -392,15 +501,9 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
     private List<String> getSelectedPermissions() {
         List<String> permissions = new ArrayList<>();
-        int[] ids = {R.id.cbTiepNhanHS, R.id.cbLapDanhSachLop, R.id.cbLapDanhSachHSChoLop, 
-                    R.id.cbLapDanhSachNamHoc, R.id.cbLapDanhSachKhoiLop, R.id.cbLapDanhSachMonHoc,
-                    R.id.cbTraCuuHS, R.id.cbNhapDiem, R.id.cbLoaiKiemTra, R.id.cbBaoCaoMon, 
-                    R.id.cbBaoCaoHocKy, R.id.cbCaiDatThamSo};
-        String[] codes = {"CNTNHS", "CNLDSL", "CNLDSHSCL", "CNLDSNH", "CNLDSKL", "CNLDSMH",
-                         "CNTCHS", "CNNBD", "CNNDSCLKT", "CNLBCTKM", "CNLBCTKHK", "CNCDTSHT"};
-        for (int i = 0; i < ids.length; i++) {
-            CheckBox cb = findViewById(ids[i]);
-            if (cb != null && cb.isChecked()) permissions.add(codes[i]);
+        for (int i = 0; i < permissionIds.length; i++) {
+            CheckBox cb = findViewById(permissionIds[i]);
+            if (cb != null && cb.isChecked()) permissions.add(permissionCodes[i]);
         }
         return permissions;
     }
