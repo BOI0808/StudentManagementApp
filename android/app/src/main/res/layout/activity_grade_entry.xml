@@ -31,7 +31,7 @@
             android:layout_centerInParent="true"
             android:text="Nhập Bảng Điểm"
             android:textColor="#1976D2"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
     </RelativeLayout>
 
@@ -40,7 +40,6 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="#FFFFFF"
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp">
 
