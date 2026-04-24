@@ -8,11 +8,12 @@
     android:orientation="vertical"
     tools:context=".SearchStudentsActivity">
 
+    <!-- Header Section -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="16dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp"
         android:paddingHorizontal="16dp">
 
         <ImageButton
@@ -35,6 +36,15 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
+    <!-- Progress Indicator -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressIndicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone" />
+
+    <!-- Input Card Section -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -50,12 +60,15 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Input Mã Lớp -->
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:hint="Mã lớp">
+                android:hint="Mã lớp"
+                app:endIconMode="clear_text"
+                app:startIconDrawable="@android:drawable/ic_menu_myplaces">
 
                 <AutoCompleteTextView
                     android:id="@+id/autoCompleteMaLop"
@@ -66,47 +79,45 @@
                     android:inputType="text|textNoSuggestions" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <LinearLayout
+            <!-- Input Mã HS -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:baselineAligned="false"
-                android:orientation="horizontal"
+                android:layout_marginBottom="12dp"
+                android:hint="Mã HS"
+                app:endIconMode="clear_text"
+                app:startIconDrawable="@android:drawable/ic_menu_edit">
+
+                <AutoCompleteTextView
+                    android:id="@+id/edtSearchMaHS"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:completionThreshold="1"
+                    android:importantForAutofill="no"
+                    android:inputType="text|textNoSuggestions" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Input Tên Học Sinh -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:weightSum="3">
+                android:hint="Tên học sinh"
+                app:endIconMode="clear_text"
+                app:startIconDrawable="@android:drawable/ic_menu_myplaces">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
+                <AutoCompleteTextView
+                    android:id="@+id/edtSearchTen"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:hint="Mã HS">
-                    <AutoCompleteTextView
-                        android:id="@+id/edtSearchMaHS"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:completionThreshold="1"
-                        android:importantForAutofill="no"
-                        android:inputType="text|textNoSuggestions" />
-                </com.google.android.material.textfield.TextInputLayout>
+                    android:completionThreshold="1"
+                    android:importantForAutofill="no"
+                    android:inputType="textPersonName|textNoSuggestions" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="2"
-                    android:hint="Tên học sinh">
-                    <AutoCompleteTextView
-                        android:id="@+id/edtSearchTen"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:completionThreshold="1"
-                        android:importantForAutofill="no"
-                        android:inputType="textPersonName|textNoSuggestions" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
-
+            <!-- Search Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTimKiem"
                 android:layout_width="match_parent"
@@ -129,14 +140,43 @@
         android:textColor="#555555"
         android:textStyle="bold" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvKetQuaTraCuu"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="16dp"
-        tools:listitem="@layout/item_search_students" />
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvKetQuaTraCuu"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="16dp"
+            tools:listitem="@layout/item_search_students" />
+
+        <!-- Empty State Section -->
+        <LinearLayout
+            android:id="@+id/layoutEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@android:drawable/ic_menu_search"
+                app:tint="#CCCCCC" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Không có kết quả nào"
+                android:textColor="#999999"
+                android:textSize="16sp" />
+        </LinearLayout>
+    </FrameLayout>
 
 </LinearLayout>

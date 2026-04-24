@@ -212,7 +212,38 @@ exports.xoaHocSinhKhoiLop = async (req, res) => {
 
 exports.traCuuHocSinh = async (req, res) => {
   const { maLop, maHocSinh, hoTen } = req.query;
-  let query = `SELECT hs.MaHocSinh, hs.HoTen, l.TenLop, CONCAT(hn.NamHocBatDau, '-', hn.NamHocKetThuc) AS NamHoc FROM hocsinh hs JOIN chitietlop ctl ON hs.MaHocSinh = ctl.MaHocSinh JOIN lop l ON ctl.MaLop = l.MaLop JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc WHERE 1=1`;
+  let query = `
+    SELECT 
+      hs.MaHocSinh, 
+      hs.HoTen, 
+      l.TenLop, 
+      CONCAT(hn.NamHocBatDau, '-', hn.NamHocKetThuc) AS NamHoc,
+      -- Tính điểm trung bình HK1 của học sinh trong năm học đó
+      (SELECT ROUND(AVG(km1.DiemTrungBinhMon), 1) 
+       FROM ketqua_monhoc km1 
+       JOIN hocky_namhoc hn1 ON km1.MaHocKyNamHoc = hn1.MaHocKyNamHoc 
+       WHERE km1.MaHocSinh = hs.MaHocSinh 
+         AND hn1.NamHocBatDau = hn.NamHocBatDau 
+         AND hn1.TenHocKy = 'Học kỳ 1') AS DiemHK1,
+      -- Tính điểm trung bình HK2
+      (SELECT ROUND(AVG(km2.DiemTrungBinhMon), 1) 
+       FROM ketqua_monhoc km2 
+       JOIN hocky_namhoc hn2 ON km2.MaHocKyNamHoc = hn2.MaHocKyNamHoc 
+       WHERE km2.MaHocSinh = hs.MaHocSinh 
+         AND hn2.NamHocBatDau = hn.NamHocBatDau 
+         AND hn2.TenHocKy = 'Học kỳ 2') AS DiemHK2,
+      -- Tính điểm trung bình Cả năm
+      (SELECT ROUND(AVG(km3.DiemTrungBinhMon), 1) 
+       FROM ketqua_monhoc km3 
+       JOIN hocky_namhoc hn3 ON km3.MaHocKyNamHoc = hn3.MaHocKyNamHoc 
+       WHERE km3.MaHocSinh = hs.MaHocSinh 
+         AND hn3.NamHocBatDau = hn.NamHocBatDau) AS DiemCaNam
+    FROM hocsinh hs 
+    JOIN chitietlop ctl ON hs.MaHocSinh = ctl.MaHocSinh 
+    JOIN lop l ON ctl.MaLop = l.MaLop 
+    JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc 
+    WHERE 1=1`;
+
   let params = [];
   if (maLop) {
     query += " AND l.MaLop = ?";
@@ -226,6 +257,13 @@ exports.traCuuHocSinh = async (req, res) => {
     query += " AND hs.HoTen LIKE ?";
     params.push(`%${hoTen}%`);
   }
-  const [rows] = await db.query(query, params);
-  res.json(rows);
+
+  try {
+    const [rows] = await db.query(query, params);
+    res.json(rows);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Lỗi truy vấn cơ sở dữ liệu: " + error.message });
+  }
 };

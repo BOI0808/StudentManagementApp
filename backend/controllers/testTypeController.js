@@ -122,7 +122,9 @@ exports.updateHeSoLoaiKT = async (req, res) => {
   const { TenLoaiKiemTra, HeSo } = req.body;
 
   if (!TenLoaiKiemTra || HeSo === undefined || HeSo === null || isNaN(HeSo)) {
-    return res.status(400).json({ error: "Dữ liệu không hợp lệ. Vui lòng nhập tên và hệ số." });
+    return res
+      .status(400)
+      .json({ error: "Dữ liệu không hợp lệ. Vui lòng nhập tên và hệ số." });
   }
 
   if (HeSo <= 0) {
