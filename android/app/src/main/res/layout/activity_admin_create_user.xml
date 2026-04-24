@@ -51,7 +51,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_upload"
+                android:src="@drawable/import_file_svgrepo_com"
                 app:tint="#388E3C"
                 android:contentDescription="Import từ Excel" />
         </RelativeLayout>

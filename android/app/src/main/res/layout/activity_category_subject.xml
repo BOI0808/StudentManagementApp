@@ -70,7 +70,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
-                    android:hint="Tên môn học"
+                    android:hint="Tên môn học (VD: Toán học)"
                     app:startIconDrawable="@android:drawable/ic_menu_edit">
 
                     <com.google.android.material.textfield.TextInputEditText

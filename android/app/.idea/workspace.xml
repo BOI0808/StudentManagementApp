@@ -7,6 +7,31 @@
       </config>
     </shared>
     <layouts>
+      <layout url="file://$PROJECT_DIR$/src/main/res/drawable/bg_edittext_outline.xml">
+        <config>
+          <theme>@style/Theme.StudentManagementApp</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/src/main/res/drawable/bottom_sheet_background.xml">
+        <config>
+          <theme>@style/Theme.StudentManagementApp</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/src/main/res/drawable/ic_launcher_background.xml">
+        <config>
+          <theme>@style/Theme.StudentManagementApp</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/src/main/res/drawable/ic_launcher_foreground.xml">
+        <config>
+          <theme>@style/Theme.StudentManagementApp</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/src/main/res/drawable/import_file_svgrepo_com.xml">
+        <config>
+          <theme>@style/Theme.StudentManagementApp</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/src/main/res/layout/activity_admin_create_user.xml">
         <config>
           <theme>@style/Theme.StudentManagementApp</theme>
@@ -174,9 +199,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/res/drawable/import_file_svgrepo_com.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/SearchStudentsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/SearchStudentsActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_search_students.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_search_students.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CategoryGradeActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CategoryGradeActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_admin_create_user.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_admin_create_user.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_category_grade.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_category_grade.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_category_subject.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_category_subject.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_change_password.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_change_password.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_create_class_list.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_create_class_list.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_receive_students.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_receive_students.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_subject_report.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_subject_report.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_term_report.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_term_report.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

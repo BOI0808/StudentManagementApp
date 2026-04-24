@@ -47,10 +47,6 @@ public class CategoryGradeActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(v -> finish());
         btnThem.setOnClickListener(v -> performAddBlock());
-        
-        // Trải nghiệm: Tự động focus và mở bàn phím
-        edtTenKhoi.requestFocus();
-        showKeyboard(edtTenKhoi);
     }
 
     private void initViews() {
@@ -72,13 +68,6 @@ public class CategoryGradeActivity extends AppCompatActivity {
     private void hideLoading() {
         if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
         btnThem.setEnabled(true);
-    }
-
-    private void showKeyboard(View view) {
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
-            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
-        }
     }
 
     private void loadBlockList() {

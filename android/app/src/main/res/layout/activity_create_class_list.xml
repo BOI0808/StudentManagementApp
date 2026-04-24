@@ -28,7 +28,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Lập danh sách lớp"
+            android:text="Lập danh sách học sinh cho lớp"
             android:textColor="#1976D2"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -41,7 +41,7 @@
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_save"
+            android:src="@drawable/import_file_svgrepo_com"
             android:contentDescription="Import Excel"
             app:tint="#388E3C" />
     </RelativeLayout>
@@ -148,7 +148,7 @@
             android:gravity="center"
             android:text="STT"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
@@ -158,16 +158,17 @@
             android:gravity="center"
             android:text="Mã HS"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="3"
+            android:gravity="center"
             android:text="Họ tên"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
@@ -175,9 +176,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1.5"
             android:gravity="center"
-            android:text="GT"
+            android:text="Giới tính"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
@@ -187,7 +188,7 @@
             android:gravity="center"
             android:text="Ngày sinh"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
@@ -197,7 +198,7 @@
             android:gravity="center"
             android:text="Xóa"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
 
