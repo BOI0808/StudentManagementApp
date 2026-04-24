@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/itemContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -29,7 +30,7 @@
             android:id="@+id/tvMaHS"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1.5"
+            android:layout_weight="2"
             android:gravity="center"
             tools:text="HS01"
             android:textColor="@color/black" />
@@ -46,7 +47,7 @@
             android:id="@+id/tvGioiTinh"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="2"
+            android:layout_weight="1.5"
             android:gravity="center"
             tools:text="Nam"
             android:textColor="@color/black" />
@@ -70,18 +71,32 @@
             app:tint="#D32F2F" />
     </LinearLayout>
 
-    <!-- Dòng thông báo lỗi đỏ ngay dưới thông tin -->
-    <TextView
-        android:id="@+id/tvError"
+    <LinearLayout
+        android:id="@+id/errorLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:paddingHorizontal="16dp"
         android:paddingBottom="10dp"
-        android:textColor="#D32F2F"
-        android:textSize="12sp"
-        android:textStyle="bold|italic"
+        android:gravity="center_vertical"
         android:visibility="gone"
-        tools:text="Học sinh này đã có lớp khác"
-        tools:visibility="visible" />
+        tools:visibility="visible">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:src="@android:drawable/stat_notify_error"
+            app:tint="#D32F2F"
+            android:layout_marginEnd="4dp"/>
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#D32F2F"
+            android:textSize="12sp"
+            android:textStyle="bold|italic"
+            tools:text="Học sinh này đã có lớp khác" />
+    </LinearLayout>
 
 </LinearLayout>

@@ -102,20 +102,20 @@ public class SearchStudentsActivity extends AppCompatActivity {
                     studentListInClass.clear();
                     List<String> maHSList = new ArrayList<>();
                     List<String> hoTenList = new ArrayList<>();
-                    
+
                     for (Map<String, String> m : response.body()) {
                         Student s = new Student();
                         s.setMaHocSinh(m.get("MaHocSinh"));
                         s.setHoTen(m.get("HoTen"));
                         studentListInClass.add(s);
-                        
+
                         if (s.getMaHocSinh() != null) maHSList.add(s.getMaHocSinh());
                         if (s.getHoTen() != null) hoTenList.add(s.getHoTen());
                     }
                     
                     autoMaHS.setAdapter(new ArrayAdapter<>(SearchStudentsActivity.this, 
                             android.R.layout.simple_dropdown_item_1line, maHSList));
-                    autoTenHS.setAdapter(new ArrayAdapter<>(SearchStudentsActivity.this, 
+                    autoTenHS.setAdapter(new ArrayAdapter<>(SearchStudentsActivity.this,
                             android.R.layout.simple_dropdown_item_1line, hoTenList));
                 }
             }
@@ -174,7 +174,7 @@ public class SearchStudentsActivity extends AppCompatActivity {
             ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
             ((TextView) itemView.findViewById(R.id.tvMaHS)).setText(getStringValue(item.get("maHocSinh")));
             ((TextView) itemView.findViewById(R.id.tvTenHS)).setText(getStringValue(item.get("hoTen")));
-            
+
             String lop = getStringValue(item.get("lop"));
             String namHoc = getStringValue(item.get("namHoc"));
             ((TextView) itemView.findViewById(R.id.tvLopNamHoc)).setText(String.format(Locale.getDefault(), "Lớp: %s  |  Năm học: %s", lop, namHoc));

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -10,10 +9,11 @@
     android:padding="16dp"
     tools:context=".CategoryGradeActivity">
 
+    <!-- Header -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="8dp">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -30,114 +30,124 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Nhập danh sách khối lớp"
+            android:text="QUẢN LÝ KHỐI LỚP"
             android:textColor="#1976D2"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textAlignment="center" />
     </RelativeLayout>
 
+    <!-- Progress Indicator -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressIndicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:indeterminate="true"
+        android:visibility="gone" />
+
+    <!-- Input Card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="16dp"
+        app:cardBackgroundColor="#FFFFFF"
         app:cardCornerRadius="12dp"
-        app:cardElevation="2dp">
+        app:cardElevation="4dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="10dp">
+            android:padding="16dp">
 
-            <LinearLayout
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTenKhoi"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:baselineAligned="false"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="16dp"
+                android:hint="Tên khối (VD: 10)"
+                app:startIconDrawable="@android:drawable/ic_menu_edit">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edtTenKhoi"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="2"
-                    android:layout_marginEnd="8dp"
-                    android:hint="Tên khối (VD: 10)">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/edtTenKhoi"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:importantForAutofill="no"
-                        android:inputType="textVisiblePassword" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Mã khối">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/edtMaKhoi"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Tự động"
-                        android:enabled="false"
-                        android:textStyle="italic" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
+                    android:importantForAutofill="no"
+                    android:inputType="textVisiblePassword"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnThem"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:text="Thêm vào danh sách"
-                app:backgroundTint="#4CAF50" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:background="#E0E0E0"
-                android:padding="8dp"
-                android:weightSum="10">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.5"
-                    android:text="STT"
-                    android:textStyle="bold"
-                    android:textAlignment="center" />
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="3"
-                    android:text="Mã khối lớp"
-                    android:textStyle="bold"
-                    android:textAlignment="center" />
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="3.5"
-                    android:text="Tên khối lớp"
-                    android:textStyle="bold"
-                    android:textAlignment="center" />
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="2"
-                    android:text="Xóa"
-                    android:textStyle="bold"
-                    android:textAlignment="center" />
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvKhoiLop"
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                tools:listitem="@layout/item_category" />
+                android:layout_height="55dp"
+                android:text="THÊM VÀO DANH SÁCH"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="8dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <!-- Table Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1976D2"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:weightSum="10">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.5"
+            android:gravity="center"
+            android:text="STT"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:gravity="center"
+            android:text="Mã khối"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3.5"
+            android:gravity="center"
+            android:text="Tên khối"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:gravity="center"
+            android:text="Xóa"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvKhoiLop"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#FFFFFF"
+        tools:listitem="@layout/item_category" />
 
 </LinearLayout>

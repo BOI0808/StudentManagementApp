@@ -78,6 +78,8 @@ exports.searchMaLop = async (req, res) => {
     const [rows] = await db.query(query, [searchKey, searchKey]);
     const result = rows.map((item) => ({
       maLop: item.MaLop,
+      tenLop: item.TenLop,
+      namHoc: `${item.NamHocBatDau}-${item.NamHocKetThuc}`,
       hienThi: `${item.MaLop} (${item.TenLop} - ${item.NamHocBatDau}-${item.NamHocKetThuc})`,
     }));
     res.json(result);

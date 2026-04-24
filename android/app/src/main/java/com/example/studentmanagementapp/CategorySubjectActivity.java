@@ -1,6 +1,9 @@
 package com.example.studentmanagementapp;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -11,7 +14,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.studentmanagementapp.api.ApiClient;
 import com.example.studentmanagementapp.model.Subject;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,10 +29,12 @@ import retrofit2.Response;
 
 public class CategorySubjectActivity extends AppCompatActivity {
 
+    private TextInputLayout tilTenMon;
     private TextInputEditText edtTenMon;
     private MaterialButton btnThem;
     private RecyclerView rvMonHoc;
     private ImageButton btnBack;
+    private LinearProgressIndicator progressIndicator;
     private List<Subject> subjectList = new ArrayList<>();
     private GenericAdapter<Subject> adapter;
 
@@ -35,23 +43,50 @@ public class CategorySubjectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category_subject);
 
+        initViews();
+        loadSubjectList();
+
+        btnBack.setOnClickListener(v -> finish());
+        btnThem.setOnClickListener(v -> performAddSubject());
+    }
+
+    private void initViews() {
+        tilTenMon = findViewById(R.id.tilTenMonHoc);
         edtTenMon = findViewById(R.id.edtTenMonHoc);
         btnThem = findViewById(R.id.btnThem);
         rvMonHoc = findViewById(R.id.rvMonHoc);
         btnBack = findViewById(R.id.btnBack);
+        progressIndicator = findViewById(R.id.progressIndicator);
 
         rvMonHoc.setLayoutManager(new LinearLayoutManager(this));
-        
-        btnBack.setOnClickListener(v -> finish());
-        btnThem.setOnClickListener(v -> performAddSubject());
+    }
 
-        loadSubjectList();
+    private void showLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+        btnThem.setEnabled(false);
+    }
+
+    private void hideLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+        btnThem.setEnabled(true);
+    }
+
+    private void hideKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
+        }
     }
 
     private void loadSubjectList() {
+        showLoading();
         ApiClient.getApiService().getSubjectList().enqueue(new Callback<List<Subject>>() {
             @Override
             public void onResponse(@NonNull Call<List<Subject>> call, @NonNull Response<List<Subject>> response) {
+                hideLoading();
                 if (response.isSuccessful() && response.body() != null) {
                     subjectList = response.body();
                     updateRecyclerView();
@@ -59,6 +94,7 @@ public class CategorySubjectActivity extends AppCompatActivity {
             }
             @Override
             public void onFailure(@NonNull Call<List<Subject>> call, @NonNull Throwable t) {
+                hideLoading();
                 Toast.makeText(CategorySubjectActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
             }
         });
@@ -73,54 +109,64 @@ public class CategorySubjectActivity extends AppCompatActivity {
             itemView.findViewById(R.id.btnDelete).setOnClickListener(v -> {
                 String maMon = subject.getMaMonHoc();
                 if (maMon != null) {
-                    performSoftDeleteSubject(maMon);
+                    new MaterialAlertDialogBuilder(CategorySubjectActivity.this)
+                            .setTitle("Xác nhận xóa")
+                            .setMessage("Bạn có chắc chắn muốn ẩn môn học này khỏi danh sách không?")
+                            .setNegativeButton("Hủy", null)
+                            .setPositiveButton("Đồng ý", (dialog, which) -> performSoftDeleteSubject(maMon))
+                            .show();
                 }
             });
         });
         rvMonHoc.setAdapter(adapter);
     }
 
-    private void performSoftDeleteSubject(String maMonHoc) {
-        // Gửi trạng thái TrangThai = 0 để ẩn môn học (Soft Delete)
+    private void performSoftDeleteSubject(String maMon) {
         Map<String, Integer> status = new HashMap<>();
         status.put("TrangThai", 0);
 
-        ApiClient.getApiService().updateSubjectStatus(maMonHoc, status).enqueue(new Callback<Map<String, String>>() {
+        showLoading();
+        ApiClient.getApiService().updateSubjectStatus(maMon, status).enqueue(new Callback<Map<String, String>>() {
             @Override
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
+                hideLoading();
                 if (response.isSuccessful()) {
-                    Toast.makeText(CategorySubjectActivity.this, "Đã ẩn môn học khỏi danh sách", Toast.LENGTH_SHORT).show();
-                    loadSubjectList(); // Tải lại danh sách (Backend sẽ chỉ trả về những môn có TrangThai = 1)
+                    Toast.makeText(CategorySubjectActivity.this, "Xóa môn học thành công", Toast.LENGTH_SHORT).show();
+                    loadSubjectList();
                 } else {
-                    Toast.makeText(CategorySubjectActivity.this, "Không thể cập nhật trạng thái môn học", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(CategorySubjectActivity.this, "Không thể xóa môn học", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
-                Toast.makeText(CategorySubjectActivity.this, "Lỗi kết nối Server", Toast.LENGTH_SHORT).show();
+                hideLoading();
+                Toast.makeText(CategorySubjectActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void performAddSubject() {
         String tenMon = edtTenMon.getText() != null ? edtTenMon.getText().toString().trim() : "";
+        
+        tilTenMon.setError(null);
         if (tenMon.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập tên môn", Toast.LENGTH_SHORT).show();
+            tilTenMon.setError("Vui lòng nhập tên môn học");
             return;
         }
 
         Subject newSubject = new Subject();
         newSubject.setTenMonHocInput(tenMon);
 
-        btnThem.setEnabled(false);
+        showLoading();
         ApiClient.getApiService().createSubject(newSubject).enqueue(new Callback<Map<String, String>>() {
             @Override
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
-                btnThem.setEnabled(true);
+                hideLoading();
                 if (response.isSuccessful()) {
                     Toast.makeText(CategorySubjectActivity.this, "Thêm môn học thành công", Toast.LENGTH_SHORT).show();
                     edtTenMon.setText("");
+                    hideKeyboard();
                     loadSubjectList();
                 } else {
                     showErrorDetails(response);
@@ -129,7 +175,7 @@ public class CategorySubjectActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
-                btnThem.setEnabled(true);
+                hideLoading();
                 Toast.makeText(CategorySubjectActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
             }
         });
