@@ -20,6 +20,7 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import retrofit2.Call;
@@ -150,11 +151,29 @@ public class CreateClassActivity extends AppCompatActivity {
     }
 
     private void setupTermSpinners() {
+        Calendar cal = Calendar.getInstance();
+        int currentYear = cal.get(Calendar.YEAR);
+        int currentMonth = cal.get(Calendar.MONTH);
+        // Xác định năm học hiện hành theo thực tế Việt Nam (Tháng 9 bắt đầu năm học mới)
+        int effectiveSchoolStartYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
+
         List<String> years = new ArrayList<>();
         for (Map<String, String> m : termList) {
             String namHoc = m.get("namhoc");
-            if (namHoc != null && !years.contains(namHoc)) years.add(namHoc);
+            if (namHoc != null && !years.contains(namHoc)) {
+                try {
+                    // Tách năm bắt đầu (vd: '2024-2025' -> '2024')
+                    String startYearStr = namHoc.contains("-") ? namHoc.split("-")[0].trim() : namHoc.trim();
+                    int startYear = Integer.parseInt(startYearStr);
+
+                    // Chỉ lọc lấy các niên khóa hiện hành hoặc tương lai
+                    if (startYear >= effectiveSchoolStartYear) {
+                        years.add(namHoc);
+                    }
+                } catch (Exception ignored) {}
+            }
         }
+
         autoCompleteNamHoc.setAdapter(new ArrayAdapter<>(this, 
                 android.R.layout.simple_dropdown_item_1line, years));
 
