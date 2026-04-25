@@ -39,47 +39,44 @@
                 android:textStyle="bold" />
         </RelativeLayout>
 
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/progressIndicator"
+
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:indeterminate="true"
-            android:visibility="gone" />
+            android:layout_marginBottom="16dp">
 
-        <TextView
-            android:id="@+id/tvInstruction"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🔍 Nhập mã số để tìm học sinh..."
-            android:textColor="#757575"
-            android:textSize="16sp"
-            android:textStyle="italic"
-            android:layout_marginBottom="16dp"
-            android:gravity="center" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilMaHS"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:startIconDrawable="@android:drawable/ic_menu_search"
-            app:endIconMode="clear_text"
-            app:boxBackgroundColor="#E3F2FD"
-            app:boxStrokeWidthFocused="2dp"
-            android:hint="Mã học sinh (Nhập để tìm kiếm)">
-
-            <AutoCompleteTextView
-                android:id="@+id/autoCompleteMaHS"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilMaHS"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="64dp"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:completionThreshold="1"
-                android:inputType="textNoSuggestions" />
-        </com.google.android.material.textfield.TextInputLayout>
+                app:startIconDrawable="@android:drawable/ic_menu_search"
+                app:endIconMode="clear_text"
+                app:boxBackgroundColor="#E3F2FD"
+                app:boxStrokeWidthFocused="2dp"
+                android:hint="Mã học sinh (Nhập để tìm kiếm)">
+
+                <AutoCompleteTextView
+                    android:id="@+id/autoCompleteMaHS"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="64dp"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:completionThreshold="1"
+                    android:inputType="textNoSuggestions" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ProgressBar
+                android:id="@+id/pbSearchLoading"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="48dp"
+                android:indeterminateTint="#1976D2"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

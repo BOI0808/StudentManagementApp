@@ -3,6 +3,8 @@ package com.example.studentmanagementapp;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -14,6 +16,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -51,10 +54,15 @@ public class EditStudentActivity extends AppCompatActivity {
     private MaterialButton btnLuuCapNhat;
     private ImageButton btnBack;
     private LinearProgressIndicator progressIndicator;
+    private ProgressBar pbSearchLoading;
     private TextView tvInstruction;
     
     private Student currentStudent = null;
     private List<Student> lastSearchResults = new ArrayList<>();
+
+    // Debouncing cho tìm kiếm
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable searchRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,7 +102,7 @@ public class EditStudentActivity extends AppCompatActivity {
         btnLuuCapNhat = findViewById(R.id.btnLuuCapNhat);
         btnBack = findViewById(R.id.btnBack);
         progressIndicator = findViewById(R.id.progressIndicator);
-        tvInstruction = findViewById(R.id.tvInstruction);
+        pbSearchLoading = findViewById(R.id.pbSearchLoading);
         
         enableFields(false);
     }
@@ -141,45 +149,54 @@ public class EditStudentActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Xóa các callback đang chờ nếu người dùng tiếp tục gõ
+                if (searchRunnable != null) {
+                    searchHandler.removeCallbacks(searchRunnable);
+                }
+
                 if (s.length() == 0) {
                     currentStudent = null;
                     clearFields();
-                    enableFields(false);
-                    updateInstruction(null);
+                    enableFields(false);;
+                    if (pbSearchLoading != null) pbSearchLoading.setVisibility(View.GONE);
+                    return;
                 }
 
-                if (currentStudent != null && !s.toString().equals(currentStudent.getMaHocSinh())) {
-                    currentStudent = null;
-                    clearFields();
-                    enableFields(false);
-                    updateInstruction(null);
-                }
+                // Hiển thị Spinner tìm kiếm ngay khi gõ và ẩn progressIndicator
+                if (pbSearchLoading != null) pbSearchLoading.setVisibility(View.VISIBLE);
+                if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
 
-                if (s.length() >= 2) {
-                    if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
-                    ApiClient.getApiService().searchStudent(s.toString()).enqueue(new Callback<List<Student>>() {
-                        @Override
-                        public void onResponse(@NonNull Call<List<Student>> call, @NonNull Response<List<Student>> response) {
-                            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
-                            if (response.isSuccessful() && response.body() != null) {
-                                lastSearchResults = response.body();
-                                List<String> suggestions = new ArrayList<>();
-                                for (Student st : lastSearchResults) {
-                                    suggestions.add(st.getMaHocSinh() + " - " + st.getHoTen());
+                searchRunnable = () -> {
+                    if (s.length() >= 1) {
+                        ApiClient.getApiService().searchStudent(s.toString()).enqueue(new Callback<List<Student>>() {
+                            @Override
+                            public void onResponse(@NonNull Call<List<Student>> call, @NonNull Response<List<Student>> response) {
+                                if (pbSearchLoading != null) pbSearchLoading.setVisibility(View.GONE);
+                                if (response.isSuccessful() && response.body() != null) {
+                                    lastSearchResults = response.body();
+                                    List<String> suggestions = new ArrayList<>();
+                                    for (Student st : lastSearchResults) {
+                                        suggestions.add(st.getMaHocSinh() + " - " + st.getHoTen());
+                                    }
+                                    
+                                    ArrayAdapter<String> adapter = new ArrayAdapter<>(EditStudentActivity.this,
+                                            android.R.layout.simple_dropdown_item_1line, suggestions);
+                                    autoCompleteMaHS.setAdapter(adapter);
+                                    autoCompleteMaHS.showDropDown();
                                 }
-                                
-                                ArrayAdapter<String> adapter = new ArrayAdapter<>(EditStudentActivity.this,
-                                        android.R.layout.simple_dropdown_item_1line, suggestions);
-                                autoCompleteMaHS.setAdapter(adapter);
-                                autoCompleteMaHS.showDropDown();
                             }
-                        }
-                        @Override
-                        public void onFailure(@NonNull Call<List<Student>> call, @NonNull Throwable t) {
-                            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
-                        }
-                    });
-                }
+                            @Override
+                            public void onFailure(@NonNull Call<List<Student>> call, @NonNull Throwable t) {
+                                if (pbSearchLoading != null) pbSearchLoading.setVisibility(View.GONE);
+                            }
+                        });
+                    } else {
+                        if (pbSearchLoading != null) pbSearchLoading.setVisibility(View.GONE);
+                    }
+                };
+
+                // Trì hoãn việc gọi API 300ms (Debouncing)
+                searchHandler.postDelayed(searchRunnable, 300);
             }
 
             @Override
@@ -216,7 +233,6 @@ public class EditStudentActivity extends AppCompatActivity {
         else if ("GT3".equals(maGT)) rbKhac.setChecked(true);
 
         enableFields(true);
-        updateInstruction(student);
         
         edtTenHS.postDelayed(() -> {
             edtTenHS.requestFocus();
@@ -225,17 +241,6 @@ public class EditStudentActivity extends AppCompatActivity {
                 imm.showSoftInput(edtTenHS, InputMethodManager.SHOW_IMPLICIT);
             }
         }, 100);
-    }
-
-    private void updateInstruction(Student student) {
-        if (tvInstruction == null) return;
-        if (student == null) {
-            tvInstruction.setText("🔍 Nhập mã số để tìm học sinh...");
-            tvInstruction.setTextColor(Color.parseColor("#757575"));
-        } else {
-            tvInstruction.setText("✅ Đang chỉnh sửa hồ sơ em: " + student.getHoTen());
-            tvInstruction.setTextColor(Color.parseColor("#388E3C")); // Màu xanh lá
-        }
     }
 
     private void enableFields(boolean enabled) {
