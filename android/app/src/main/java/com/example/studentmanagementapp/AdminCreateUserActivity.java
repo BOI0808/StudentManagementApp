@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -68,7 +69,8 @@ public class AdminCreateUserActivity extends AppCompatActivity {
             uri -> {
                 if (uri != null) {
                     selectedFileUri = uri;
-                    processExcelFile(uri);
+                    showLoading(); // Phản hồi tức thì ngay khi nhận được URI
+                    new Thread(() -> processExcelFile(uri)).start(); // Đẩy vào luồng nền
                 }
             }
     );
@@ -258,19 +260,25 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                 }
             }
             
-            if (!usersFromExcel.isEmpty()) {
-                showPreviewDialog(usersFromExcel);
-            } else {
-                Toast.makeText(this, "Không tìm thấy dữ liệu hợp lệ trong file", Toast.LENGTH_SHORT).show();
-            }
+            runOnUiThread(() -> {
+                hideLoading();
+                if (!usersFromExcel.isEmpty()) {
+                    showPreviewDialog(usersFromExcel);
+                } else {
+                    Toast.makeText(AdminCreateUserActivity.this, "Không tìm thấy dữ liệu hợp lệ trong file", Toast.LENGTH_SHORT).show();
+                }
+            });
 
         } catch (Exception e) {
             Log.e("ExcelError", "Lỗi xử lý file: ", e);
-            new AlertDialog.Builder(this)
-                    .setTitle("Lỗi đọc file")
-                    .setMessage(e.getMessage())
-                    .setPositiveButton("OK", null)
-                    .show();
+            runOnUiThread(() -> {
+                hideLoading();
+                new AlertDialog.Builder(AdminCreateUserActivity.this)
+                        .setTitle("Lỗi đọc file")
+                        .setMessage(e.getMessage())
+                        .setPositiveButton("OK", null)
+                        .show();
+            });
         }
     }
 
@@ -315,6 +323,11 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         RecyclerView rvPreview = view.findViewById(R.id.rvExcelPreview);
         MaterialButton btnConfirm = view.findViewById(R.id.btnConfirmImport);
         
+        // Đảm bảo nút xác nhận có màu đồng bộ
+        if (btnConfirm != null) {
+            btnConfirm.setBackgroundColor(android.graphics.Color.parseColor("#6750A4"));
+        }
+        
         rvPreview.setLayoutManager(new LinearLayoutManager(this));
         rvPreview.setAdapter(new GenericAdapter<>(users, R.layout.item_excel_import_row, (user, itemView, position) -> {
             ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
@@ -349,7 +362,16 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                 public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
                     hideLoading();
                     if (response.isSuccessful()) {
-                        Toast.makeText(AdminCreateUserActivity.this, "Import thành công!", Toast.LENGTH_SHORT).show();
+                        new MaterialAlertDialogBuilder(AdminCreateUserActivity.this)
+                                .setTitle("Thành công")
+                                .setMessage("Đã tạo tài khoản từ tệp Excel thành công! Bạn có muốn kiểm tra danh sách tài khoản ngay không?")
+                                .setCancelable(false)
+                                .setPositiveButton("Xem danh sách", (dialog, which) -> {
+                                    Intent intent = new Intent(AdminCreateUserActivity.this, AdminUserListActivity.class);
+                                    startActivity(intent);
+                                })
+                                .setNegativeButton("Đóng", null)
+                                .show();
                     } else {
                         List<String> errors = parseErrorResponse(response);
                         showValidationErrorDialog(errors);
