@@ -9,10 +9,11 @@
     android:padding="16dp"
     tools:context=".AdminUserListActivity">
 
+    <!-- Header Section -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="8dp">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -34,23 +35,49 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilSearch"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+    <!-- Progress Indicator -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressIndicator"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:hint="Tìm theo tên hoặc mã nhân viên"
-        app:startIconDrawable="@android:drawable/ic_menu_search"
-        app:endIconMode="clear_text">
+        android:layout_marginBottom="8dp"
+        android:indeterminate="true"
+        android:visibility="gone" />
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/edtSearchUser"
+    <!-- Search Section -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilSearch"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:hint="Tìm theo tên hoặc mã nhân viên"
+            app:startIconDrawable="@android:drawable/ic_menu_search"
+            app:endIconMode="clear_text">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtSearchUser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ProgressBar
+            android:id="@+id/pbSearchLoading"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="40dp"
+            android:indeterminateTint="#1976D2"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Content Card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -60,73 +87,121 @@
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp">
 
-        <HorizontalScrollView
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:scrollbars="horizontal">
+            android:layout_height="match_parent">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
+            <HorizontalScrollView
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:fillViewport="true"
+                android:scrollbars="horizontal">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="#E0E0E0"
-                    android:orientation="horizontal"
-                    android:paddingVertical="12dp"
-                    android:paddingHorizontal="8dp">
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
 
-                    <TextView android:layout_width="50dp" android:layout_height="wrap_content" android:text="STT" android:textStyle="bold" android:textAlignment="center" />
-                    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="Mã NV" android:textStyle="bold" android:textAlignment="center" />
-                    <TextView android:layout_width="180dp" android:layout_height="wrap_content" android:text="Họ và tên" android:textStyle="bold" android:paddingStart="8dp" />
-                    <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="Điện thoại" android:textStyle="bold" android:textAlignment="center" />
-                    <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="Tài khoản" android:textStyle="bold" android:textAlignment="center" />
-                    <TextView android:layout_width="100dp" android:layout_height="wrap_content" android:text="Mật khẩu" android:textStyle="bold" android:textAlignment="center" />
+                    <!-- Table Header -->
                     <LinearLayout
-                        android:layout_width="200dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:background="#1976D2"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:paddingStart="8dp">
+                        android:paddingVertical="12dp"
+                        android:paddingHorizontal="8dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <TextView android:layout_width="50dp" android:textColor="#FFFFFF" android:layout_height="wrap_content" android:text="STT" android:textStyle="bold" android:textAlignment="center" />
+                        <TextView android:layout_width="80dp" android:textColor="#FFFFFF" android:layout_height="wrap_content" android:text="Mã NV" android:textStyle="bold" android:textAlignment="center" />
+                        <TextView android:layout_width="180dp" android:textColor="#FFFFFF" android:layout_height="wrap_content" android:text="Họ và tên" android:textStyle="bold" android:paddingStart="8dp" />
+                        <TextView android:layout_width="120dp" android:textColor="#FFFFFF" android:layout_height="wrap_content" android:text="Điện thoại" android:textStyle="bold" android:textAlignment="center" />
+                        <TextView android:layout_width="120dp" android:textColor="#FFFFFF" android:layout_height="wrap_content" android:text="Tài khoản" android:textStyle="bold" android:textAlignment="center" />
+
+                        <!-- Bảo mật Column -->
+                        <LinearLayout
+                            android:layout_width="100dp"
                             android:layout_height="wrap_content"
-                            android:text="Quyền hệ thống"
-                            android:textStyle="bold" />
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="#FFFFFF"
+                                android:text="Mật khẩu"
+                                android:textStyle="bold"
+                                />
+                        </LinearLayout>
 
-                        <ImageButton
-                            android:id="@+id/btnHelpRights"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:src="@android:drawable/ic_menu_info_details"
-                            app:tint="#1976D2" />
-                     </LinearLayout>
-                    <TextView android:layout_width="60dp" android:layout_height="wrap_content" android:text="Sửa" android:textStyle="bold" android:textAlignment="center" />
-                    <TextView android:layout_width="60dp" android:layout_height="wrap_content" android:text="Xóa" android:textStyle="bold" android:textAlignment="center" />
+                        <LinearLayout
+                            android:layout_width="200dp"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:paddingStart="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="#FFFFFF"
+                                android:text="Quyền hệ thống"
+                                android:textStyle="bold"
+                                android:gravity="center"
+                                android:layout_marginTop="-2sp"/>
+
+                            <ImageButton
+                                android:id="@+id/btnHelpRights"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:src="@android:drawable/ic_menu_info_details"
+                                android:layout_marginTop="-1sp"
+                                app:tint="#FFFFFF" />
+                         </LinearLayout>
+                        <TextView android:layout_width="60dp" android:textColor="#FFFFFF" android:layout_height="wrap_content" android:text="Sửa" android:textStyle="bold" android:textAlignment="center" />
+                        <TextView android:layout_width="60dp" android:textColor="#FFFFFF" android:layout_height="wrap_content" android:text="Xóa" android:textStyle="bold" android:textAlignment="center" />
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvDanhSachNhanVien"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        tools:listitem="@layout/item_admin_user_row" />
+
                 </LinearLayout>
+            </HorizontalScrollView>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvDanhSachNhanVien"
-                    android:layout_width="match_parent"
+            <!-- Empty State -->
+            <LinearLayout
+                android:id="@+id/layoutEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:src="@android:drawable/ic_menu_myplaces"
+                    app:tint="#CCCCCC" />
+
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    tools:listitem="@layout/item_admin_user_row" />
-
+                    android:layout_marginTop="12dp"
+                    android:text="Không tìm thấy tài khoản nào"
+                    android:textColor="#999999"
+                    android:textSize="16sp" />
             </LinearLayout>
-        </HorizontalScrollView>
+        </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- Action Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLuuDanhSach"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:text="THÊM TÀI KHOẢN MỚI"
         android:textSize="16sp"
-        android:textStyle="bold"
-        app:cornerRadius="8dp" />
+        android:textStyle="bold"        app:cornerRadius="8dp" />
 
 </LinearLayout>

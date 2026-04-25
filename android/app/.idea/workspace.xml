@@ -200,22 +200,8 @@
   <component name="ChangeListManager">
     <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminUserListActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminUserListActivity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_admin_user_list.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_admin_user_list.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_category_grade.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_category_grade.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_category_subject.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_category_subject.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_category_term.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_category_term.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_change_password.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_change_password.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_create_class.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_create_class.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_create_class_list.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_create_class_list.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_edit_exam_type.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_edit_exam_type.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_edit_student.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_edit_student.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_exam_type_management.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_exam_type_management.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_grade_entry.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_grade_entry.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_main.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_receive_students.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_receive_students.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_search_students.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_search_students.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_subject_report.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_subject_report.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_system_parameters.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_system_parameters.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -390,12 +376,12 @@
       <map>
         <entry key="com.example.studentmanagementapp">
           <value>
-            <CheckInfo lastCheckTimestamp="1776998734108" />
+            <CheckInfo lastCheckTimestamp="1777085532341" />
           </value>
         </entry>
         <entry key="com.example.studentmanagementapp.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1776998734065" />
+            <CheckInfo lastCheckTimestamp="1777085532341" />
           </value>
         </entry>
       </map>
