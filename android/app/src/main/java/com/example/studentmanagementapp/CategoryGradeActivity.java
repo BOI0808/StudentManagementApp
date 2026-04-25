@@ -1,9 +1,9 @@
 package com.example.studentmanagementapp;
 
-import android.content.Context;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,10 +43,8 @@ public class CategoryGradeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_category_grade);
 
         initViews();
+        setupListeners();
         loadBlockList();
-
-        btnBack.setOnClickListener(v -> finish());
-        btnThem.setOnClickListener(v -> performAddBlock());
     }
 
     private void initViews() {
@@ -58,6 +56,26 @@ public class CategoryGradeActivity extends AppCompatActivity {
         progressIndicator = findViewById(R.id.progressIndicator);
 
         rvKhoiLop.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void setupListeners() {
+        btnBack.setOnClickListener(v -> finish());
+        btnThem.setOnClickListener(v -> performAddBlock());
+
+        edtTenKhoi.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (tilTenKhoi != null) {
+                    tilTenKhoi.setError(null);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void showLoading() {
@@ -115,7 +133,7 @@ public class CategoryGradeActivity extends AppCompatActivity {
     }
 
     private void performAddBlock() {
-        String tenKhoi = edtTenKhoi.getText() != null ? edtTenKhoi.getText().toString().trim() : "";
+        final String tenKhoi = edtTenKhoi.getText() != null ? edtTenKhoi.getText().toString().trim() : "";
         
         tilTenKhoi.setError(null);
         if (tenKhoi.isEmpty()) {
@@ -132,11 +150,22 @@ public class CategoryGradeActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
                 hideLoading();
                 if (response.isSuccessful()) {
-                    Toast.makeText(CategoryGradeActivity.this, "Thêm thành công", Toast.LENGTH_SHORT).show();
-                    edtTenKhoi.setText("");
-                    loadBlockList();
+                    new MaterialAlertDialogBuilder(CategoryGradeActivity.this)
+                            .setTitle("Thành công")
+                            .setMessage("Đã tạo khối lớp " + tenKhoi + " thành công")
+                            .setCancelable(false)
+                            .setPositiveButton("Tạo tiếp", (dialog, which) -> {
+                                edtTenKhoi.setText("");
+                                loadBlockList();
+                            })
+                            .setNegativeButton("Đóng", (dialog, which) -> finish())
+                            .show();
                 } else {
-                    Toast.makeText(CategoryGradeActivity.this, "Khối đã tồn tại hoặc lỗi", Toast.LENGTH_SHORT).show();
+                    new MaterialAlertDialogBuilder(CategoryGradeActivity.this)
+                            .setTitle("Thất bại")
+                            .setMessage("Khối lớp " + tenKhoi + " đã tồn tại")
+                            .setPositiveButton("OK", null)
+                            .show();
                 }
             }
 

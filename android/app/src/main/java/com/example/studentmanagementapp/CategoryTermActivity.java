@@ -307,7 +307,7 @@ public class CategoryTermActivity extends AppCompatActivity {
 
     private void showSimpleErrorDialog(String message) {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Lỗi")
+                .setTitle("Thất bại")
                 .setMessage(message)
                 .setPositiveButton("OK", null)
                 .show();

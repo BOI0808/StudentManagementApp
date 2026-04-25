@@ -41,6 +41,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -123,7 +124,11 @@ public class CreateClassListActivity extends AppCompatActivity {
             }
 
             if (!isValid) {
-                Toast.makeText(this, "Vui lòng chọn đầy đủ thông tin lớp trước khi Import", Toast.LENGTH_SHORT).show();
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Thất bại")
+                        .setMessage("Vui lòng chọn đầy đủ thông tin lớp trước khi Import")
+                        .setPositiveButton("OK", null)
+                        .show();
                 return;
             }
             filePickerLauncher.launch("*/*");
@@ -358,16 +363,42 @@ public class CreateClassListActivity extends AppCompatActivity {
 
                 int idxMaHS = -1, idxHoTen = -1, idxGioiTinh = -1, idxNgaySinh = -1;
 
+                List<String> mahsVariants = Arrays.asList("mã học sinh", "mahs", "mã hs", "student id", "msid");
+                List<String> hotenVariants = Arrays.asList("họ và tên", "hoten", "họ tên", "full name", "name", "tên học sinh");
+                List<String> gioitinhVariants = Arrays.asList("giới tính", "gioitinh", "gender", "sex");
+                List<String> ngaysinhVariants = Arrays.asList("ngày sinh", "ngaysinh", "birthday", "dob", "birth date", "ngày sinh nhật");
+
                 for (Cell cell : headerRow) {
                     String title = formatter.formatCellValue(cell).trim().toLowerCase();
-                    if (title.contains("mã học sinh") || title.contains("mahs") || title.equals("mã hs")) idxMaHS = cell.getColumnIndex();
-                    else if (title.contains("họ và tên") || title.contains("hoten") || title.equals("họ tên")) idxHoTen = cell.getColumnIndex();
-                    else if (title.contains("giới tính") || title.contains("gioitinh") || title.contains("gender")) idxGioiTinh = cell.getColumnIndex();
-                    else if (title.contains("ngày sinh") || title.contains("ngaysinh") || title.contains("birthday")) idxNgaySinh = cell.getColumnIndex();
+                    
+                    if (mahsVariants.contains(title)) {
+                        idxMaHS = cell.getColumnIndex();
+                    } else if (hotenVariants.contains(title)) {
+                        idxHoTen = cell.getColumnIndex();
+                    } else if (gioitinhVariants.contains(title)) {
+                        idxGioiTinh = cell.getColumnIndex();
+                    } else if (ngaysinhVariants.contains(title)) {
+                        idxNgaySinh = cell.getColumnIndex();
+                    }
                 }
 
-                if (idxMaHS == -1 || idxHoTen == -1) {
-                    throw new Exception("Không tìm thấy các cột bắt buộc trong file (Mã HS, Họ tên). Vui lòng kiểm tra lại tiêu đề cột.");
+                if (idxMaHS == -1 || idxHoTen == -1 || idxGioiTinh == -1 || idxNgaySinh == -1) {
+                    final List<String> missingCols = new ArrayList<>();
+                    if (idxMaHS == -1) missingCols.add("Mã học sinh");
+                    if (idxHoTen == -1) missingCols.add("Họ và tên");
+                    if (idxGioiTinh == -1) missingCols.add("Giới tính");
+                    if (idxNgaySinh == -1) missingCols.add("Ngày sinh");
+                    
+                    final String msg = "File Excel thiếu cột: " + String.join(", ", missingCols);
+                    runOnUiThread(() -> {
+                        hideLoading();
+                        new MaterialAlertDialogBuilder(CreateClassListActivity.this)
+                                .setTitle("Thất bại")
+                                .setMessage(msg)
+                                .setPositiveButton("OK", null)
+                                .show();
+                    });
+                    return;
                 }
 
                 for (int i = 1; i <= sheet.getLastRowNum(); i++) {
@@ -382,25 +413,19 @@ public class CreateClassListActivity extends AppCompatActivity {
                     student.setMaHocSinh(maHS);
                     student.setHoTen(hoTen);
 
-                    if (idxNgaySinh != -1) {
-                        Cell dateCell = row.getCell(idxNgaySinh);
-                        if (dateCell != null && dateCell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(dateCell)) {
-                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                            student.setNgaySinh(sdf.format(dateCell.getDateCellValue()));
-                        } else {
-                            String rawDate = formatter.formatCellValue(dateCell).trim();
-                            student.setNgaySinh(formatDateString(rawDate));
-                        }
+                    Cell dateCell = row.getCell(idxNgaySinh);
+                    if (dateCell != null && dateCell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(dateCell)) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        student.setNgaySinh(sdf.format(dateCell.getDateCellValue()));
+                    } else {
+                        String rawDate = formatter.formatCellValue(dateCell).trim();
+                        student.setNgaySinh(formatDateString(rawDate));
                     }
 
-                    if (idxGioiTinh != -1) {
-                        String genderText = formatter.formatCellValue(row.getCell(idxGioiTinh)).trim();
-                        if (genderText.equalsIgnoreCase("Nam") || genderText.equalsIgnoreCase("GT1")) student.setMaGioiTinh("GT1");
-                        else if (genderText.equalsIgnoreCase("Nữ") || genderText.equalsIgnoreCase("Nu") || genderText.equalsIgnoreCase("GT2")) student.setMaGioiTinh("GT2");
-                        else student.setMaGioiTinh("GT3");
-                    } else {
-                        student.setMaGioiTinh("GT1");
-                    }
+                    String genderText = formatter.formatCellValue(row.getCell(idxGioiTinh)).trim();
+                    if (genderText.equalsIgnoreCase("Nam") || genderText.equalsIgnoreCase("GT1")) student.setMaGioiTinh("GT1");
+                    else if (genderText.equalsIgnoreCase("Nữ") || genderText.equalsIgnoreCase("Nu") || genderText.equalsIgnoreCase("GT2")) student.setMaGioiTinh("GT2");
+                    else student.setMaGioiTinh("GT3");
 
                     studentsFromExcel.add(student);
                 }
@@ -431,14 +456,21 @@ public class CreateClassListActivity extends AppCompatActivity {
                             .show();
                 });
             } else {
-                runOnUiThread(this::hideLoading);
+                runOnUiThread(() -> {
+                    hideLoading();
+                    new MaterialAlertDialogBuilder(CreateClassListActivity.this)
+                            .setTitle("Thông báo")
+                            .setMessage("File Excel không có dữ liệu học sinh hợp lệ hoặc sai định dạng tiêu đề cột")
+                            .setPositiveButton("OK", null)
+                            .show();
+                });
             }
 
         } catch (Exception e) {
             Log.e("ExcelError", "Lỗi xử lý file: ", e);
             runOnUiThread(() -> {
                 hideLoading();
-                new AlertDialog.Builder(CreateClassListActivity.this)
+                new MaterialAlertDialogBuilder(CreateClassListActivity.this)
                         .setTitle("Lỗi đọc file")
                         .setMessage(e.getMessage())
                         .setPositiveButton("OK", null)
@@ -695,7 +727,7 @@ public class CreateClassListActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     String tenLop = autoLop.getText().toString();
                     new MaterialAlertDialogBuilder(CreateClassListActivity.this)
-                            .setTitle("Lưu danh sách thành công")
+                            .setTitle("Thành công")
                             .setMessage("Đã xếp lớp thành công cho " + listHocSinhSelected.size() + " học sinh vào lớp " + tenLop + ". Bạn có muốn tiếp tục lập danh sách cho lớp khác không?")
                             .setCancelable(false)
                             .setPositiveButton("Tiếp tục lập", (dialog, which) -> resetUI())
@@ -724,7 +756,7 @@ public class CreateClassListActivity extends AppCompatActivity {
                             adapter.notifyDataSetChanged();
                             if (firstErrorPos != -1) rvHocSinh.smoothScrollToPosition(firstErrorPos);
                             new MaterialAlertDialogBuilder(CreateClassListActivity.this)
-                                    .setTitle("Lỗi dữ liệu")
+                                    .setTitle("Thất bại")
                                     .setMessage("Có " + arr.length() + " học sinh không hợp lệ. Vui lòng kiểm tra các dòng màu đỏ trong danh sách.")
                                     .setPositiveButton("Đã hiểu", null)
                                     .show();

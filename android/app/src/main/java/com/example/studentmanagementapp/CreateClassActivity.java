@@ -191,23 +191,18 @@ public class CreateClassActivity extends AppCompatActivity {
 
     private void showSuccessDialog(String maLop, String tenLop, String namHoc, String hocKy) {
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Tạo lớp thành công!")
-                .setMessage("Lớp " + tenLop + " đã được tạo thành công trong hệ thống. Bạn có muốn thêm học sinh vào lớp này ngay bây giờ không?")
-                .setPositiveButton("Xếp lớp ngay", (dialog, which) -> {
-                    Intent intent = new Intent(this, CreateClassListActivity.class);
-                    intent.putExtra("MaLop", maLop);
-                    intent.putExtra("TenLop", tenLop);
-                    intent.putExtra("NamHoc", namHoc);
-                    intent.putExtra("HocKy", hocKy);
-                    startActivity(intent);
-                    finish();
-                })
-                .setNeutralButton("Tạo lớp tiếp", (dialog, which) -> {
+                .setTitle("Thành công")
+                .setMessage("Lớp " + tenLop + " đã được tạo thành công trong hệ thống.")
+                .setPositiveButton("Tạo lớp tiếp", (dialog, which) -> {
+                    // Xóa trắng dữ liệu cũ để sẵn sàng tạo lớp mới
                     resetFields();
                     dialog.dismiss();
                 })
-                .setNegativeButton("Đóng", (dialog, which) -> finish())
-                .setCancelable(false)
+                .setNegativeButton("Đóng", (dialog, which) -> {
+                    // Thoát màn hình tạo lớp
+                    finish();
+                })
+                .setCancelable(false) // Bắt buộc người dùng phải chọn một trong hai
                 .show();
     }
 
@@ -217,10 +212,10 @@ public class CreateClassActivity extends AppCompatActivity {
         if (tilNamHoc != null) tilNamHoc.setError(null);
         if (tilHocKy != null) tilHocKy.setError(null);
 
-        String tenLop = (edtTenLop.getText() != null) ? edtTenLop.getText().toString().trim() : "";
+        final String tenLop = (edtTenLop.getText() != null) ? edtTenLop.getText().toString().trim() : "";
         String tenKhoi = autoCompleteKhoiLop.getText().toString();
-        String namHoc = autoCompleteNamHoc.getText().toString();
-        String hocKyStr = autoCompleteHocKy.getText().toString();
+        final String namHoc = autoCompleteNamHoc.getText().toString();
+        final String hocKyStr = autoCompleteHocKy.getText().toString();
 
         boolean hasError = false;
 
@@ -273,7 +268,11 @@ public class CreateClassActivity extends AppCompatActivity {
                     if (maLop == null) maLop = response.body().get("ma"); // Fallback
                     showSuccessDialog(maLop, tenLop, namHoc, hocKyStr);
                 } else {
-                    Toast.makeText(CreateClassActivity.this, "Lỗi: Lớp đã tồn tại trong niên khóa này", Toast.LENGTH_SHORT).show();
+                    new MaterialAlertDialogBuilder(CreateClassActivity.this)
+                            .setTitle("Thất bại")
+                            .setMessage("Lớp " + tenLop + " đã tồn tại")
+                            .setPositiveButton("OK", null)
+                            .show();
                 }
             }
 

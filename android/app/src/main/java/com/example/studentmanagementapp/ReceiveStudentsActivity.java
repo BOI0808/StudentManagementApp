@@ -257,7 +257,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                     if (!studentsFromExcel.isEmpty()) {
                         showStudentPreviewDialog(studentsFromExcel);
                     } else {
-                        Toast.makeText(ReceiveStudentsActivity.this, "Không tìm thấy dữ liệu học sinh hợp lệ", Toast.LENGTH_SHORT).show();
+                        showFailureDialog("Không tìm thấy dữ liệu học sinh hợp lệ trong file Excel.");
                     }
                 });
 
@@ -265,11 +265,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                 Log.e("ExcelError", "Lỗi xử lý file: ", e);
                 runOnUiThread(() -> {
                     hideLoading();
-                    new AlertDialog.Builder(ReceiveStudentsActivity.this)
-                            .setTitle("Lỗi đọc file")
-                            .setMessage(e.getMessage())
-                            .setPositiveButton("OK", null)
-                            .show();
+                    showFailureDialog("Lỗi đọc file: " + e.getMessage());
                 });
             }
         });
@@ -371,11 +367,11 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                     hideLoading();
-                    Toast.makeText(ReceiveStudentsActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    showFailureDialog("Lỗi kết nối Server: " + t.getMessage());
                 }
             });
         } catch (Exception e) {
-            Toast.makeText(this, "Lỗi chuẩn bị file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            showFailureDialog("Lỗi chuẩn bị file: " + e.getMessage());
         }
     }
 
@@ -406,9 +402,16 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
         for (String err : errors) sb.append("• ").append(err).append("\n");
         
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Lỗi Import")
-                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("Thất bại")
                 .setMessage(sb.toString().trim())
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    private void showFailureDialog(String message) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Thất bại")
+                .setMessage(message)
                 .setPositiveButton("OK", null)
                 .show();
     }
@@ -487,47 +490,38 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     String maHS = response.body().get("MaHocSinh");
                     String tenHS = hoTen;
-                    
+
                     new MaterialAlertDialogBuilder(ReceiveStudentsActivity.this)
-                            .setTitle("Tiếp nhận thành công!")
-                            .setMessage("Học sinh " + tenHS + " đã được cấp mã " + maHS + ". Bạn có muốn xếp lớp cho học sinh này ngay bây giờ không?")
-                            .setPositiveButton("Xếp lớp ngay", (dialog, which) -> {
-                                try {
-                                    Class<?> targetClass = Class.forName("com.example.studentmanagementapp.CreateClassListActivity");
-                                    Intent intent = new Intent(ReceiveStudentsActivity.this, targetClass);
-                                    intent.putExtra("MaHocSinh", maHS);
-                                    intent.putExtra("HoTen", tenHS);
-                                    startActivity(intent);
-                                    finish();
-                                } catch (ClassNotFoundException e) {
-                                    Toast.makeText(ReceiveStudentsActivity.this, "Không tìm thấy màn hình lập danh sách lớp!", Toast.LENGTH_SHORT).show();
-                                    finish();
-                                }
-                            })
-                            .setNeutralButton("Tiếp nhận tiếp", (dialog, which) -> resetFields())
-                            .setNegativeButton("Đóng", (dialog, which) -> finish())
+                            .setTitle("Tiếp nhận thành công")
+                            .setMessage("Học sinh " + tenHS + " đã được cấp mã " + maHS + ".")
                             .setCancelable(false)
+                            .setPositiveButton("Tiếp nhận tiếp", (dialog, which) -> {
+                                // Xóa trắng các ô nhập liệu để sẵn sàng cho học sinh tiếp theo
+                                resetFields();
+                            })
+                            .setNegativeButton("Đóng", (dialog, which) -> {
+                                // Thoát màn hình tiếp nhận
+                                finish();
+                            })
                             .show();
                 } else {
+                    String errorMsg = "Dữ liệu không hợp lệ";
                     try (ResponseBody errorBody = response.errorBody()) {
                         if (errorBody != null) {
-                            String errorContent = errorBody.string();
-                            JSONObject jObjError = new JSONObject(errorContent);
-                            String errorMsg = jObjError.has("error") ? jObjError.getString("error") : "Dữ liệu không hợp lệ";
-                            Toast.makeText(ReceiveStudentsActivity.this, "Thất bại: " + errorMsg, Toast.LENGTH_LONG).show();
-                        } else {
-                            Toast.makeText(ReceiveStudentsActivity.this, "Lỗi hệ thống: " + response.code(), Toast.LENGTH_SHORT).show();
+                            JSONObject jObjError = new JSONObject(errorBody.string());
+                            errorMsg = jObjError.has("error") ? jObjError.getString("error") : errorMsg;
                         }
                     } catch (Exception e) {
-                        Toast.makeText(ReceiveStudentsActivity.this, "Lỗi hệ thống: " + response.code(), Toast.LENGTH_SHORT).show();
+                        errorMsg = "Lỗi hệ thống: " + response.code();
                     }
+                    showFailureDialog(errorMsg);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(ReceiveStudentsActivity.this, "Không thể kết nối Server. Vui lòng kiểm tra mạng!", Toast.LENGTH_SHORT).show();
+                showFailureDialog("Không thể kết nối Server. Vui lòng kiểm tra mạng!");
             }
         });
     }
