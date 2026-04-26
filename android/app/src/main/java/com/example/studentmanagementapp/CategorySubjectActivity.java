@@ -2,6 +2,8 @@ package com.example.studentmanagementapp;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
@@ -44,10 +46,8 @@ public class CategorySubjectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_category_subject);
 
         initViews();
+        setupListeners();
         loadSubjectList();
-
-        btnBack.setOnClickListener(v -> finish());
-        btnThem.setOnClickListener(v -> performAddSubject());
     }
 
     private void initViews() {
@@ -59,6 +59,26 @@ public class CategorySubjectActivity extends AppCompatActivity {
         progressIndicator = findViewById(R.id.progressIndicator);
 
         rvMonHoc.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void setupListeners() {
+        btnBack.setOnClickListener(v -> finish());
+        btnThem.setOnClickListener(v -> performAddSubject());
+
+        edtTenMon.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (tilTenMon != null) {
+                    tilTenMon.setError(null);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void showLoading() {
@@ -131,7 +151,6 @@ public class CategorySubjectActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
                 hideLoading();
                 if (response.isSuccessful()) {
-                    Toast.makeText(CategorySubjectActivity.this, "Xóa môn học thành công", Toast.LENGTH_SHORT).show();
                     loadSubjectList();
                 } else {
                     Toast.makeText(CategorySubjectActivity.this, "Không thể xóa môn học", Toast.LENGTH_SHORT).show();
@@ -164,10 +183,16 @@ public class CategorySubjectActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
                 hideLoading();
                 if (response.isSuccessful()) {
-                    Toast.makeText(CategorySubjectActivity.this, "Thêm môn học thành công", Toast.LENGTH_SHORT).show();
-                    edtTenMon.setText("");
-                    hideKeyboard();
-                    loadSubjectList();
+                    new MaterialAlertDialogBuilder(CategorySubjectActivity.this)
+                            .setTitle("Thành Công")
+                            .setMessage("Đã thêm môn học thành công vào hệ thống.")
+                            .setCancelable(false)
+                            .setPositiveButton("Tạo tiếp", (dialog, which) -> {
+                                edtTenMon.setText("");
+                                loadSubjectList();
+                            })
+                            .setNegativeButton("Đóng", (dialog, which) -> finish())
+                            .show();
                 } else {
                     showErrorDetails(response);
                 }

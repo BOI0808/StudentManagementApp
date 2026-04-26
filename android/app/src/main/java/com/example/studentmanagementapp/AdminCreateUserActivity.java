@@ -177,7 +177,7 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                 targetCodes = Arrays.asList(permissionCodes);
                 break;
             case "TEACHER":
-                targetCodes = Arrays.asList("CNTNHS", "CNLDSL", "CNLDSHSCL", "CNTCHS", "CNNBD");
+                targetCodes = Arrays.asList("CNTNHS", "CNLDSL", "CNLDSHSCL", "CNTCHS", "CNNBD", "CNNDSCLKT");
                 break;
             case "MANAGEMENT":
                 targetCodes = Arrays.asList("CNLDSNH", "CNLDSKL", "CNLDSMH", "CNLBCTKM", "CNLBCTKHK", "CNCDTSHT");
@@ -497,7 +497,11 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
         List<String> permissions = getSelectedPermissions();
         if (permissions.isEmpty()) {
-            Toast.makeText(this, "Vui lòng chọn ít nhất một quyền", Toast.LENGTH_SHORT).show();
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Thất bại")
+                    .setMessage("Vui lòng chọn ít nhất một quyền hạn cho tài khoản này.")
+                    .setPositiveButton("OK", null)
+                    .show();
             return;
         }
 
