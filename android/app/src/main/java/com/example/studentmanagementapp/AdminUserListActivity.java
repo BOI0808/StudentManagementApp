@@ -190,15 +190,14 @@ public class AdminUserListActivity extends AppCompatActivity {
     private void confirmDeleteUser(User user) {
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Xác nhận")
-                .setMessage("Bạn có chắc muốn ngưng hoạt động tài khoản " + user.getHoTen() + "?")
-                .setPositiveButton("Ngưng hoạt động", (dialog, which) -> {
+                .setMessage("Bạn có chắc muốn xóa tài khoản của " + user.getHoTen() + "?")
+                .setPositiveButton("Xóa tài khoản", (dialog, which) -> {
                     showLoading();
                     ApiClient.getApiService().deleteAccount(user.getMaSo()).enqueue(new Callback<Map<String, String>>() {
                         @Override
                         public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
                             hideLoading();
                             if (response.isSuccessful()) {
-                                Toast.makeText(AdminUserListActivity.this, "Đã ngưng hoạt động tài khoản", Toast.LENGTH_SHORT).show();
                                 loadUserList();
                             }
                         }

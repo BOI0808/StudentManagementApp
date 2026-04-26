@@ -1,14 +1,18 @@
 package com.example.studentmanagementapp;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -27,6 +31,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import org.apache.poi.ss.usermodel.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -48,6 +53,7 @@ import retrofit2.Response;
 public class AdminCreateUserActivity extends AppCompatActivity {
 
     private TextView btnLogout, tvTitle;
+    private TextInputLayout tilFullName, tilEmail, tilPhone, tilUsername, tilPassword;
     private TextInputEditText edtFullName, edtUsername, edtPassword, edtEmail, edtPhone;
     private MaterialButton btnCreateAccount, btnXemDanhSach;
     private ImageButton btnImportExcel;
@@ -69,8 +75,8 @@ public class AdminCreateUserActivity extends AppCompatActivity {
             uri -> {
                 if (uri != null) {
                     selectedFileUri = uri;
-                    showLoading(); // Phản hồi tức thì ngay khi nhận được URI
-                    new Thread(() -> processExcelFile(uri)).start(); // Đẩy vào luồng nền
+                    showLoading();
+                    new Thread(() -> processExcelFile(uri)).start();
                 }
             }
     );
@@ -84,17 +90,26 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
         initViews();
         setupListeners();
+        setupErrorClearing();
         checkEditMode();
     }
 
     private void initViews() {
         btnLogout = findViewById(R.id.btnLogout);
         tvTitle = findViewById(R.id.tvTitle);
+        
+        tilFullName = findViewById(R.id.tilFullName);
+        tilEmail = findViewById(R.id.tilEmail);
+        tilPhone = findViewById(R.id.tilPhone);
+        tilUsername = findViewById(R.id.tilUsername);
+        tilPassword = findViewById(R.id.tilPassword);
+
         edtFullName = findViewById(R.id.edtFullName);
         edtUsername = findViewById(R.id.edtUsername);
         edtPassword = findViewById(R.id.edtPassword);
         edtEmail = findViewById(R.id.edtEmail);
         edtPhone = findViewById(R.id.edtPhone);
+        
         btnCreateAccount = findViewById(R.id.btnCreateAccount);
         btnXemDanhSach = findViewById(R.id.btnXemDanhSach);
         btnImportExcel = findViewById(R.id.btnImportExcel);
@@ -104,6 +119,24 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         btnQuickTeacher = findViewById(R.id.btnQuickTeacher);
         btnQuickManagement = findViewById(R.id.btnQuickManagement);
         btnQuickClear = findViewById(R.id.btnQuickClear);
+    }
+
+    private void setupErrorClearing() {
+        edtFullName.addTextChangedListener(new SimpleTextWatcher(tilFullName));
+        edtEmail.addTextChangedListener(new SimpleTextWatcher(tilEmail));
+        edtPhone.addTextChangedListener(new SimpleTextWatcher(tilPhone));
+        edtUsername.addTextChangedListener(new SimpleTextWatcher(tilUsername));
+        edtPassword.addTextChangedListener(new SimpleTextWatcher(tilPassword));
+    }
+
+    private static class SimpleTextWatcher implements TextWatcher {
+        private final TextInputLayout layout;
+        public SimpleTextWatcher(TextInputLayout layout) { this.layout = layout; }
+        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            if (layout != null) layout.setError(null);
+        }
+        @Override public void afterTextChanged(Editable s) {}
     }
 
     private void setupListeners() {
@@ -213,7 +246,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                 Sheet sheet = workbook.getSheetAt(0);
                 DataFormatter formatter = new DataFormatter();
 
-                // 1. Tìm vị trí cột dựa trên Header (Hàng 0)
                 Row headerRow = sheet.getRow(0);
                 if (headerRow == null) throw new Exception("File Excel không có dữ liệu tiêu đề.");
 
@@ -229,12 +261,10 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                     else if (title.contains("quyền hạn") || title.contains("quyenhan") || title.contains("quyen") || title.contains("rights")) idxQuyen = cell.getColumnIndex();
                 }
 
-                // Kiểm tra xem các cột bắt buộc có tồn tại không
                 if (idxHoTen == -1 || idxUsername == -1 || idxMatKhau == -1) {
                     throw new Exception("Không tìm thấy các cột bắt buộc trong file (Họ tên, Tên đăng nhập, Mật khẩu). Vui lòng kiểm tra lại tiêu đề cột.");
                 }
 
-                // 2. Đọc dữ liệu từ các hàng tiếp theo
                 for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                     Row row = sheet.getRow(i);
                     if (row == null) continue;
@@ -265,7 +295,11 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                 if (!usersFromExcel.isEmpty()) {
                     showPreviewDialog(usersFromExcel);
                 } else {
-                    Toast.makeText(AdminCreateUserActivity.this, "Không tìm thấy dữ liệu hợp lệ trong file", Toast.LENGTH_SHORT).show();
+                    new MaterialAlertDialogBuilder(this)
+                        .setTitle("Thông báo")
+                        .setMessage("Không tìm thấy dữ liệu hợp lệ trong file")
+                        .setPositiveButton("OK", null)
+                        .show();
                 }
             });
 
@@ -273,7 +307,7 @@ public class AdminCreateUserActivity extends AppCompatActivity {
             Log.e("ExcelError", "Lỗi xử lý file: ", e);
             runOnUiThread(() -> {
                 hideLoading();
-                new AlertDialog.Builder(AdminCreateUserActivity.this)
+                new MaterialAlertDialogBuilder(this)
                         .setTitle("Lỗi đọc file")
                         .setMessage(e.getMessage())
                         .setPositiveButton("OK", null)
@@ -323,11 +357,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         RecyclerView rvPreview = view.findViewById(R.id.rvExcelPreview);
         MaterialButton btnConfirm = view.findViewById(R.id.btnConfirmImport);
         
-        // Đảm bảo nút xác nhận có màu đồng bộ
-        if (btnConfirm != null) {
-            btnConfirm.setBackgroundColor(android.graphics.Color.parseColor("#6750A4"));
-        }
-        
         rvPreview.setLayoutManager(new LinearLayoutManager(this));
         rvPreview.setAdapter(new GenericAdapter<>(users, R.layout.item_excel_import_row, (user, itemView, position) -> {
             ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
@@ -364,13 +393,8 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                     if (response.isSuccessful()) {
                         new MaterialAlertDialogBuilder(AdminCreateUserActivity.this)
                                 .setTitle("Thành công")
-                                .setMessage("Đã tạo tài khoản từ tệp Excel thành công! Bạn có muốn kiểm tra danh sách tài khoản ngay không?")
-                                .setCancelable(false)
-                                .setPositiveButton("Xem danh sách", (dialog, which) -> {
-                                    Intent intent = new Intent(AdminCreateUserActivity.this, AdminUserListActivity.class);
-                                    startActivity(intent);
-                                })
-                                .setNegativeButton("Đóng", null)
+                                .setMessage("Đã tạo tài khoản từ tệp Excel thành công!")
+                                .setPositiveButton("OK", null)
                                 .show();
                     } else {
                         List<String> errors = parseErrorResponse(response);
@@ -381,7 +405,11 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                 @Override
                 public void onFailure(Call<Map<String, String>> call, Throwable t) {
                     hideLoading();
-                    Toast.makeText(AdminCreateUserActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    new MaterialAlertDialogBuilder(AdminCreateUserActivity.this)
+                            .setTitle("Thất bại")
+                            .setMessage("Lỗi kết nối Server: " + t.getMessage())
+                            .setPositiveButton("OK", null)
+                            .show();
                 }
             });
 
@@ -418,7 +446,11 @@ public class AdminCreateUserActivity extends AppCompatActivity {
     private void showValidationErrorDialog(List<String> errors) {
         StringBuilder sb = new StringBuilder();
         for (String err : errors) sb.append("• ").append(err).append("\n");
-        new AlertDialog.Builder(this).setTitle("Thông báo lỗi Import").setMessage(sb.toString().trim()).setPositiveButton("Đã hiểu", null).show();
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Lỗi Import")
+                .setMessage(sb.toString().trim())
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     private void checkEditMode() {
@@ -445,16 +477,23 @@ public class AdminCreateUserActivity extends AppCompatActivity {
     }
 
     private void performCreateOrUpdateAccount() {
+        clearAllErrors();
+        
         String fullName = edtFullName.getText().toString().trim();
         String username = edtUsername.getText().toString().trim();
         String password = edtPassword.getText().toString().trim();
         String email = edtEmail.getText().toString().trim();
         String phone = edtPhone.getText().toString().trim();
 
-        if (fullName.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty() || phone.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        boolean hasError = false;
+
+        if (fullName.isEmpty()) { tilFullName.setError("Vui lòng nhập họ và tên"); hasError = true; }
+        if (username.isEmpty()) { tilUsername.setError("Vui lòng nhập tên đăng nhập"); hasError = true; }
+        if (password.isEmpty()) { tilPassword.setError("Vui lòng nhập mật khẩu"); hasError = true; }
+        if (email.isEmpty()) { tilEmail.setError("Vui lòng nhập email"); hasError = true; }
+        if (phone.isEmpty()) { tilPhone.setError("Vui lòng nhập số điện thoại"); hasError = true; }
+
+        if (hasError) return;
 
         List<String> permissions = getSelectedPermissions();
         if (permissions.isEmpty()) {
@@ -505,10 +544,14 @@ public class AdminCreateUserActivity extends AppCompatActivity {
                         if (errorBody != null) {
                             JSONObject jsonError = new JSONObject(errorBody.string());
                             String errorMsg = jsonError.optString("error", "Lỗi xử lý dữ liệu");
-                            Toast.makeText(AdminCreateUserActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                            new MaterialAlertDialogBuilder(AdminCreateUserActivity.this)
+                                    .setTitle("Thông báo")
+                                    .setMessage(errorMsg)
+                                    .setPositiveButton("OK", null)
+                                    .show();
                         }
                     } catch (Exception e) {
-                        Toast.makeText(AdminCreateUserActivity.this, "Lỗi server: " + response.code(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AdminCreateUserActivity.this, "Lỗi server", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -516,9 +559,21 @@ public class AdminCreateUserActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<Map<String, String>> call, Throwable t) {
                 hideLoading();
-                Toast.makeText(AdminCreateUserActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                new MaterialAlertDialogBuilder(AdminCreateUserActivity.this)
+                        .setTitle("Lỗi kết nối")
+                        .setMessage("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.")
+                        .setPositiveButton("OK", null)
+                        .show();
             }
         });
+    }
+
+    private void clearAllErrors() {
+        tilFullName.setError(null);
+        tilUsername.setError(null);
+        tilPassword.setError(null);
+        tilEmail.setError(null);
+        tilPhone.setError(null);
     }
 
     private List<String> getSelectedPermissions() {
@@ -537,6 +592,7 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         edtEmail.setText("");
         edtPhone.setText("");
         clearCheckBoxes((ViewGroup) findViewById(android.R.id.content));
+        clearAllErrors();
     }
 
     private void clearCheckBoxes(ViewGroup viewGroup) {
