@@ -25,7 +25,9 @@ import com.example.studentmanagementapp.model.ClassModel;
 import com.example.studentmanagementapp.model.Student;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -35,7 +37,8 @@ import retrofit2.Response;
 
 public class SearchStudentsActivity extends AppCompatActivity {
 
-    private AutoCompleteTextView autoLop, autoMaHS, autoTenHS;
+    private AutoCompleteTextView autoLop, autoMaHS, autoTenHS, autoNamHoc;
+    private TextInputLayout tilNamHoc, tilMaLop;
     private MaterialButton btnTimKiem;
     private RecyclerView rvKetQua;
     private ImageButton btnBack;
@@ -44,6 +47,9 @@ public class SearchStudentsActivity extends AppCompatActivity {
 
     private List<Map<String, Object>> searchResults = new ArrayList<>();
     private List<Student> studentListInClass = new ArrayList<>();
+    private List<Map<String, String>> semesterList = new ArrayList<>();
+    private List<ClassModel> allClassList = new ArrayList<>();
+    
     private String selectedMaLop = "";
     private boolean isProgrammaticChange = false;
 
@@ -53,7 +59,7 @@ public class SearchStudentsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search_students);
 
         initViews();
-        setupClassAutocomplete();
+        setupFilters();
         setupStudentAutocomplete();
 
         btnBack.setOnClickListener(v -> finish());
@@ -61,9 +67,15 @@ public class SearchStudentsActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        tilNamHoc = findViewById(R.id.tilNamHoc);
+        tilMaLop = findViewById(R.id.tilMaLop);
+
+        autoNamHoc = findViewById(R.id.autoCompleteNamHoc);
         autoLop = findViewById(R.id.autoCompleteMaLop);
+        
         autoMaHS = findViewById(R.id.edtSearchMaHS);
         autoTenHS = findViewById(R.id.edtSearchTen);
+        
         btnTimKiem = findViewById(R.id.btnTimKiem);
         rvKetQua = findViewById(R.id.rvKetQuaTraCuu);
         btnBack = findViewById(R.id.btnBack);
@@ -71,6 +83,83 @@ public class SearchStudentsActivity extends AppCompatActivity {
         layoutEmpty = findViewById(R.id.layoutEmpty);
 
         rvKetQua.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void setupFilters() {
+        ApiClient.getApiService().getSemesterList().enqueue(new Callback<List<Map<String, String>>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Map<String, String>>> call, @NonNull Response<List<Map<String, String>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    semesterList = response.body();
+                    loadNamHoc(semesterList);
+                }
+            }
+            @Override public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {}
+        });
+
+        ApiClient.getApiService().getClassList().enqueue(new Callback<List<ClassModel>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ClassModel>> call, @NonNull Response<List<ClassModel>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    allClassList = response.body();
+                }
+            }
+            @Override public void onFailure(@NonNull Call<List<ClassModel>> call, @NonNull Throwable t) {}
+        });
+
+        autoLop.setOnItemClickListener((p, v, pos, id) -> {
+            ClassModel sel = (ClassModel) p.getItemAtPosition(pos);
+            selectedMaLop = sel.getMaLop();
+            hideKeyboard();
+            loadStudentsInClass(selectedMaLop);
+        });
+    }
+
+    private void loadNamHoc(List<Map<String, String>> fullList) {
+        Calendar cal = Calendar.getInstance();
+        int currentYear = cal.get(Calendar.YEAR);
+        int currentMonth = cal.get(Calendar.MONTH);
+        int effectiveSchoolStartYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
+
+        List<String> distinctYears = new ArrayList<>();
+        distinctYears.add("Tất cả năm học");
+
+        for (Map<String, String> m : fullList) {
+            String y = m.get("namhoc");
+            if (y == null || distinctYears.contains(y)) continue;
+            try {
+                String startYearStr = y.contains("-") ? y.split("-")[0].trim() : y.trim();
+                int startYear = Integer.parseInt(startYearStr);
+                if (startYear >= effectiveSchoolStartYear) {
+                    distinctYears.add(y);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        autoNamHoc.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, distinctYears));
+        autoNamHoc.setOnItemClickListener((parent, view, position, id) -> {
+            tilMaLop.setEnabled(true);
+            autoLop.setText("");
+            selectedMaLop = "";
+            filterClasses();
+        });
+    }
+
+    private void filterClasses() {
+        String year = autoNamHoc.getText().toString();
+        if (year.isEmpty()) return;
+
+        List<ClassModel> filtered = new ArrayList<>();
+        if (year.equals("Tất cả năm học")) {
+            filtered.addAll(allClassList);
+        } else {
+            for (ClassModel c : allClassList) {
+                if (year.equalsIgnoreCase(c.getNamHoc())) {
+                    filtered.add(c);
+                }
+            }
+        }
+        autoLop.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, filtered));
     }
 
     private void showLoading() {
@@ -89,80 +178,6 @@ public class SearchStudentsActivity extends AppCompatActivity {
                 imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
             }
         }
-    }
-
-    private void setupClassAutocomplete() {
-        autoLop.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (isProgrammaticChange) {
-                    isProgrammaticChange = false;
-                    return;
-                }
-                if (s.length() == 0) {
-                    selectedMaLop = "";
-                    studentListInClass.clear();
-                    autoMaHS.setAdapter(null);
-                    autoTenHS.setAdapter(null);
-                    autoMaHS.setText("");
-                    autoTenHS.setText("");
-                } else if (s.length() >= 1) {
-                    ApiClient.getApiService().suggestClass(s.toString()).enqueue(new Callback<List<ClassModel>>() {
-                        @Override
-                        public void onResponse(@NonNull Call<List<ClassModel>> call, @NonNull Response<List<ClassModel>> response) {
-                            if (response.isSuccessful() && response.body() != null) {
-                                ArrayAdapter<ClassModel> adapter = new ArrayAdapter<ClassModel>(SearchStudentsActivity.this, R.layout.item_dropdown_2line, response.body()) {
-                                    @NonNull
-                                    @Override
-                                    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                                        if (convertView == null) {
-                                            convertView = getLayoutInflater().inflate(R.layout.item_dropdown_2line, parent, false);
-                                        }
-                                        ClassModel item = getItem(position);
-                                        if (item != null) {
-                                            ((TextView) convertView.findViewById(R.id.text1)).setText(item.getTenLop());
-                                            String info = "Năm học: " + item.getNamHoc() + " - Học kỳ: " + item.getTenHocKy();
-                                            ((TextView) convertView.findViewById(R.id.text2)).setText(info);
-                                        }
-                                        return convertView;
-                                    }
-                                };
-                                autoLop.setAdapter(adapter);
-                                if (autoLop.hasFocus()) autoLop.showDropDown();
-                            }
-                        }
-                        @Override
-                        public void onFailure(@NonNull Call<List<ClassModel>> call, @NonNull Throwable t) {}
-                    });
-                }
-            }
-            @Override
-            public void afterTextChanged(Editable s) {}
-        });
-
-        autoLop.setOnItemClickListener((parent, view, position, id) -> {
-            ClassModel selected = (ClassModel) parent.getItemAtPosition(position);
-            if (selected != null) {
-                selectedMaLop = selected.getMaLop();
-                
-                // Cập nhật văn bản hiển thị theo định dạng: TenLop (MaLop)
-                String displayText = String.format("%s (%s)", selected.getTenLop(), selected.getMaLop());
-                isProgrammaticChange = true;
-                
-                // 1. Set văn bản và ẩn ngay Dropbox gợi ý
-                autoLop.setText(displayText, false);
-                autoLop.dismissDropDown(); 
-                
-                // 2. Ẩn bàn phím và xóa focus để chắc chắn danh sách biến mất
-                autoLop.clearFocus();
-                hideKeyboard();
-                
-                // 3. Tải danh sách học sinh
-                loadStudentsInClass(selectedMaLop);
-            }
-        });
     }
 
     private void loadStudentsInClass(String maLop) {

@@ -59,27 +59,38 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Input Mã Lớp -->
             <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:id="@+id/tilNamHoc"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:hint="Mã lớp"
-                app:endIconMode="clear_text"
-                app:startIconDrawable="@android:drawable/ic_menu_myplaces">
+                android:hint="Năm học">
+                <AutoCompleteTextView
+                    android:id="@+id/autoCompleteNamHoc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
 
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilMaLop"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:enabled="false"
+                android:hint="Tên lớp">
                 <AutoCompleteTextView
                     android:id="@+id/autoCompleteMaLop"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:completionThreshold="1"
-                    android:importantForAutofill="no"
-                    android:inputType="text|textNoSuggestions" />
+                    android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Input Mã HS -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilSearchMaHS"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -99,6 +110,7 @@
 
             <!-- Input Tên Học Sinh -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilSearchTen"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
