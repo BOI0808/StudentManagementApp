@@ -119,10 +119,13 @@ exports.softDeleteLoaiKT = async (req, res) => {
 // API Cập nhật tên và hệ số của một loại kiểm tra
 exports.updateHeSoLoaiKT = async (req, res) => {
   const { MaLoaiKiemTra } = req.params;
-  const { TenLoaiKiemTra, HeSo } = req.body;
+  const { HeSo } = req.body; // Bỏ TenLoaiKiemTra
 
-  if (!TenLoaiKiemTra || HeSo === undefined || HeSo === null || isNaN(HeSo)) {
-    return res.status(400).json({ error: "Dữ liệu không hợp lệ. Vui lòng nhập tên và hệ số." });
+  // Chỉ check HeSo
+  if (HeSo === undefined || HeSo === null || isNaN(HeSo)) {
+    return res
+      .status(400)
+      .json({ error: "Dữ liệu không hợp lệ. Vui lòng nhập hệ số." });
   }
 
   if (HeSo <= 0) {
@@ -132,8 +135,8 @@ exports.updateHeSoLoaiKT = async (req, res) => {
   try {
     // Cập nhật cả TenLoaiKiemTra và HeSo
     const [result] = await db.query(
-      "UPDATE loaihinhkiemtra SET TenLoaiKiemTra = ?, HeSo = ? WHERE MaLoaiKiemTra = ? AND TrangThai = 1",
-      [TenLoaiKiemTra, HeSo, MaLoaiKiemTra]
+      "UPDATE loaihinhkiemtra SET HeSo = ? WHERE MaLoaiKiemTra = ? AND TrangThai = 1",
+      [HeSo, MaLoaiKiemTra]
     );
 
     if (result.affectedRows === 0) {
@@ -145,7 +148,6 @@ exports.updateHeSoLoaiKT = async (req, res) => {
     res.json({
       message: "Cập nhật thành công!",
       MaLoaiKiemTra: MaLoaiKiemTra,
-      TenMoi: TenLoaiKiemTra,
       HeSoMoi: HeSo,
     });
   } catch (err) {

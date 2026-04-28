@@ -2,57 +2,101 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/itemContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingVertical="12dp"
-    android:paddingHorizontal="12dp"
-    android:weightSum="10">
+    android:orientation="vertical"
+    android:background="?attr/selectableItemBackground">
 
-    <TextView
-        android:id="@+id/tvSTT"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center"
-        tools:text="1"
-        android:textColor="@color/black" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="12dp"
+        android:weightSum="11">
 
-    <TextView
-        android:id="@+id/tvMaHS"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="2"
-        android:gravity="center"
-        tools:text="HS001"
-        android:textColor="@color/black" />
+        <TextView
+            android:id="@+id/tvSTT"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            tools:text="1"
+            android:textColor="@color/black" />
 
-    <TextView
-        android:id="@+id/tvTenHS"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="3.5"
-        tools:text="Nguyễn Văn A"
-        android:textColor="@color/black" />
+        <TextView
+            android:id="@+id/tvMaHS"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:gravity="center"
+            tools:text="HS01"
+            android:textColor="@color/black" />
 
-    <TextView
-        android:id="@+id/tvNgaySinh"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="2"
-        android:gravity="center"
-        tools:text="15/08/2008"
-        android:textColor="@color/black" />
+        <TextView
+            android:id="@+id/tvTenHS"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            tools:text="Nguyễn Văn A"
+            android:textColor="@color/black" />
 
-    <ImageButton
-        android:id="@+id/btnXoaHocSinh"
-        android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tvGioiTinh"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.5"
+            android:gravity="center"
+            tools:text="Nam"
+            android:textColor="@color/black" />
+
+        <TextView
+            android:id="@+id/tvNgaySinh"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:gravity="center"
+            tools:text="2008-01-01"
+            android:textColor="@color/black" />
+
+        <ImageButton
+            android:id="@+id/btnXoaHocSinh"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.5"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_delete"
+            app:tint="#D32F2F" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/errorLayout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1.5"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@android:drawable/ic_menu_delete"
-        app:tint="#D32F2F" />
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="10dp"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:src="@android:drawable/stat_notify_error"
+            app:tint="#D32F2F"
+            android:layout_marginEnd="4dp"/>
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#D32F2F"
+            android:textSize="12sp"
+            android:textStyle="bold|italic"
+            tools:text="Học sinh này đã có lớp khác" />
+    </LinearLayout>
 
 </LinearLayout>

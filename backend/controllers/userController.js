@@ -1,14 +1,11 @@
 const db = require("../config/db");
+const xlsx = require("xlsx");
 
 const generateMaSo = async (connection) => {
-  // 1. Mặc định tiền tố là Giáo Viên
   const prefix = "GV";
-
-  // 2. Lấy 2 số cuối của năm hiện tại (2026 -> "26")
   const year = new Date().getFullYear().toString().slice(-2);
-  const searchPattern = `${prefix}${year}%`; // Tìm dạng "GV26%"
+  const searchPattern = `${prefix}${year}%`;
 
-  // 3. Tìm mã lớn nhất hiện có trong DB
   const [rows] = await connection.query(
     "SELECT MaSo FROM nguoidung WHERE MaSo LIKE ? ORDER BY MaSo DESC LIMIT 1",
     [searchPattern]
@@ -16,20 +13,212 @@ const generateMaSo = async (connection) => {
 
   let nextNumber = 1;
   if (rows.length > 0) {
-    // Lấy 3 số cuối (ví dụ '005'), chuyển thành số (5) và cộng thêm 1
     const lastNumber = parseInt(rows[0].MaSo.slice(-3));
     nextNumber = lastNumber + 1;
   }
 
-  // 4. Kết quả: GV + 26 + 001 = GV26001
   return `${prefix}${year}${nextNumber.toString().padStart(3, "0")}`;
+};
+
+const validateEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+const validatePhone = (phone) => {
+  return /^(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/.test(phone);
+};
+
+const validateUsername = (username) => {
+  return /^[a-zA-Z0-9_]{5,20}$/.test(username);
+};
+
+exports.importUsersExcel = async (req, res) => {
+  if (!req.file) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Vui lòng đính kèm file Excel." });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+
+    // 1. Chuyển đổi sang JSON và chuẩn hóa Key (xóa khoảng trắng thừa ở tiêu đề)
+    const rawData = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
+    const data = rawData.map((row) => {
+      const newRow = {};
+      Object.keys(row).forEach((key) => {
+        newRow[key.trim()] = row[key];
+      });
+      return newRow;
+    });
+
+    let errors = [];
+    let usersToInsert = [];
+    let usernamesInFile = new Set();
+    let emailsInFile = new Set();
+
+    // GIAI ĐOẠN 1: Validate toàn bộ dữ liệu
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowIndex = i + 2;
+
+      // ÁNH XẠ THÔNG MINH: Hỗ trợ cả tiếng Việt (có dấu/có cách) và tiếng Anh
+      const HoTen = String(
+        row["Họ và tên"] || row["Họ tên"] || row.HoTen || ""
+      ).trim();
+      const TenDangNhap = String(
+        row["Tên đăng nhập"] || row.TenDangNhap || ""
+      ).trim();
+      const MatKhau = String(row["Mật khẩu"] || row.MatKhau || "").trim();
+      const Email = String(row["Email"] || row.Email || "").trim();
+      const SoDienThoai = String(
+        row["Số điện thoại"] || row.SoDienThoai || row.SĐT || ""
+      ).trim();
+      const DanhSachQuyen = String(
+        row["Quyền hạn"] || row.DanhSachQuyen || row.Quyen || ""
+      ).trim();
+
+      // 1. Kiểm tra thiếu thông tin bắt buộc
+      if (!HoTen || !TenDangNhap || !MatKhau || !Email || !SoDienThoai) {
+        errors.push({
+          row: rowIndex,
+          message: "Thiếu thông tin bắt buộc (Họ tên, TK, MK, Email, SĐT).",
+        });
+        continue;
+      }
+
+      // 2. Kiểm tra định dạng
+      if (!validateUsername(TenDangNhap)) {
+        errors.push({
+          row: rowIndex,
+          message: "Tên đăng nhập không hợp lệ (5-20 ký tự, không dấu cách).",
+        });
+      }
+      if (!validateEmail(Email)) {
+        errors.push({
+          row: rowIndex,
+          message: "Định dạng Email không hợp lệ.",
+        });
+      }
+      if (!validatePhone(SoDienThoai)) {
+        errors.push({
+          row: rowIndex,
+          message: "Số điện thoại không đúng định dạng VN.",
+        });
+      }
+      if (MatKhau.length < 6) {
+        errors.push({
+          row: rowIndex,
+          message: "Mật khẩu phải từ 6 ký tự trở lên.",
+        });
+      }
+
+      // 3. Kiểm tra trùng lặp trong file
+      if (usernamesInFile.has(TenDangNhap)) {
+        errors.push({
+          row: rowIndex,
+          message: `Tên đăng nhập '${TenDangNhap}' bị lặp trong file.`,
+        });
+      }
+      if (emailsInFile.has(Email)) {
+        errors.push({
+          row: rowIndex,
+          message: `Email '${Email}' bị lặp trong file.`,
+        });
+      }
+      usernamesInFile.add(TenDangNhap);
+      emailsInFile.add(Email);
+
+      // 4. Kiểm tra trùng lặp trong DB
+      const [existing] = await connection.query(
+        "SELECT TenDangNhap, Email FROM nguoidung WHERE TenDangNhap = ? OR Email = ? LIMIT 1",
+        [TenDangNhap, Email]
+      );
+
+      if (existing.length > 0) {
+        if (existing[0].TenDangNhap === TenDangNhap) {
+          errors.push({
+            row: rowIndex,
+            message: `Tên đăng nhập '${TenDangNhap}' đã tồn tại trên hệ thống.`,
+          });
+        } else {
+          errors.push({
+            row: rowIndex,
+            message: `Email '${Email}' đã tồn tại trên hệ thống.`,
+          });
+        }
+      }
+
+      usersToInsert.push({
+        HoTen,
+        TenDangNhap,
+        MatKhau,
+        Email,
+        SoDienThoai,
+        DanhSachQuyen,
+      });
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).json({ success: false, errors: errors });
+    }
+
+    // GIAI ĐOẠN 2: Insert (Transaction)
+    await connection.beginTransaction();
+
+    for (const user of usersToInsert) {
+      const MaSo = await generateMaSo(connection);
+      await connection.query(
+        "INSERT INTO nguoidung (MaSo, HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, PhanQuyen) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          MaSo,
+          user.HoTen,
+          user.TenDangNhap,
+          user.MatKhau,
+          user.Email,
+          user.SoDienThoai,
+          "Giáo Viên",
+        ]
+      );
+
+      if (user.DanhSachQuyen) {
+        const quyenCodes = user.DanhSachQuyen.split(",")
+          .map((q) => q.trim().toUpperCase())
+          .filter((q) => q !== "");
+
+        if (quyenCodes.length > 0) {
+          const quyenValues = quyenCodes.map((maCN) => [MaSo, maCN]);
+          await connection.query(
+            "INSERT INTO nguoidung_quyen (MaSo, MaCN) VALUES ?",
+            [quyenValues]
+          );
+        }
+      }
+    }
+
+    await connection.commit();
+    res.json({
+      success: true,
+      message: `Đã nhập thành công ${usersToInsert.length} tài khoản!`,
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error("Lỗi Import:", err);
+    res
+      .status(500)
+      .json({ success: false, error: "Lỗi hệ thống khi xử lý file Excel." });
+  } finally {
+    connection.release();
+  }
 };
 
 exports.createUser = async (req, res) => {
   const { HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, DanhSachQuyen } =
     req.body;
 
-  // 1. Kiểm tra không được để trống (Trim để tránh chỉ nhập dấu cách)
   if (
     !HoTen?.trim() ||
     !TenDangNhap?.trim() ||
@@ -42,39 +231,21 @@ exports.createUser = async (req, res) => {
       .json({ error: "Vui lòng nhập đầy đủ thông tin bắt buộc." });
   }
 
-  // 2. Kiểm tra định dạng Email (Regex chuẩn)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(Email)) {
+  if (!validateEmail(Email))
     return res.status(400).json({ error: "Định dạng Email không hợp lệ." });
-  }
-
-  // 3. Kiểm tra Số điện thoại (10 số, đầu số Việt Nam)
-  const phoneRegex = /^(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/;
-  if (!phoneRegex.test(SoDienThoai)) {
+  if (!validatePhone(SoDienThoai))
     return res
       .status(400)
       .json({ error: "Số điện thoại không đúng định dạng Việt Nam." });
-  }
-
-  // 4. Kiểm tra Tên đăng nhập (Từ 5-20 ký tự, không dấu cách, không ký tự đặc biệt)
-  const userRegex = /^[a-zA-Z0-9_]{5,20}$/;
-  if (!userRegex.test(TenDangNhap)) {
-    return res.status(400).json({
-      error:
-        "Tên đăng nhập phải từ 5-20 ký tự, không chứa khoảng trắng hoặc ký tự đặc biệt.",
-    });
-  }
-
-  // 5. Độ mạnh mật khẩu (Tối thiểu 6 ký tự)
-  if (MatKhau.length < 6) {
+  if (!validateUsername(TenDangNhap))
+    return res.status(400).json({ error: "Tên đăng nhập phải từ 5-20 ký tự." });
+  if (MatKhau.length < 6)
     return res.status(400).json({ error: "Mật khẩu phải có ít nhất 6 ký tự." });
-  }
 
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
 
-    // Kiểm tra trùng lặp
     const [existing] = await connection.query(
       "SELECT MaSo FROM nguoidung WHERE TenDangNhap = ? OR Email = ?",
       [TenDangNhap.trim(), Email.trim()]
@@ -85,69 +256,59 @@ exports.createUser = async (req, res) => {
         .json({ error: "Tên đăng nhập hoặc Email đã được sử dụng." });
     }
 
-    // 1. Tự động sinh MaSo "đẹp"
     const MaSo = await generateMaSo(connection);
 
-    // 2. Thêm vào bảng nguoidung
-    const userQuery = `INSERT INTO nguoidung (MaSo, HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, PhanQuyen) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    await connection.query(userQuery, [
-      MaSo,
-      HoTen,
-      TenDangNhap,
-      MatKhau,
-      Email,
-      SoDienThoai,
-      "Giáo Viên",
-    ]);
+    await connection.query(
+      "INSERT INTO nguoidung (MaSo, HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, PhanQuyen) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [
+        MaSo,
+        HoTen.trim(),
+        TenDangNhap.trim(),
+        MatKhau,
+        Email.trim(),
+        SoDienThoai.trim(),
+        "Giáo Viên",
+      ]
+    );
 
-    // 3. Cấp quyền (Sử dụng các mã viết tắt gợi nhớ của Khôi: CNTNHS, CNNBD...)
     if (DanhSachQuyen && DanhSachQuyen.length > 0) {
-      const quyenQuery = "INSERT INTO nguoidung_quyen (MaSo, MaCN) VALUES ?";
       const values = DanhSachQuyen.map((maCN) => [MaSo, maCN]);
-      await connection.query(quyenQuery, [values]);
+      await connection.query(
+        "INSERT INTO nguoidung_quyen (MaSo, MaCN) VALUES ?",
+        [values]
+      );
     }
 
     await connection.commit();
-    res.json({
-      message: "Tạo tài khoản thành công!",
-      MaSo: MaSo, // Trả về mã vừa sinh để Admin biết
-    });
+    res.json({ message: "Tạo tài khoản thành công!", MaSo: MaSo });
   } catch (err) {
     await connection.rollback();
-    console.error("Lỗi tạo user:", err);
     res.status(500).json({ error: "Lỗi hệ thống khi tạo tài khoản" });
   } finally {
-    connection.release(); // Giải phóng kết nối (Quan trọng)
+    connection.release();
   }
 };
 
 exports.getAllAccounts = async (req, res) => {
   try {
     const rightsMap = {
-      "CNTNHS": "1",
-      "CNLDSL": "2",
-      "CNLDSHSCL": "3",
-      "CNLDSNH": "4",
-      "CNLDSKL": "5",
-      "CNLDSMH": "6",
-      "CNTCHS": "7",
-      "CNNBD": "8",
-      "CNNDSCLKT": "9",
-      "CNLBCTKM": "10",
-      "CNLBCTKHK": "11",
-      "CNCDTSHT": "12"
+      CNTNHS: "1",
+      CNLDSL: "2",
+      CNLDSHSCL: "3",
+      CNLDSNH: "4",
+      CNLDSKL: "5",
+      CNLDSMH: "6",
+      CNTCHS: "7",
+      CNNBD: "8",
+      CNNDSCLKT: "9",
+      CNLBCTKM: "10",
+      CNLBCTKHK: "11",
+      CNCDTSHT: "12",
     };
 
     const query = `
-      SELECT 
-        nd.MaSo, 
-        nd.HoTen, 
-        nd.Email, 
-        nd.SoDienThoai, 
-        nd.TenDangNhap, 
-        nd.MatKhau,
-        GROUP_CONCAT(ndq.MaCN) AS DS_Quyen
+      SELECT nd.MaSo, nd.HoTen, nd.Email, nd.SoDienThoai, nd.TenDangNhap, nd.MatKhau,
+             GROUP_CONCAT(ndq.MaCN) AS DS_Quyen
       FROM nguoidung nd
       LEFT JOIN nguoidung_quyen ndq ON nd.MaSo = ndq.MaSo
       WHERE nd.TrangThai = 1 
@@ -157,23 +318,16 @@ exports.getAllAccounts = async (req, res) => {
     const [rows] = await db.query(query);
 
     const result = rows.map((user) => {
-      let mappedRights = "";
-      if (user.DS_Quyen) {
-        const codes = user.DS_Quyen.split(",");
-        const nums = codes
-          .map(code => parseInt(rightsMap[code.trim().toUpperCase()])) // Chuyển sang số để sort chính xác
-          .filter(n => !isNaN(n))
-          .sort((a, b) => a - b); // SẮP XẾP TĂNG DẦN
-          
-        mappedRights = `{${nums.join(",")}}`;
-      } else {
-        mappedRights = "{}";
-      }
+      let mappedRights = user.DS_Quyen
+        ? `{${user.DS_Quyen.split(",")
+            .map((code) => parseInt(rightsMap[code.trim().toUpperCase()]))
+            .filter((n) => !isNaN(n))
+            .sort((a, b) => a - b)
+            .join(",")}}`
+        : "{}";
 
-      // 2. Đặc cách cho tài khoản ADMIN luôn hiện full 12 số
-      if (user.MaSo && user.MaSo.startsWith("ADMIN")) {
+      if (user.MaSo && user.MaSo.startsWith("ADMIN"))
         mappedRights = "{1,2,3,4,5,6,7,8,9,10,11,12}";
-      }
 
       return {
         MaSo: user.MaSo,
@@ -181,25 +335,22 @@ exports.getAllAccounts = async (req, res) => {
         Email: user.Email,
         SoDienThoai: user.SoDienThoai,
         TenDangNhap: user.TenDangNhap,
-        MatKhau: user.MatKhau, // Đã thêm mật khẩu vào đây
-        QuyenHeThong: mappedRights // Trả về dạng số {1,2,3}
+        MatKhau: user.MatKhau,
+        QuyenHeThong: mappedRights,
       };
     });
 
     res.json(result);
   } catch (err) {
-    console.error("Lỗi lấy danh sách tài khoản:", err);
     res.status(500).json({ error: "Lỗi hệ thống khi tải dữ liệu." });
   }
 };
 
 exports.updateAccount = async (req, res) => {
   const { id } = req.params;
-  // 1. SỬA LỖI: Lấy thêm Email và TenDangNhap từ req.body
   const { HoTen, SoDienThoai, TenDangNhap, Email, MatKhau, DanhSachQuyen } =
     req.body;
 
-  // 2. SỬA LOGIC: Kiểm tra các trường bắt buộc (bỏ qua MatKhau ở bước này)
   if (
     !HoTen?.trim() ||
     !TenDangNhap?.trim() ||
@@ -211,39 +362,41 @@ exports.updateAccount = async (req, res) => {
       .json({ error: "Vui lòng nhập đầy đủ thông tin bắt buộc." });
   }
 
-  // Validation Regex giữ nguyên như của Khôi (Rất tốt)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(Email))
+  if (!validateEmail(Email))
     return res.status(400).json({ error: "Email không hợp lệ." });
-
-  const phoneRegex = /^(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/;
-  if (!phoneRegex.test(SoDienThoai))
+  if (!validatePhone(SoDienThoai))
     return res.status(400).json({ error: "SĐT không hợp lệ." });
 
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
 
-    // 3. SỬA SQL: Cập nhật thêm TenDangNhap và Email
-    let updateQuery =
-      "UPDATE nguoidung SET HoTen = ?, SoDienThoai = ?, TenDangNhap = ?, Email = ? ";
-    let queryParams = [HoTen, SoDienThoai, TenDangNhap, Email];
+    let updateFields = [
+      "HoTen = ?",
+      "SoDienThoai = ?",
+      "TenDangNhap = ?",
+      "Email = ?",
+    ];
+    let queryParams = [
+      HoTen.trim(),
+      SoDienThoai.trim(),
+      TenDangNhap.trim(),
+      Email.trim(),
+    ];
 
-    // 4. SỬA LOGIC: Chỉ validate và update MatKhau nếu nó thực sự thay đổi
     if (MatKhau && MatKhau !== "********") {
-      if (MatKhau.length < 6) {
+      if (MatKhau.length < 6)
         throw new Error("Mật khẩu mới phải có ít nhất 6 ký tự.");
-      }
-      updateQuery += ", MatKhau = ? ";
+      updateFields.push("MatKhau = ?");
       queryParams.push(MatKhau);
     }
 
-    updateQuery += " WHERE MaSo = ?";
     queryParams.push(id);
+    await connection.query(
+      `UPDATE nguoidung SET ${updateFields.join(", ")} WHERE MaSo = ?`,
+      queryParams
+    );
 
-    await connection.query(updateQuery, queryParams);
-
-    // Logic xử lý quyền cũ/mới của Khôi rất chuẩn, giữ nguyên
     if (DanhSachQuyen && Array.isArray(DanhSachQuyen)) {
       await connection.query("DELETE FROM nguoidung_quyen WHERE MaSo = ?", [
         id,
@@ -258,7 +411,7 @@ exports.updateAccount = async (req, res) => {
     }
 
     await connection.commit();
-    res.json({ message: "Cập nhật tài khoản và quyền hạn thành công!" });
+    res.json({ message: "Cập nhật tài khoản thành công!" });
   } catch (err) {
     await connection.rollback();
     res
@@ -276,11 +429,8 @@ exports.softDeleteAccount = async (req, res) => {
       "UPDATE nguoidung SET TrangThai = 0 WHERE MaSo = ?",
       [id]
     );
-
-    if (result.affectedRows === 0) {
+    if (result.affectedRows === 0)
       return res.status(404).json({ error: "Không tìm thấy tài khoản." });
-    }
-
     res.json({ message: "Đã ngưng hoạt động tài khoản này thành công!" });
   } catch (err) {
     res.status(500).json({ error: "Lỗi hệ thống khi xóa tài khoản." });

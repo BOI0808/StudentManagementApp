@@ -135,7 +135,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lập danh sách\nHS cho lớp"
+                        android:text="Lập danh sách học sinh cho lớp"
                         android:textAlignment="center"
                         android:textStyle="bold"
                         android:layout_marginTop="12dp"/>
@@ -165,7 +165,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lập danh sách\nNăm học"
+                        android:text="Quản lý năm học"
                         android:textAlignment="center"
                         android:textStyle="bold"
                         android:layout_marginTop="12dp"/>
@@ -195,7 +195,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lập danh sách\nKhối lớp"
+                        android:text="Quản lý khối lớp"
                         android:textAlignment="center"
                         android:textStyle="bold"
                         android:layout_marginTop="12dp"/>
@@ -225,7 +225,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lập danh sách\nMôn học"
+                        android:text="Quản lý môn học"
                         android:textAlignment="center"
                         android:textStyle="bold"
                         android:layout_marginTop="12dp"/>

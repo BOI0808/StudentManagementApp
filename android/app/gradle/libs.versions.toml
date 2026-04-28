@@ -10,6 +10,9 @@ constraintlayout = "2.2.1"
 retrofit = "2.11.0"
 gson = "2.11.0"
 okhttp = "4.12.0"
+poi = "5.2.5"
+log4j = "2.25.4"
+desugar_jdk_libs = "2.1.4"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -23,6 +26,10 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+poi = { group = "org.apache.poi", name = "poi", version.ref = "poi" }
+poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
+log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j" }
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

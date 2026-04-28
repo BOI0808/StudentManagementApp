@@ -6,13 +6,12 @@
     android:layout_height="match_parent"
     android:background="#F5F5F5"
     android:orientation="vertical"
-    android:padding="16dp"
     tools:context=".CategoryTermActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp">
+        android:padding="16dp">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -28,16 +27,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Danh Mục Học Kỳ"
+            android:text="Quản lý năm học"
             android:textColor="#1976D2"
-            android:textSize="22sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
     </RelativeLayout>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressIndicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone" />
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="2dp">
 
@@ -51,65 +58,72 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:baselineAligned="false"
-                android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
+                android:orientation="horizontal">
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilNamBatDau"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
-                    android:hint="Năm bắt đầu">
+                    android:hint="Năm bắt đầu"
+                    app:startIconDrawable="@android:drawable/ic_menu_myplaces">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtNamBatDau"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        android:maxLength="4" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilNamKetThuc"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    android:hint="Năm kết thúc">
+                    android:hint="Năm kết thúc"
+                    app:startIconDrawable="@android:drawable/ic_menu_myplaces">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtNamKetThuc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="number" />
+                        android:inputType="number"
+                        android:maxLength="4" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:text="Chọn học kỳ cần tạo:"
-                android:layout_marginTop="8dp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
 
             <RadioGroup
                 android:id="@+id/rgHocKy"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="12dp"
+                android:orientation="horizontal">
 
                 <RadioButton
                     android:id="@+id/rbHocKy1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="HK 1"
-                    android:layout_marginEnd="16dp"/>
+                    android:layout_marginEnd="16dp"
+                    android:text="HK 1" />
 
                 <RadioButton
                     android:id="@+id/rbHocKy2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="HK 2"
-                    android:layout_marginEnd="16dp"/>
+                    android:layout_marginEnd="16dp"
+                    android:text="HK 2" />
 
                 <RadioButton
                     android:id="@+id/rbHocKyCaHai"
@@ -128,51 +142,91 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilSearchTerm"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Tìm kiếm niên khóa..."
+            app:endIconMode="clear_text"
+            app:startIconDrawable="@android:drawable/ic_menu_search">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtSearchTerm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ProgressBar
+            android:id="@+id/pbSearchLoading"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="48dp"
+            android:indeterminateTint="#1976D2"
+            android:visibility="gone" />
+    </FrameLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginHorizontal="16dp"
         android:background="#1976D2"
+        android:orientation="horizontal"
         android:padding="12dp"
         android:weightSum="10">
+
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1.5"
             android:text="STT"
+            android:textAlignment="center"
             android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textAlignment="center" />
+            android:textStyle="bold" />
+
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="4"
             android:text="Năm học"
+            android:textAlignment="center"
             android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textAlignment="center" />
+            android:textStyle="bold" />
+
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2.5"
             android:text="Học kỳ"
+            android:textAlignment="center"
             android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textAlignment="center" />
+            android:textStyle="bold" />
+
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Xóa"
+            android:textAlignment="center"
             android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textAlignment="center" />
+            android:textStyle="bold" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvNamHoc"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
         android:layout_weight="1"
         android:background="#FFFFFF"
         tools:listitem="@layout/item_term_row" />

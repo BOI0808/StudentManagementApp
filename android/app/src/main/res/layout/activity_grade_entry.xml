@@ -31,16 +31,33 @@
             android:layout_centerInParent="true"
             android:text="Nhập Bảng Điểm"
             android:textColor="#1976D2"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btnImportExcel"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Import Excel"
+            android:src="@drawable/import_file_svgrepo_com"
+            app:tint="#388E3C" />
     </RelativeLayout>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressIndicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone" />
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="#FFFFFF"
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp">
 
@@ -58,6 +75,7 @@
                 android:layout_marginBottom="12dp">
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilNamHoc"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -72,11 +90,13 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilHocKy"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
+                    android:enabled="false"
                     android:hint="Học kỳ">
                     <AutoCompleteTextView
                         android:id="@+id/autoCompleteHocKy"
@@ -94,11 +114,13 @@
                 android:layout_marginBottom="12dp">
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilLop"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
+                    android:enabled="false"
                     android:hint="Tên lớp">
                     <AutoCompleteTextView
                         android:id="@+id/autoCompleteMaLopGrade"
@@ -108,6 +130,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilMon"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -123,6 +146,7 @@
             </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilLoaiKT"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -134,13 +158,6 @@
                     android:layout_height="wrap_content"
                     android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnXemDanhSachDiem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Lấy danh sách học sinh"
-                app:cornerRadius="8dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -148,7 +165,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:background="#E0E0E0"
+        android:background="#1976D2"
         android:orientation="horizontal"
         android:padding="8dp"
         android:weightSum="10">
@@ -158,6 +175,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="STT"
+            android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />
 
@@ -166,6 +184,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Mã HS"
+            android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />
 
@@ -174,6 +193,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="3"
             android:text="Họ tên"
+            android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />
 
@@ -182,6 +202,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Điểm"
+            android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />
 
@@ -190,6 +211,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Ghi chú"
+            android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />
     </LinearLayout>
@@ -209,14 +231,20 @@
         android:background="#FFFFFF"
         tools:listitem="@layout/item_grade_entry" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnLuuBangDiem"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_margin="16dp"
-        android:text="LƯU BẢNG ĐIỂM"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:cornerRadius="8dp" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLuuBangDiem"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="LƯU BẢNG ĐIỂM"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="8dp" />
+    </LinearLayout>
 
 </LinearLayout>

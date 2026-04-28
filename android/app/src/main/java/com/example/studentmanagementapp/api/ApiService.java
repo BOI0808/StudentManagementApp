@@ -8,6 +8,8 @@ import com.example.studentmanagementapp.model.Subject;
 import com.example.studentmanagementapp.model.User;
 import java.util.List;
 import java.util.Map;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -17,6 +19,8 @@ import retrofit2.http.PUT;
 import retrofit2.http.PATCH;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
+import retrofit2.http.Multipart;
+import retrofit2.http.Part;
 
 public interface ApiService {
 
@@ -32,6 +36,10 @@ public interface ApiService {
 
     @DELETE("api/users/xoa-tai-khoan/{id}")
     Call<Map<String, String>> deleteAccount(@Path("id") String id);
+
+    @Multipart
+    @POST("api/users/import-excel")
+    Call<Map<String, String>> importExcel(@Part MultipartBody.Part file);
 
     // II. Đăng nhập & đổi mật khẩu
     @POST("api/auths/dang-nhap")
@@ -70,6 +78,10 @@ public interface ApiService {
     @PUT("api/students/cap-nhat-hoc-sinh")
     Call<Map<String, String>> updateStudent(@Body Student student);
 
+    @Multipart
+    @POST("api/students/import-excel")
+    Call<Map<String, String>> importStudentExcel(@Part MultipartBody.Part file);
+
     // VI. Lập danh mục học kỳ năm học
     @GET("api/semesters/danh-sach-hoc-ky-nam-hoc")
     Call<List<Map<String, String>>> getSemesterList();
@@ -104,6 +116,9 @@ public interface ApiService {
         @Query("maHocSinh") String maHocSinh
     );
 
+    @GET("api/students/lich-su-hoc-tap/{maHocSinh}")
+    Call<List<Map<String, String>>> getStudentHistory(@Path("maHocSinh") String maHocSinh);
+
     // IX. Nhập danh sách các loại kiểm tra
     @GET("api/test-types/danh-sach-loai-kiem-tra")
     Call<List<Map<String, Object>>> getTestTypeList();
@@ -121,14 +136,23 @@ public interface ApiService {
     @GET("api/grades/nhap-diem/danh-sach")
     Call<List<Map<String, Object>>> getHocSinhNhapDiem(
         @Query("MaLop") String maLop,
-        @Query("MaMonHoc") String maMonHoc,
+        @Query("MaMonHoc") String maMon,
         @Query("MaLoaiKiemTra") String maLoai,
         @Query("MaHocKyNamHoc") String maHK
     );
 
-    // Endpoint sửa từ luu-bang-diem sang nhap-diem cho khớp Backend
     @POST("api/grades/nhap-diem")
     Call<Map<String, String>> saveGrades(@Body Map<String, Object> data);
+
+    @Multipart
+    @POST("api/grades/import-excel")
+    Call<Map<String, String>> importGradeExcel(
+        @Part MultipartBody.Part file,
+        @Part("MaLop") RequestBody maLop,
+        @Part("MaMonHoc") RequestBody maMon,
+        @Part("MaLoaiKiemTra") RequestBody maLoai,
+        @Part("MaHocKyNamHoc") RequestBody maHK
+    );
 
     // XI & XII. Báo cáo
     @GET("api/reports/bao-cao-mon")
