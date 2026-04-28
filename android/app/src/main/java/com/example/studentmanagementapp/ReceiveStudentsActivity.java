@@ -364,7 +364,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                     hideLoading();
                     if (response.isSuccessful()) {
                         new MaterialAlertDialogBuilder(ReceiveStudentsActivity.this)
-                                .setTitle("Thành công")
+                                .setTitle("Import thành công")
                                 .setMessage("Tiếp nhận học sinh từ Excel thành công!")
                                 .setPositiveButton("OK", null)
                                 .show();
@@ -411,7 +411,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
         for (String err : errors) sb.append("• ").append(err).append("\n");
         
         new MaterialAlertDialogBuilder(this)
-                .setTitle("Thất bại")
+                .setTitle("Import thất bại")
                 .setMessage(sb.toString().trim())
                 .setPositiveButton("OK", null)
                 .show();

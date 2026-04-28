@@ -458,14 +458,14 @@ public class CreateClassListActivity extends AppCompatActivity {
                     new MaterialAlertDialogBuilder(CreateClassListActivity.this)
                             .setTitle("Import thành công")
                             .setMessage("Đã thêm thành công " + studentsFromExcel.size() + " học sinh vào danh sách chờ của lớp " + tenLop + ". Vui lòng kiểm tra lại và nhấn Lưu để hoàn tất.")
-                            .setPositiveButton("Đã hiểu", null)
+                            .setPositiveButton("OK", null)
                             .show();
                 });
             } else {
                 runOnUiThread(() -> {
                     hideLoading();
                     new MaterialAlertDialogBuilder(CreateClassListActivity.this)
-                            .setTitle("Thông báo")
+                            .setTitle("Import thất bại")
                             .setMessage("File Excel không có dữ liệu học sinh hợp lệ hoặc sai định dạng tiêu đề cột")
                             .setPositiveButton("OK", null)
                             .show();

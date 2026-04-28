@@ -25,12 +25,17 @@ import com.example.studentmanagementapp.api.ApiClient;
 import com.example.studentmanagementapp.model.ClassModel;
 import com.example.studentmanagementapp.model.Subject;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.textfield.TextInputLayout;
 import org.apache.poi.ss.usermodel.*;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,9 +46,12 @@ import retrofit2.Response;
 public class GradeEntryActivity extends AppCompatActivity {
 
     private AutoCompleteTextView autoLop, autoMon, autoNamHoc, autoHocKy, autoLoaiKT;
-    private MaterialButton btnXem, btnLuu, btnImportExcel;
+    private TextInputLayout tilNamHoc, tilHocKy, tilLop, tilMon, tilLoaiKT;
+    private MaterialButton btnLuu;
+    private ImageButton btnImportExcel;
     private RecyclerView rvDiem;
     private ImageButton btnBack;
+    private LinearProgressIndicator progressIndicator;
 
     private List<Map<String, Object>> listDiem = new ArrayList<>();
     private List<Map<String, String>> semesterList = new ArrayList<>();
@@ -56,6 +64,7 @@ public class GradeEntryActivity extends AppCompatActivity {
             new ActivityResultContracts.GetContent(),
             uri -> {
                 if (uri != null) {
+                    showLoading();
                     new Thread(() -> processExcelFile(uri)).start();
                 }
             }
@@ -72,40 +81,92 @@ public class GradeEntryActivity extends AppCompatActivity {
         setupFilters();
 
         btnBack.setOnClickListener(v -> finish());
-        btnXem.setOnClickListener(v -> loadGradeList());
         btnLuu.setOnClickListener(v -> saveGrades());
+        
         btnImportExcel.setOnClickListener(v -> {
             if (validateFilters()) {
+                if (listDiem.isEmpty()) {
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle("Thông báo")
+                            .setMessage("Hãy đảm bảo danh sách học sinh đã được tải trước khi Import")
+                            .setPositiveButton("OK", null)
+                            .show();
+                    return;
+                }
                 filePickerLauncher.launch("*/*");
             }
         });
     }
 
     private void initViews() {
+        tilNamHoc = findViewById(R.id.tilNamHoc);
+        tilHocKy = findViewById(R.id.tilHocKy);
+        tilLop = findViewById(R.id.tilLop);
+        tilMon = findViewById(R.id.tilMon);
+        tilLoaiKT = findViewById(R.id.tilLoaiKT);
+
         autoNamHoc = findViewById(R.id.autoCompleteNamHoc);
         autoHocKy = findViewById(R.id.autoCompleteHocKy);
         autoLop = findViewById(R.id.autoCompleteMaLopGrade);
         autoMon = findViewById(R.id.autoCompleteMonHoc);
         autoLoaiKT = findViewById(R.id.autoCompleteLoaiKT);
-        btnXem = findViewById(R.id.btnXemDanhSachDiem);
+        
         btnLuu = findViewById(R.id.btnLuuBangDiem);
         btnImportExcel = findViewById(R.id.btnImportExcel);
+
         rvDiem = findViewById(R.id.rvBangDiem);
         btnBack = findViewById(R.id.btnBack);
+        progressIndicator = findViewById(R.id.progressIndicator);
 
         rvDiem.setLayoutManager(new LinearLayoutManager(this));
     }
 
+    private void showLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+    }
+
+    private void hideLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+    }
+
+    private void checkAndAutoLoad() {
+        if (!autoNamHoc.getText().toString().isEmpty() &&
+            !selectedMaHK.isEmpty() &&
+            !selectedMaLop.isEmpty() &&
+            !selectedMaMon.isEmpty() &&
+            !selectedMaLoaiKT.isEmpty()) {
+            loadGradeList();
+        }
+    }
+
     private boolean validateFilters() {
-        if (selectedMaLop.isEmpty() || selectedMaMon.isEmpty() || selectedMaLoaiKT.isEmpty() || selectedMaHK.isEmpty()) {
-            Toast.makeText(this, "Vui lòng chọn đầy đủ thông tin bộ lọc trước khi Import", Toast.LENGTH_LONG).show();
-            return false;
+        boolean isValid = true;
+        if (autoNamHoc.getText().toString().isEmpty()) {
+            tilNamHoc.setErrorEnabled(true);
+            tilNamHoc.setError("Vui lòng chọn năm học");
+            isValid = false;
         }
-        if (listDiem.isEmpty()) {
-            Toast.makeText(this, "Hãy nhấn 'Lấy danh sách học sinh' trước khi Import", Toast.LENGTH_LONG).show();
-            return false;
+        if (selectedMaHK.isEmpty()) {
+            tilHocKy.setErrorEnabled(true);
+            tilHocKy.setError("Vui lòng chọn học kỳ");
+            isValid = false;
         }
-        return true;
+        if (selectedMaLop.isEmpty()) {
+            tilLop.setErrorEnabled(true);
+            tilLop.setError("Vui lòng chọn lớp");
+            isValid = false;
+        }
+        if (selectedMaMon.isEmpty()) {
+            tilMon.setErrorEnabled(true);
+            tilMon.setError("Vui lòng chọn môn học");
+            isValid = false;
+        }
+        if (selectedMaLoaiKT.isEmpty()) {
+            tilLoaiKT.setErrorEnabled(true);
+            tilLoaiKT.setError("Vui lòng chọn loại kiểm tra");
+            isValid = false;
+        }
+        return isValid;
     }
 
     private void setupFilters() {
@@ -114,11 +175,26 @@ public class GradeEntryActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<List<Map<String, String>>> call, @NonNull Response<List<Map<String, String>>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     semesterList = response.body();
+                    
+                    Calendar cal = Calendar.getInstance();
+                    int currentYear = cal.get(Calendar.YEAR);
+                    int currentMonth = cal.get(Calendar.MONTH);
+                    // Nếu từ tháng 9 trở đi, tính từ năm hiện tại. Ngược lại tính từ năm trước.
+                    int effectiveSchoolStartYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
+
                     List<String> years = new ArrayList<>();
                     for (Map<String, String> m : semesterList) {
                         String y = m.get("namhoc");
-                        if (y != null && !years.contains(y)) years.add(y);
+                        if (y == null || years.contains(y)) continue;
+                        try {
+                            String startYearStr = y.contains("-") ? y.split("-")[0].trim() : y.trim();
+                            int startYear = Integer.parseInt(startYearStr);
+                            if (startYear >= effectiveSchoolStartYear) {
+                                years.add(y);
+                            }
+                        } catch (Exception ignored) {}
                     }
+                    Collections.sort(years, Collections.reverseOrder());
                     autoNamHoc.setAdapter(new ArrayAdapter<>(GradeEntryActivity.this, android.R.layout.simple_list_item_1, years));
                 }
             }
@@ -126,18 +202,41 @@ public class GradeEntryActivity extends AppCompatActivity {
         });
 
         autoNamHoc.setOnItemClickListener((parent, view, position, id) -> {
+            tilNamHoc.setError(null);
+            tilNamHoc.setErrorEnabled(false);
+            
+            // Xóa trắng và khóa lại các ô sau khi đổi năm học
+            autoHocKy.setText("");
+            autoLop.setText("");
+            selectedMaHK = "";
+            selectedMaLop = "";
+            tilHocKy.setEnabled(true);
+            tilLop.setEnabled(false);
+            
+            listDiem.clear();
+            if (adapter != null) adapter.notifyDataSetChanged();
+
             String year = (String) parent.getItemAtPosition(position);
             List<String> terms = new ArrayList<>();
             for (Map<String, String> m : semesterList) {
                 if (year.equals(m.get("namhoc"))) terms.add(m.get("hocky"));
             }
             autoHocKy.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, terms));
-            autoHocKy.setText("");
-            autoLop.setText("");
-            selectedMaHK = "";
+            
+            checkAndAutoLoad();
         });
 
         autoHocKy.setOnItemClickListener((parent, view, position, id) -> {
+            tilHocKy.setError(null);
+            tilHocKy.setErrorEnabled(false);
+            
+            autoLop.setText("");
+            selectedMaLop = "";
+            tilLop.setEnabled(true);
+            
+            listDiem.clear();
+            if (adapter != null) adapter.notifyDataSetChanged();
+
             String year = autoNamHoc.getText().toString();
             String term = (String) parent.getItemAtPosition(position);
             for (Map<String, String> m : semesterList) {
@@ -146,8 +245,8 @@ public class GradeEntryActivity extends AppCompatActivity {
                     break;
                 }
             }
-            autoLop.setText("");
             filterClasses();
+            checkAndAutoLoad();
         });
 
         ApiClient.getApiService().getClassList().enqueue(new Callback<List<ClassModel>>() {
@@ -161,8 +260,11 @@ public class GradeEntryActivity extends AppCompatActivity {
         });
 
         autoLop.setOnItemClickListener((p, v, pos, id) -> {
+            tilLop.setError(null);
+            tilLop.setErrorEnabled(false);
             ClassModel sel = (ClassModel) p.getItemAtPosition(pos);
             selectedMaLop = sel.getMaLop();
+            checkAndAutoLoad();
         });
 
         ApiClient.getApiService().getSubjectList().enqueue(new Callback<List<Subject>>() {
@@ -173,7 +275,12 @@ public class GradeEntryActivity extends AppCompatActivity {
                     List<String> names = new ArrayList<>();
                     for(Subject s : subjs) names.add(s.getTenMonHoc());
                     autoMon.setAdapter(new ArrayAdapter<>(GradeEntryActivity.this, android.R.layout.simple_list_item_1, names));
-                    autoMon.setOnItemClickListener((p, v, pos, id) -> selectedMaMon = subjs.get(pos).getMaMonHoc());
+                    autoMon.setOnItemClickListener((p, v, pos, id) -> {
+                        tilMon.setError(null);
+                        tilMon.setErrorEnabled(false);
+                        selectedMaMon = subjs.get(pos).getMaMonHoc();
+                        checkAndAutoLoad();
+                    });
                 }
             }
             @Override public void onFailure(@NonNull Call<List<Subject>> call, @NonNull Throwable t) {}
@@ -187,7 +294,12 @@ public class GradeEntryActivity extends AppCompatActivity {
                     List<String> names = new ArrayList<>();
                     for(Map<String, Object> m : types) names.add(String.valueOf(m.get("TenLoaiKiemTra")));
                     autoLoaiKT.setAdapter(new ArrayAdapter<>(GradeEntryActivity.this, android.R.layout.simple_list_item_1, names));
-                    autoLoaiKT.setOnItemClickListener((p, v, pos, id) -> selectedMaLoaiKT = String.valueOf(types.get(pos).get("MaLoaiKiemTra")));
+                    autoLoaiKT.setOnItemClickListener((p, v, pos, id) -> {
+                        tilLoaiKT.setError(null);
+                        tilLoaiKT.setErrorEnabled(false);
+                        selectedMaLoaiKT = String.valueOf(types.get(pos).get("MaLoaiKiemTra"));
+                        checkAndAutoLoad();
+                    });
                 }
             }
             @Override public void onFailure(@NonNull Call<List<Map<String, Object>>> call, @NonNull Throwable t) {}
@@ -204,19 +316,32 @@ public class GradeEntryActivity extends AppCompatActivity {
     }
 
     private void loadGradeList() {
-        if(selectedMaLop.isEmpty() || selectedMaMon.isEmpty() || selectedMaLoaiKT.isEmpty() || selectedMaHK.isEmpty()){
-            Toast.makeText(this, "Vui lòng chọn đầy đủ thông tin", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        showLoading();
         ApiClient.getApiService().getHocSinhNhapDiem(selectedMaLop, selectedMaMon, selectedMaLoaiKT, selectedMaHK).enqueue(new Callback<List<Map<String, Object>>>() {
             @Override
             public void onResponse(@NonNull Call<List<Map<String, Object>>> call, @NonNull Response<List<Map<String, Object>>> response) {
+                hideLoading();
                 if (response.isSuccessful() && response.body() != null) {
                     listDiem = response.body();
                     setupGradeAdapter();
+                } else {
+                    listDiem.clear();
+                    if (adapter != null) adapter.notifyDataSetChanged();
+                    new MaterialAlertDialogBuilder(GradeEntryActivity.this)
+                            .setTitle("Thông báo")
+                            .setMessage("Học sinh trong lớp này đã được nhập điểm hoặc lớp trống.")
+                            .setPositiveButton("OK", null)
+                            .show();
                 }
             }
-            @Override public void onFailure(@NonNull Call<List<Map<String, Object>>> call, @NonNull Throwable t) {}
+            @Override public void onFailure(@NonNull Call<List<Map<String, Object>>> call, @NonNull Throwable t) {
+                hideLoading();
+                new MaterialAlertDialogBuilder(GradeEntryActivity.this)
+                        .setTitle("Lỗi")
+                        .setMessage("Không thể kết nối đến server")
+                        .setPositiveButton("OK", null)
+                        .show();
+            }
         });
     }
 
@@ -267,14 +392,26 @@ public class GradeEntryActivity extends AppCompatActivity {
                 }
                 int finalCount = count;
                 runOnUiThread(() -> {
+                    hideLoading();
                     if (adapter != null) {
                         adapter.notifyDataSetChanged();
                     }
-                    Toast.makeText(this, "Đã khớp " + finalCount + " học sinh từ Excel", Toast.LENGTH_SHORT).show();
+                    new MaterialAlertDialogBuilder(GradeEntryActivity.this)
+                            .setTitle("Import thành công")
+                            .setMessage("Đã import thành công " + finalCount + " học sinh từ file Excel. Vui lòng kiểm tra lại điểm trước khi nhấn Lưu.")
+                            .setPositiveButton("OK", null)
+                            .show();
                 });
             }
         } catch (Exception e) {
-            runOnUiThread(() -> new AlertDialog.Builder(this).setTitle("Lỗi Import").setMessage(e.getMessage()).show());
+            runOnUiThread(() -> {
+                hideLoading();
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Import thất bại")
+                        .setMessage(e.getMessage())
+                        .setPositiveButton("OK", null)
+                        .show();
+            });
         }
     }
 
@@ -328,11 +465,9 @@ public class GradeEntryActivity extends AppCompatActivity {
     }
 
     private void saveGrades() {
-        if (selectedMaLop.isEmpty() || selectedMaMon.isEmpty() || selectedMaLoaiKT.isEmpty() || selectedMaHK.isEmpty()) {
-            Toast.makeText(this, "Thiếu thông tin để lưu", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (!validateFilters()) return;
         
+        showLoading();
         Map<String, Object> body = new HashMap<>();
         body.put("MaLop", selectedMaLop);
         body.put("MaMonHoc", selectedMaMon);
@@ -353,16 +488,44 @@ public class GradeEntryActivity extends AppCompatActivity {
         ApiClient.getApiService().saveGrades(body).enqueue(new Callback<Map<String, String>>() {
             @Override
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
+                hideLoading();
                 btnLuu.setEnabled(true);
                 if (response.isSuccessful()) {
-                    Toast.makeText(GradeEntryActivity.this, "Lưu điểm thành công!", Toast.LENGTH_SHORT).show();
+                    new MaterialAlertDialogBuilder(GradeEntryActivity.this)
+                            .setTitle("Thành công")
+                            .setMessage("Đã lưu bảng điểm thành công vào hệ thống.")
+                            .setCancelable(false)
+                            .setNegativeButton("Đóng", (dialog, which) -> finish())
+                            .setPositiveButton("Nhập tiếp", (dialog, which) -> {
+                                autoMon.setText("");
+                                autoLoaiKT.setText("");
+                                selectedMaMon = "";
+                                selectedMaLoaiKT = "";
+                                listDiem.clear();
+                                if (adapter != null) adapter.notifyDataSetChanged();
+                                tilMon.setError(null);
+                                tilMon.setErrorEnabled(false);
+                                tilLoaiKT.setError(null);
+                                tilLoaiKT.setErrorEnabled(false);
+                                dialog.dismiss();
+                            })
+                            .show();
                 } else {
-                    Toast.makeText(GradeEntryActivity.this, "Lỗi Server: " + response.code(), Toast.LENGTH_SHORT).show();
+                    new MaterialAlertDialogBuilder(GradeEntryActivity.this)
+                            .setTitle("Thất bại")
+                            .setMessage("Lỗi Server: " + response.code())
+                            .setPositiveButton("OK", null)
+                            .show();
                 }
             }
             @Override public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
+                hideLoading();
                 btnLuu.setEnabled(true);
-                Toast.makeText(GradeEntryActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                new MaterialAlertDialogBuilder(GradeEntryActivity.this)
+                        .setTitle("Lỗi kết nối")
+                        .setMessage("Không thể kết nối đến server. Vui lòng kiểm tra lại mạng.")
+                        .setPositiveButton("OK", null)
+                        .show();
             }
         });
     }

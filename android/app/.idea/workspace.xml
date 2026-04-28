@@ -214,26 +214,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/StudentInfoActivity.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/StudentScoreActivity.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/res/layout/activity_student_info.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/res/layout/activity_student_score.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/res/layout/view_info_row.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CategoryGradeActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CategoryGradeActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CategorySubjectActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CategorySubjectActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CategoryTermActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CategoryTermActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CreateClassActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CreateClassActivity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CreateClassListActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/CreateClassListActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/GradeEntryActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/GradeEntryActivity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/ReceiveStudentsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/ReceiveStudentsActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/SearchStudentsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/SearchStudentsActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_search_students.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_search_students.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/item_search_students.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/item_search_students.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/controllers/classController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/classController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/controllers/studentController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/studentController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/routes/studentRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/studentRoutes.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_grade_entry.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_grade_entry.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
