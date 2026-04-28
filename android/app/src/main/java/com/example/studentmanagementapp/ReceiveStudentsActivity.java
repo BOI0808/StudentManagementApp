@@ -140,6 +140,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
         edtNgaySinh.addTextChangedListener(new SimpleTextWatcher(tilNgaySinh));
         edtDiaChi.addTextChangedListener(new SimpleTextWatcher(tilDiaChi));
         edtEmail.addTextChangedListener(new SimpleTextWatcher(tilEmail));
+        edtGioiTinhKhac.addTextChangedListener(new SimpleTextWatcher(tilGioiTinhKhac));
     }
 
     private static class SimpleTextWatcher implements TextWatcher {
@@ -147,7 +148,10 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
         public SimpleTextWatcher(TextInputLayout layout) { this.layout = layout; }
         @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
         @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-            if (layout != null) layout.setError(null);
+            if (layout != null) {
+                layout.setError(null);
+                layout.setErrorEnabled(false);
+            }
         }
         @Override public void afterTextChanged(Editable s) {}
     }
@@ -179,6 +183,8 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
             } else {
                 tilGioiTinhKhac.setVisibility(View.GONE);
                 edtGioiTinhKhac.setText("");
+                tilGioiTinhKhac.setError(null);
+                tilGioiTinhKhac.setErrorEnabled(false);
             }
         });
     }
@@ -195,7 +201,10 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
             sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
             String dateString = sdf.format(new Date(selection));
             edtNgaySinh.setText(dateString);
-            if (tilNgaySinh != null) tilNgaySinh.setError(null);
+            if (tilNgaySinh != null) {
+                tilNgaySinh.setError(null);
+                tilNgaySinh.setErrorEnabled(false);
+            }
         });
 
         datePicker.show(getSupportFragmentManager(), "DATE_PICKER");
@@ -423,19 +432,20 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
         edtEmail.setText("");
         rbNam.setChecked(true);
         edtGioiTinhKhac.setText("");
+        
         tilHoTen.setError(null);
+        tilHoTen.setErrorEnabled(false);
         tilNgaySinh.setError(null);
+        tilNgaySinh.setErrorEnabled(false);
         tilDiaChi.setError(null);
+        tilDiaChi.setErrorEnabled(false);
         tilEmail.setError(null);
+        tilEmail.setErrorEnabled(false);
+        
         edtHoTen.requestFocus();
     }
 
     private void performSaveStudent() {
-        if (tilHoTen != null) tilHoTen.setError(null);
-        if (tilNgaySinh != null) tilNgaySinh.setError(null);
-        if (tilDiaChi != null) tilDiaChi.setError(null);
-        if (tilEmail != null) tilEmail.setError(null);
-
         String hoTen = (edtHoTen.getText() != null) ? edtHoTen.getText().toString().trim() : "";
         String ngaySinh = (edtNgaySinh.getText() != null) ? edtNgaySinh.getText().toString().trim() : "";
         String diaChi = (edtDiaChi.getText() != null) ? edtDiaChi.getText().toString().trim() : "";
@@ -444,25 +454,40 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
         boolean hasError = false;
 
         if (hoTen.isEmpty()) {
-            if (tilHoTen != null) tilHoTen.setError("Họ và tên không được để trống");
+            if (tilHoTen != null) {
+                tilHoTen.setErrorEnabled(true);
+                tilHoTen.setError("Họ và tên không được để trống");
+            }
             hasError = true;
         }
 
         if (ngaySinh.isEmpty()) {
-            if (tilNgaySinh != null) tilNgaySinh.setError("Vui lòng chọn ngày sinh");
+            if (tilNgaySinh != null) {
+                tilNgaySinh.setErrorEnabled(true);
+                tilNgaySinh.setError("Vui lòng chọn ngày sinh");
+            }
             hasError = true;
         }
 
         if (diaChi.isEmpty()) {
-            if (tilDiaChi != null) tilDiaChi.setError("Địa chỉ không được để trống");
+            if (tilDiaChi != null) {
+                tilDiaChi.setErrorEnabled(true);
+                tilDiaChi.setError("Địa chỉ không được để trống");
+            }
             hasError = true;
         }
 
         if (email.isEmpty()) {
-            if (tilEmail != null) tilEmail.setError("Email không được để trống");
+            if (tilEmail != null) {
+                tilEmail.setErrorEnabled(true);
+                tilEmail.setError("Email không được để trống");
+            }
             hasError = true;
         } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            if (tilEmail != null) tilEmail.setError("Email không hợp lệ");
+            if (tilEmail != null) {
+                tilEmail.setErrorEnabled(true);
+                tilEmail.setError("Email không hợp lệ");
+            }
             hasError = true;
         }
 
@@ -496,11 +521,9 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
                             .setMessage("Học sinh " + tenHS + " đã được cấp mã " + maHS + ".")
                             .setCancelable(false)
                             .setPositiveButton("Tiếp nhận tiếp", (dialog, which) -> {
-                                // Xóa trắng các ô nhập liệu để sẵn sàng cho học sinh tiếp theo
                                 resetFields();
                             })
                             .setNegativeButton("Đóng", (dialog, which) -> {
-                                // Thoát màn hình tiếp nhận
                                 finish();
                             })
                             .show();

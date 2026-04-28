@@ -111,14 +111,17 @@ public class CreateClassListActivity extends AppCompatActivity {
             clearAllErrors();
             boolean isValid = true;
             if (autoNamHoc.getText().toString().isEmpty()) {
+                tilNamHoc.setErrorEnabled(true);
                 tilNamHoc.setError("Vui lòng chọn năm học");
                 isValid = false;
             }
             if (autoHocKy.getText().toString().isEmpty()) {
+                tilHocKy.setErrorEnabled(true);
                 tilHocKy.setError("Vui lòng chọn học kỳ");
                 isValid = false;
             }
             if (autoLop.getText().toString().isEmpty()) {
+                tilMaLop.setErrorEnabled(true);
                 tilMaLop.setError("Vui lòng chọn tên lớp");
                 isValid = false;
             }
@@ -177,6 +180,7 @@ public class CreateClassListActivity extends AppCompatActivity {
         autoHocKy.setOnItemClickListener((parent, view, position, id) -> {
             tilMaLop.setEnabled(true);
             tilHocKy.setError(null);
+            tilHocKy.setErrorEnabled(false);
 
             String year = autoNamHoc.getText().toString();
             String term = (String) parent.getItemAtPosition(position);
@@ -203,6 +207,7 @@ public class CreateClassListActivity extends AppCompatActivity {
 
         autoLop.setOnItemClickListener((p, v, pos, id) -> {
             tilMaLop.setError(null);
+            tilMaLop.setErrorEnabled(false);
             ClassModel sel = (ClassModel) p.getItemAtPosition(pos);
             selectedMaLop = sel.getMaLop();
             hideKeyboard();
@@ -235,6 +240,7 @@ public class CreateClassListActivity extends AppCompatActivity {
         autoNamHoc.setOnItemClickListener((parent, view, position, id) -> {
             tilHocKy.setEnabled(true);
             tilNamHoc.setError(null);
+            tilNamHoc.setErrorEnabled(false);
 
             String year = (String) parent.getItemAtPosition(position);
             List<String> terms = new ArrayList<>();
@@ -571,12 +577,16 @@ public class CreateClassListActivity extends AppCompatActivity {
             }
             @Override
             public void afterTextChanged(Editable s) {
-                if (s.length() > 0) tilHocSinh.setError(null);
+                if (s.length() > 0) {
+                    tilHocSinh.setError(null);
+                    tilHocSinh.setErrorEnabled(false);
+                }
             }
         });
 
         autoHocSinh.setOnItemClickListener((parent, view, position, id) -> {
             tilHocSinh.setError(null);
+            tilHocSinh.setErrorEnabled(false);
             Student selected = (Student) parent.getItemAtPosition(position);
             if (selected != null) {
                 selectedStudentToAdd = selected;
@@ -658,14 +668,31 @@ public class CreateClassListActivity extends AppCompatActivity {
     private void addStudentToList() {
         clearAllErrors();
         boolean isValid = true;
-        if (autoNamHoc.getText().toString().isEmpty()) { tilNamHoc.setError("Vui lòng chọn năm học"); isValid = false; }
-        if (autoHocKy.getText().toString().isEmpty()) { tilHocKy.setError("Vui lòng chọn học kỳ"); isValid = false; }
-        if (autoLop.getText().toString().isEmpty()) { tilMaLop.setError("Vui lòng chọn tên lớp"); isValid = false; }
-        if (autoHocSinh.getText().toString().isEmpty()) { tilHocSinh.setError("Không được để trống"); isValid = false; }
+        if (autoNamHoc.getText().toString().isEmpty()) { 
+            tilNamHoc.setErrorEnabled(true);
+            tilNamHoc.setError("Vui lòng chọn năm học"); 
+            isValid = false; 
+        }
+        if (autoHocKy.getText().toString().isEmpty()) { 
+            tilHocKy.setErrorEnabled(true);
+            tilHocKy.setError("Vui lòng chọn học kỳ"); 
+            isValid = false; 
+        }
+        if (autoLop.getText().toString().isEmpty()) { 
+            tilMaLop.setErrorEnabled(true);
+            tilMaLop.setError("Vui lòng chọn tên lớp"); 
+            isValid = false; 
+        }
+        if (autoHocSinh.getText().toString().isEmpty()) { 
+            tilHocSinh.setErrorEnabled(true);
+            tilHocSinh.setError("Không được để trống"); 
+            isValid = false; 
+        }
 
         if (!isValid) return;
 
         if (selectedStudentToAdd == null) {
+            tilHocSinh.setErrorEnabled(true);
             tilHocSinh.setError("Vui lòng chọn học sinh từ danh sách gợi ý");
             return;
         }
@@ -691,13 +718,18 @@ public class CreateClassListActivity extends AppCompatActivity {
 
     private void clearAllErrors() {
         tilNamHoc.setError(null);
+        tilNamHoc.setErrorEnabled(false);
         tilHocKy.setError(null);
+        tilHocKy.setErrorEnabled(false);
         tilMaLop.setError(null);
+        tilMaLop.setErrorEnabled(false);
         tilHocSinh.setError(null);
+        tilHocSinh.setErrorEnabled(false);
     }
 
     private void saveClassList() {
         if (selectedMaLop.isEmpty()) {
+            tilMaLop.setErrorEnabled(true);
             tilMaLop.setError("Vui lòng chọn tên lớp");
             return;
         }

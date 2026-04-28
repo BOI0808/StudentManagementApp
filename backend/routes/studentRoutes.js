@@ -23,6 +23,9 @@ router.get("/search", studentController.searchHocSinh);
 // Endpoint: GET /api/students/ket-qua-tra-cuu?maLop=...&hoTen=...&maHocSinh=...
 router.get("/ket-qua-tra-cuu", studentController.traCuuHocSinh);
 
+//Endpoint: GET /api/students/lich-su-hoc-tap/:maHocSinh
+router.get("/lich-su-hoc-tap/:maHocSinh", studentController.getStudentHistory);
+
 // Endpoint: PUT /api/students/cap-nhat-hoc-sinh
 router.put("/cap-nhat-hoc-sinh", studentController.updateHocSinh);
 

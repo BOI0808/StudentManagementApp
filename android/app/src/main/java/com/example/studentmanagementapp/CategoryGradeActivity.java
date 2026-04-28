@@ -70,6 +70,7 @@ public class CategoryGradeActivity extends AppCompatActivity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (tilTenKhoi != null) {
                     tilTenKhoi.setError(null);
+                    tilTenKhoi.setErrorEnabled(false);
                 }
             }
 
@@ -135,8 +136,8 @@ public class CategoryGradeActivity extends AppCompatActivity {
     private void performAddBlock() {
         final String tenKhoi = edtTenKhoi.getText() != null ? edtTenKhoi.getText().toString().trim() : "";
         
-        tilTenKhoi.setError(null);
         if (tenKhoi.isEmpty()) {
+            tilTenKhoi.setErrorEnabled(true);
             tilTenKhoi.setError("Vui lòng nhập tên khối");
             return;
         }
@@ -156,6 +157,8 @@ public class CategoryGradeActivity extends AppCompatActivity {
                             .setCancelable(false)
                             .setPositiveButton("Tạo tiếp", (dialog, which) -> {
                                 edtTenKhoi.setText("");
+                                tilTenKhoi.setError(null);
+                                tilTenKhoi.setErrorEnabled(false);
                                 loadBlockList();
                             })
                             .setNegativeButton("Đóng", (dialog, which) -> finish())

@@ -74,21 +74,33 @@ public class CreateClassActivity extends AppCompatActivity {
         edtTenLop.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (tilTenLop != null) tilTenLop.setError(null);
+                if (tilTenLop != null) {
+                    tilTenLop.setError(null);
+                    tilTenLop.setErrorEnabled(false);
+                }
             }
             @Override public void afterTextChanged(Editable s) {}
         });
 
         autoCompleteKhoiLop.setOnItemClickListener((parent, view, position, id) -> {
-            if (tilKhoiLop != null) tilKhoiLop.setError(null);
+            if (tilKhoiLop != null) {
+                tilKhoiLop.setError(null);
+                tilKhoiLop.setErrorEnabled(false);
+            }
         });
 
         autoCompleteNamHoc.setOnItemClickListener((parent, view, position, id) -> {
-            if (tilNamHoc != null) tilNamHoc.setError(null);
+            if (tilNamHoc != null) {
+                tilNamHoc.setError(null);
+                tilNamHoc.setErrorEnabled(false);
+            }
         });
 
         autoCompleteHocKy.setOnItemClickListener((parent, view, position, id) -> {
-            if (tilHocKy != null) tilHocKy.setError(null);
+            if (tilHocKy != null) {
+                tilHocKy.setError(null);
+                tilHocKy.setErrorEnabled(false);
+            }
         });
     }
 
@@ -154,7 +166,6 @@ public class CreateClassActivity extends AppCompatActivity {
         Calendar cal = Calendar.getInstance();
         int currentYear = cal.get(Calendar.YEAR);
         int currentMonth = cal.get(Calendar.MONTH);
-        // Xác định năm học hiện hành theo thực tế Việt Nam (Tháng 9 bắt đầu năm học mới)
         int effectiveSchoolStartYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
 
         List<String> years = new ArrayList<>();
@@ -162,11 +173,8 @@ public class CreateClassActivity extends AppCompatActivity {
             String namHoc = m.get("namhoc");
             if (namHoc != null && !years.contains(namHoc)) {
                 try {
-                    // Tách năm bắt đầu (vd: '2024-2025' -> '2024')
                     String startYearStr = namHoc.contains("-") ? namHoc.split("-")[0].trim() : namHoc.trim();
                     int startYear = Integer.parseInt(startYearStr);
-
-                    // Chỉ lọc lấy các niên khóa hiện hành hoặc tương lai
                     if (startYear >= effectiveSchoolStartYear) {
                         years.add(namHoc);
                     }
@@ -185,33 +193,18 @@ public class CreateClassActivity extends AppCompatActivity {
     private void resetFields() {
         if (edtTenLop != null) edtTenLop.setText("");
         if (autoCompleteKhoiLop != null) autoCompleteKhoiLop.setText("", false);
-        if (tilTenLop != null) tilTenLop.setError(null);
-        if (tilKhoiLop != null) tilKhoiLop.setError(null);
-    }
-
-    private void showSuccessDialog(String maLop, String tenLop, String namHoc, String hocKy) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Thành công")
-                .setMessage("Lớp " + tenLop + " đã được tạo thành công trong hệ thống.")
-                .setPositiveButton("Tạo lớp tiếp", (dialog, which) -> {
-                    // Xóa trắng dữ liệu cũ để sẵn sàng tạo lớp mới
-                    resetFields();
-                    dialog.dismiss();
-                })
-                .setNegativeButton("Đóng", (dialog, which) -> {
-                    // Thoát màn hình tạo lớp
-                    finish();
-                })
-                .setCancelable(false) // Bắt buộc người dùng phải chọn một trong hai
-                .show();
+        
+        if (tilTenLop != null) {
+            tilTenLop.setError(null);
+            tilTenLop.setErrorEnabled(false);
+        }
+        if (tilKhoiLop != null) {
+            tilKhoiLop.setError(null);
+            tilKhoiLop.setErrorEnabled(false);
+        }
     }
 
     private void performCreateClass() {
-        if (tilTenLop != null) tilTenLop.setError(null);
-        if (tilKhoiLop != null) tilKhoiLop.setError(null);
-        if (tilNamHoc != null) tilNamHoc.setError(null);
-        if (tilHocKy != null) tilHocKy.setError(null);
-
         final String tenLop = (edtTenLop.getText() != null) ? edtTenLop.getText().toString().trim() : "";
         String tenKhoi = autoCompleteKhoiLop.getText().toString();
         final String namHoc = autoCompleteNamHoc.getText().toString();
@@ -220,19 +213,31 @@ public class CreateClassActivity extends AppCompatActivity {
         boolean hasError = false;
 
         if (tenLop.isEmpty()) {
-            if (tilTenLop != null) tilTenLop.setError("Tên lớp không được để trống (VD: 10A1)");
+            if (tilTenLop != null) {
+                tilTenLop.setErrorEnabled(true);
+                tilTenLop.setError("Tên lớp không được để trống (VD: 10A1)");
+            }
             hasError = true;
         }
         if (tenKhoi.isEmpty()) {
-            if (tilKhoiLop != null) tilKhoiLop.setError("Vui lòng chọn khối lớp");
+            if (tilKhoiLop != null) {
+                tilKhoiLop.setErrorEnabled(true);
+                tilKhoiLop.setError("Vui lòng chọn khối lớp");
+            }
             hasError = true;
         }
         if (namHoc.isEmpty()) {
-            if (tilNamHoc != null) tilNamHoc.setError("Vui lòng chọn năm học");
+            if (tilNamHoc != null) {
+                tilNamHoc.setErrorEnabled(true);
+                tilNamHoc.setError("Vui lòng chọn năm học");
+            }
             hasError = true;
         }
         if (hocKyStr.isEmpty()) {
-            if (tilHocKy != null) tilHocKy.setError("Vui lòng chọn học kỳ");
+            if (tilHocKy != null) {
+                tilHocKy.setErrorEnabled(true);
+                tilHocKy.setError("Vui lòng chọn học kỳ");
+            }
             hasError = true;
         }
 
@@ -264,15 +269,15 @@ public class CreateClassActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
                 hideLoading();
                 if (response.isSuccessful() && response.body() != null) {
-                    String maLop = response.body().get("maLop");
-                    if (maLop == null) maLop = response.body().get("ma"); // Fallback
-                    showSuccessDialog(maLop, tenLop, namHoc, hocKyStr);
-                } else {
                     new MaterialAlertDialogBuilder(CreateClassActivity.this)
-                            .setTitle("Thất bại")
-                            .setMessage("Lớp " + tenLop + " đã tồn tại")
-                            .setPositiveButton("OK", null)
+                            .setTitle("Thành công")
+                            .setMessage("Lớp " + tenLop + " đã được tạo thành công.")
+                            .setPositiveButton("Tạo lớp tiếp", (dialog, which) -> resetFields())
+                            .setNegativeButton("Đóng", (dialog, which) -> finish())
+                            .setCancelable(false)
                             .show();
+                } else {
+                    Toast.makeText(CreateClassActivity.this, "Lớp đã tồn tại hoặc dữ liệu lỗi", Toast.LENGTH_SHORT).show();
                 }
             }
 

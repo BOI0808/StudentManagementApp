@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:orientation="vertical"
+    tools:context=".StudentScoreActivity">
+
+    <!-- Header Section Section (Thống nhất với các UI khác) -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="?attr/homeAsUpIndicator"
+            app:tint="#1976D2" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Bảng Điểm Học Sinh"
+            android:textColor="#1976D2"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="24dp">
+
+            <!-- Student Info Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:id="@+id/tvHoTen"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Họ tên: N/A"
+                        android:textColor="#1976D2"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#EEEEEE"
+                        android:layout_marginBottom="12dp"/>
+
+                    <TextView
+                        android:id="@+id/tvMaHS"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Mã HS: N/A"
+                        android:textColor="#555555"
+                        android:textSize="15sp"
+                        android:layout_marginBottom="8dp"/>
+
+                    <TextView
+                        android:id="@+id/tvLop"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Lớp: N/A"
+                        android:textColor="#555555"
+                        android:textSize="15sp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Score Table Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Bảng điểm chi tiết"
+                        android:textColor="#333333"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp"/>
+
+                    <TableLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:stretchColumns="1">
+
+                        <!-- Header Row -->
+                        <TableRow
+                            android:background="#1976D2"
+                            android:paddingVertical="12dp"
+                            android:paddingHorizontal="8dp">
+                            <TextView
+                                android:text="Học kỳ"
+                                android:textColor="@android:color/white"
+                                android:textStyle="bold"
+                                android:padding="4dp"/>
+                            <TextView
+                                android:text="Điểm trung bình"
+                                android:textColor="@android:color/white"
+                                android:textStyle="bold"
+                                android:padding="4dp"
+                                android:gravity="center"/>
+                        </TableRow>
+
+                        <!-- Semester 1 -->
+                        <TableRow
+                            android:paddingVertical="12dp"
+                            android:paddingHorizontal="8dp"
+                            android:background="#FFFFFF">
+                            <TextView
+                                android:text="Học kỳ 1"
+                                android:textColor="#555555"
+                                android:padding="4dp"/>
+                            <TextView
+                                android:id="@+id/tvDiemHK1"
+                                android:text="N/A"
+                                android:textColor="#1976D2"
+                                android:textStyle="bold"
+                                android:padding="4dp"
+                                android:gravity="center"/>
+                        </TableRow>
+
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+                        <!-- Semester 2 -->
+                        <TableRow
+                            android:paddingVertical="12dp"
+                            android:paddingHorizontal="8dp"
+                            android:background="#FFFFFF">
+                            <TextView
+                                android:text="Học kỳ 2"
+                                android:textColor="#555555"
+                                android:padding="4dp"/>
+                            <TextView
+                                android:id="@+id/tvDiemHK2"
+                                android:text="N/A"
+                                android:textColor="#1976D2"
+                                android:textStyle="bold"
+                                android:padding="4dp"
+                                android:gravity="center"/>
+                        </TableRow>
+
+                        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
+
+                        <!-- Full Year -->
+                        <TableRow
+                            android:paddingVertical="12dp"
+                            android:paddingHorizontal="8dp"
+                            android:background="#E3F2FD">
+                            <TextView
+                                android:text="Cả năm"
+                                android:textColor="#1976D2"
+                                android:textStyle="bold"
+                                android:padding="4dp"/>
+                            <TextView
+                                android:id="@+id/tvDiemCaNam"
+                                android:text="N/A"
+                                android:textColor="#D32F2F"
+                                android:textStyle="bold"
+                                android:textSize="18sp"
+                                android:padding="4dp"
+                                android:gravity="center"/>
+                        </TableRow>
+                    </TableLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

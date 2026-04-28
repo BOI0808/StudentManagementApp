@@ -212,13 +212,20 @@ exports.xoaHocSinhKhoiLop = async (req, res) => {
 
 exports.traCuuHocSinh = async (req, res) => {
   const { maLop, maHocSinh, hoTen } = req.query;
+
+  // Sử dụng GROUP BY để mỗi học sinh chỉ hiện 1 dòng duy nhất trong 1 năm học
+  // Sử dụng MAX/MIN cho các trường thông tin chung để tránh lỗi SQL Mode
   let query = `
     SELECT 
       hs.MaHocSinh, 
-      hs.HoTen, 
-      l.TenLop, 
+      hs.HoTen,
+      hs.NgaySinh,      
+      hs.MaGioiTinh,    
+      hs.DiaChi,        
+      hs.Email,         
+      MAX(l.TenLop) AS TenLop, 
       CONCAT(hn.NamHocBatDau, '-', hn.NamHocKetThuc) AS NamHoc,
-      -- Tính điểm trung bình HK1 của học sinh trong năm học đó
+      -- Tính điểm trung bình HK1
       (SELECT ROUND(AVG(km1.DiemTrungBinhMon), 1) 
        FROM ketqua_monhoc km1 
        JOIN hocky_namhoc hn1 ON km1.MaHocKyNamHoc = hn1.MaHocKyNamHoc 
@@ -246,8 +253,10 @@ exports.traCuuHocSinh = async (req, res) => {
 
   let params = [];
   if (maLop) {
-    query += " AND l.MaLop = ?";
-    params.push(maLop);
+    // FIX: Tìm theo tên lớp và năm học thay vì ID duy nhất của 1 học kỳ
+    query += ` AND l.TenLop = (SELECT TenLop FROM lop WHERE MaLop = ?) 
+               AND hn.NamHocBatDau = (SELECT hn2.NamHocBatDau FROM lop l2 JOIN hocky_namhoc hn2 ON l2.MaHocKyNamHoc = hn2.MaHocKyNamHoc WHERE l2.MaLop = ?)`;
+    params.push(maLop, maLop);
   }
   if (maHocSinh) {
     query += " AND hs.MaHocSinh = ?";
@@ -258,12 +267,34 @@ exports.traCuuHocSinh = async (req, res) => {
     params.push(`%${hoTen}%`);
   }
 
+  // Thêm GROUP BY để gộp dữ liệu học sinh theo năm học
+  query += " GROUP BY hs.MaHocSinh, hn.NamHocBatDau";
+
   try {
     const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Lỗi truy vấn cơ sở dữ liệu: " + error.message });
+    res.status(500).json({ error: "Lỗi truy vấn: " + error.message });
+  }
+};
+
+exports.getStudentHistory = async (req, res) => {
+  const { maHocSinh } = req.params;
+  const query = `
+    SELECT 
+      l.TenLop, 
+      hn.TenHocKy, 
+      CONCAT(hn.NamHocBatDau, '-', hn.NamHocKetThuc) AS NamHoc
+    FROM chitietlop ctl
+    JOIN lop l ON ctl.MaLop = l.MaLop
+    JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc
+    WHERE ctl.MaHocSinh = ?
+    ORDER BY hn.NamHocBatDau DESC, hn.TenHocKy DESC`;
+
+  try {
+    const [rows] = await db.query(query, [maHocSinh]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

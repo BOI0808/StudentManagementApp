@@ -73,6 +73,7 @@ public class CategorySubjectActivity extends AppCompatActivity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (tilTenMon != null) {
                     tilTenMon.setError(null);
+                    tilTenMon.setErrorEnabled(false);
                 }
             }
 
@@ -168,8 +169,8 @@ public class CategorySubjectActivity extends AppCompatActivity {
     private void performAddSubject() {
         String tenMon = edtTenMon.getText() != null ? edtTenMon.getText().toString().trim() : "";
         
-        tilTenMon.setError(null);
         if (tenMon.isEmpty()) {
+            tilTenMon.setErrorEnabled(true);
             tilTenMon.setError("Vui lòng nhập tên môn học");
             return;
         }
@@ -189,6 +190,8 @@ public class CategorySubjectActivity extends AppCompatActivity {
                             .setCancelable(false)
                             .setPositiveButton("Tạo tiếp", (dialog, which) -> {
                                 edtTenMon.setText("");
+                                tilTenMon.setError(null);
+                                tilTenMon.setErrorEnabled(false);
                                 loadSubjectList();
                             })
                             .setNegativeButton("Đóng", (dialog, which) -> finish())

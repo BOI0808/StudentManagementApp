@@ -55,6 +55,7 @@ exports.getLopHoc = async (req, res) => {
       siSoHienTai: item.SiSo,
       hienThi: item.MaLop,
       maHocKyNamHoc: item.MaHocKyNamHoc,
+      namhoc: item.NamHocBatDau + "-" + item.NamHocKetThuc,
     }));
     res.json(dropdownData);
   } catch (err) {

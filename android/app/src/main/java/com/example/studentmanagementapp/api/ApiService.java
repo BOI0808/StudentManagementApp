@@ -116,6 +116,9 @@ public interface ApiService {
         @Query("maHocSinh") String maHocSinh
     );
 
+    @GET("api/students/lich-su-hoc-tap/{maHocSinh}")
+    Call<List<Map<String, String>>> getStudentHistory(@Path("maHocSinh") String maHocSinh);
+
     // IX. Nhập danh sách các loại kiểm tra
     @GET("api/test-types/danh-sach-loai-kiem-tra")
     Call<List<Map<String, Object>>> getTestTypeList();

@@ -81,14 +81,21 @@ public class CategoryTermActivity extends AppCompatActivity {
         // Auto-fill: Năm kết thúc = Năm bắt đầu + 1
         edtNamBatDau.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (tilNamBatDau != null) {
+                    tilNamBatDau.setError(null);
+                    tilNamBatDau.setErrorEnabled(false);
+                }
+            }
             @Override public void afterTextChanged(Editable s) {
-                tilNamBatDau.setError(null);
                 if (s.length() == 4) {
                     try {
                         int namBD = Integer.parseInt(s.toString());
                         edtNamKetThuc.setText(String.valueOf(namBD + 1));
-                        tilNamKetThuc.setError(null);
+                        if (tilNamKetThuc != null) {
+                            tilNamKetThuc.setError(null);
+                            tilNamKetThuc.setErrorEnabled(false);
+                        }
                     } catch (NumberFormatException ignored) {}
                 }
             }
@@ -96,10 +103,13 @@ public class CategoryTermActivity extends AppCompatActivity {
 
         edtNamKetThuc.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) {
-                tilNamKetThuc.setError(null);
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (tilNamKetThuc != null) {
+                    tilNamKetThuc.setError(null);
+                    tilNamKetThuc.setErrorEnabled(false);
+                }
             }
+            @Override public void afterTextChanged(Editable s) {}
         });
 
         edtSearchTerm.addTextChangedListener(new TextWatcher() {
@@ -222,21 +232,32 @@ public class CategoryTermActivity extends AppCompatActivity {
         String strNamKT = edtNamKetThuc.getText().toString().trim();
 
         boolean isValid = true;
-        if (strNamBD.isEmpty()) { tilNamBatDau.setError("Không được để trống"); isValid = false; }
-        if (strNamKT.isEmpty()) { tilNamKetThuc.setError("Không được để trống"); isValid = false; }
+        if (strNamBD.isEmpty()) {
+            tilNamBatDau.setErrorEnabled(true);
+            tilNamBatDau.setError("Không được để trống");
+            isValid = false;
+        }
+        if (strNamKT.isEmpty()) {
+            tilNamKetThuc.setErrorEnabled(true);
+            tilNamKetThuc.setError("Không được để trống");
+            isValid = false;
+        }
         if (!isValid) return;
 
         try {
             int namBD = Integer.parseInt(strNamBD);
             int namKT = Integer.parseInt(strNamKT);
             if (namBD >= namKT) {
+                tilNamBatDau.setErrorEnabled(true);
                 tilNamBatDau.setError("Năm bắt đầu phải nhỏ hơn năm kết thúc");
                 isValid = false;
             } else if (namKT - namBD != 1) {
+                tilNamKetThuc.setErrorEnabled(true);
                 tilNamKetThuc.setError("Khoảng cách phải đúng bằng 1 năm");
                 isValid = false;
             }
         } catch (NumberFormatException e) {
+            tilNamBatDau.setErrorEnabled(true);
             tilNamBatDau.setError("Năm không hợp lệ");
             isValid = false;
         }
@@ -289,6 +310,12 @@ public class CategoryTermActivity extends AppCompatActivity {
                             .setPositiveButton("Tạo tiếp", (dialog, which) -> {
                                 edtNamBatDau.setText("");
                                 edtNamKetThuc.setText("");
+                                
+                                tilNamBatDau.setError(null);
+                                tilNamBatDau.setErrorEnabled(false);
+                                tilNamKetThuc.setError(null);
+                                tilNamKetThuc.setErrorEnabled(false);
+
                                 loadTermList();
                                 dialog.dismiss();
                             })

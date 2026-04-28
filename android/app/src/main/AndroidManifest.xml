@@ -77,6 +77,12 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+        <activity
+            android:name=".StudentInfoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".StudentScoreActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

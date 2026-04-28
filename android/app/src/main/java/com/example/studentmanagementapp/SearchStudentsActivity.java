@@ -1,7 +1,10 @@
 package com.example.studentmanagementapp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -13,6 +16,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Filter;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -24,10 +28,13 @@ import com.example.studentmanagementapp.api.ApiClient;
 import com.example.studentmanagementapp.model.ClassModel;
 import com.example.studentmanagementapp.model.Student;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputLayout;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -38,7 +45,8 @@ import retrofit2.Response;
 public class SearchStudentsActivity extends AppCompatActivity {
 
     private AutoCompleteTextView autoLop, autoMaHS, autoTenHS, autoNamHoc;
-    private TextInputLayout tilNamHoc, tilMaLop;
+    private TextInputLayout tilNamHoc, tilMaLop, tilSearchMaHS, tilSearchTen;
+    private ProgressBar pbMaHSLoading, pbTenHSLoading;
     private MaterialButton btnTimKiem;
     private RecyclerView rvKetQua;
     private ImageButton btnBack;
@@ -53,6 +61,9 @@ public class SearchStudentsActivity extends AppCompatActivity {
     private String selectedMaLop = "";
     private boolean isProgrammaticChange = false;
 
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable searchMaHSRunnable, searchTenHSRunnable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +72,7 @@ public class SearchStudentsActivity extends AppCompatActivity {
         initViews();
         setupFilters();
         setupStudentAutocomplete();
+        setupErrorWatchers();
 
         btnBack.setOnClickListener(v -> finish());
         btnTimKiem.setOnClickListener(v -> performSearch());
@@ -69,6 +81,15 @@ public class SearchStudentsActivity extends AppCompatActivity {
     private void initViews() {
         tilNamHoc = findViewById(R.id.tilNamHoc);
         tilMaLop = findViewById(R.id.tilMaLop);
+        tilSearchMaHS = findViewById(R.id.tilSearchMaHS);
+        tilSearchTen = findViewById(R.id.tilSearchTen);
+
+        pbMaHSLoading = findViewById(R.id.pbMaHSLoading);
+        pbTenHSLoading = findViewById(R.id.pbTenHSLoading);
+
+        // Khóa hai ô tìm kiếm học sinh ban đầu
+        tilSearchMaHS.setEnabled(false);
+        tilSearchTen.setEnabled(false);
 
         autoNamHoc = findViewById(R.id.autoCompleteNamHoc);
         autoLop = findViewById(R.id.autoCompleteMaLop);
@@ -86,6 +107,7 @@ public class SearchStudentsActivity extends AppCompatActivity {
     }
 
     private void setupFilters() {
+        // 1. Tải danh sách Học kỳ/Năm học
         ApiClient.getApiService().getSemesterList().enqueue(new Callback<List<Map<String, String>>>() {
             @Override
             public void onResponse(@NonNull Call<List<Map<String, String>>> call, @NonNull Response<List<Map<String, String>>> response) {
@@ -97,19 +119,37 @@ public class SearchStudentsActivity extends AppCompatActivity {
             @Override public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {}
         });
 
+        // 2. Tải danh sách lớp
+        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
         ApiClient.getApiService().getClassList().enqueue(new Callback<List<ClassModel>>() {
             @Override
             public void onResponse(@NonNull Call<List<ClassModel>> call, @NonNull Response<List<ClassModel>> response) {
+                if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
                     allClassList = response.body();
+
+                    // Nếu người dùng đã chọn Năm học trước khi lớp tải xong, lọc ngay
+                    if (!autoNamHoc.getText().toString().isEmpty()) {
+                        filterClasses();
+                    }
                 }
             }
-            @Override public void onFailure(@NonNull Call<List<ClassModel>> call, @NonNull Throwable t) {}
+            @Override public void onFailure(@NonNull Call<List<ClassModel>> call, @NonNull Throwable t) {
+                if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+            }
         });
 
         autoLop.setOnItemClickListener((p, v, pos, id) -> {
             ClassModel sel = (ClassModel) p.getItemAtPosition(pos);
             selectedMaLop = sel.getMaLop();
+
+            tilMaLop.setError(null);
+            tilMaLop.setErrorEnabled(false);
+
+            // Mở khóa các ô tìm kiếm khi đã chọn lớp
+            tilSearchMaHS.setEnabled(true);
+            tilSearchTen.setEnabled(true);
+
             hideKeyboard();
             loadStudentsInClass(selectedMaLop);
         });
@@ -122,7 +162,6 @@ public class SearchStudentsActivity extends AppCompatActivity {
         int effectiveSchoolStartYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
 
         List<String> distinctYears = new ArrayList<>();
-        distinctYears.add("Tất cả năm học");
 
         for (Map<String, String> m : fullList) {
             String y = m.get("namhoc");
@@ -138,28 +177,114 @@ public class SearchStudentsActivity extends AppCompatActivity {
 
         autoNamHoc.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, distinctYears));
         autoNamHoc.setOnItemClickListener((parent, view, position, id) -> {
-            tilMaLop.setEnabled(true);
             autoLop.setText("");
             selectedMaLop = "";
+
+            tilNamHoc.setError(null);
+            tilNamHoc.setErrorEnabled(false);
+            tilMaLop.setError(null);
+            tilMaLop.setErrorEnabled(false);
+
+            // Khóa lại các ô tìm kiếm khi đổi năm học (vì chưa chọn lớp mới)
+            tilSearchMaHS.setEnabled(false);
+            tilSearchTen.setEnabled(false);
+
             filterClasses();
         });
     }
 
     private void filterClasses() {
-        String year = autoNamHoc.getText().toString();
+        String year = autoNamHoc.getText().toString().trim();
         if (year.isEmpty()) return;
 
         List<ClassModel> filtered = new ArrayList<>();
-        if (year.equals("Tất cả năm học")) {
-            filtered.addAll(allClassList);
-        } else {
-            for (ClassModel c : allClassList) {
-                if (year.equalsIgnoreCase(c.getNamHoc())) {
+        List<String> addedClassNames = new ArrayList<>();
+
+        for (ClassModel c : allClassList) {
+            String classYear = c.getNamHoc();
+
+            // Đối chiếu năm học dựa trên mã nếu cần
+            if (classYear == null || classYear.equals("Chưa có")) {
+                for (Map<String, String> s : semesterList) {
+                    if (s.get("ma") != null && s.get("ma").equalsIgnoreCase(c.getMaHocKyNamHoc())) {
+                        classYear = s.get("namhoc");
+                        break;
+                    }
+                }
+            }
+
+            if (classYear != null && year.equalsIgnoreCase(classYear.trim())) {
+                String tenLop = c.getTenLop();
+                if (!addedClassNames.contains(tenLop)) {
                     filtered.add(c);
+                    addedClassNames.add(tenLop);
                 }
             }
         }
-        autoLop.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, filtered));
+
+        ArrayAdapter<ClassModel> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_dropdown_item_1line, filtered);
+        autoLop.setAdapter(adapter);
+        autoLop.setThreshold(0);
+
+        if (!filtered.isEmpty()) {
+            tilMaLop.setEnabled(true);
+        } else {
+            tilMaLop.setEnabled(false);
+            if (!allClassList.isEmpty()) {
+                Toast.makeText(this, "Năm học " + year + " chưa có lớp nào.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void setupErrorWatchers() {
+        autoMaHS.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (isProgrammaticChange) return; // Chặn hoàn toàn logic khi code tự điền
+                
+                tilSearchMaHS.setError(null);
+                tilSearchMaHS.setErrorEnabled(false);
+
+                searchHandler.removeCallbacksAndMessages(null); // Hủy sạch các Runnable đang chờ
+                
+                if (s.length() > 0) {
+                    pbMaHSLoading.setVisibility(View.VISIBLE);
+                    searchMaHSRunnable = () -> {
+                        autoMaHS.showDropDown(); 
+                        pbMaHSLoading.setVisibility(View.GONE);
+                    };
+                    searchHandler.postDelayed(searchMaHSRunnable, 300);
+                } else {
+                    pbMaHSLoading.setVisibility(View.GONE);
+                }
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        autoTenHS.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (isProgrammaticChange) return; // Chặn hoàn toàn logic khi code tự điền
+                
+                tilSearchTen.setError(null);
+                tilSearchTen.setErrorEnabled(false);
+
+                searchHandler.removeCallbacksAndMessages(null); // Hủy sạch các Runnable đang chờ
+                
+                if (s.length() > 0) {
+                    pbTenHSLoading.setVisibility(View.VISIBLE);
+                    searchTenHSRunnable = () -> {
+                        autoTenHS.showDropDown();
+                        pbTenHSLoading.setVisibility(View.GONE);
+                    };
+                    searchHandler.postDelayed(searchTenHSRunnable, 300);
+                } else {
+                    pbTenHSLoading.setVisibility(View.GONE);
+                }
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void showLoading() {
@@ -318,35 +443,60 @@ public class SearchStudentsActivity extends AppCompatActivity {
 
     private void setupStudentAutocomplete() {
         autoMaHS.setOnItemClickListener((parent, view, position, id) -> {
+            searchHandler.removeCallbacksAndMessages(null); // Hủy mọi lệnh hiện dropdown đang chờ
+            pbMaHSLoading.setVisibility(View.GONE); // Ẩn Spinner trực tiếp
+            pbTenHSLoading.setVisibility(View.GONE);
+
             Student selected = (Student) parent.getItemAtPosition(position);
             if (selected != null) {
                 isProgrammaticChange = true;
-                autoMaHS.setText(selected.getMaHocSinh(), false);
+                autoMaHS.setText(selected.getMaHocSinh(), false); // false để không kích hoạt filter
                 autoMaHS.dismissDropDown();
-                isProgrammaticChange = true;
-                autoTenHS.setText(selected.getHoTen(), false);
+                
+                autoTenHS.setText(selected.getHoTen(), false); // false để không kích hoạt filter
                 autoTenHS.dismissDropDown();
+                
                 autoMaHS.clearFocus();
                 hideKeyboard();
+                isProgrammaticChange = false;
             }
         });
 
         autoTenHS.setOnItemClickListener((parent, view, position, id) -> {
+            searchHandler.removeCallbacksAndMessages(null); // Hủy mọi lệnh hiện dropdown đang chờ
+            pbMaHSLoading.setVisibility(View.GONE); // Ẩn Spinner trực tiếp
+            pbTenHSLoading.setVisibility(View.GONE);
+
             Student selected = (Student) parent.getItemAtPosition(position);
             if (selected != null) {
                 isProgrammaticChange = true;
-                autoMaHS.setText(selected.getMaHocSinh(), false);
+                autoMaHS.setText(selected.getMaHocSinh(), false); // false để không kích hoạt filter
                 autoMaHS.dismissDropDown();
-                isProgrammaticChange = true;
-                autoTenHS.setText(selected.getHoTen(), false);
+                
+                autoTenHS.setText(selected.getHoTen(), false); // false để không kích hoạt filter
                 autoTenHS.dismissDropDown();
+
                 autoTenHS.clearFocus();
                 hideKeyboard();
+                isProgrammaticChange = false;
             }
         });
     }
 
     private void performSearch() {
+        String year = autoNamHoc.getText().toString().trim();
+        if (year.isEmpty()) {
+            tilNamHoc.setErrorEnabled(true);
+            tilNamHoc.setError("Vui lòng chọn năm học");
+            return;
+        }
+
+        if (selectedMaLop == null || selectedMaLop.isEmpty()) {
+            tilMaLop.setErrorEnabled(true);
+            tilMaLop.setError("Vui lòng chọn lớp");
+            return;
+        }
+
         String maHS = autoMaHS.getText().toString().trim();
         String tenHS = autoTenHS.getText().toString().trim();
 
@@ -391,11 +541,29 @@ public class SearchStudentsActivity extends AppCompatActivity {
             String namHoc = getStringValue(findValue(item, "NamHoc", "namHoc", "NamHocBatDau"));
             ((TextView) itemView.findViewById(R.id.tvLopNamHoc)).setText(String.format("Lớp: %s  |  Năm học: %s", lop, namHoc));
 
-            ((TextView) itemView.findViewById(R.id.tvTB1)).setText(formatScore(findValue(item, "DiemHK1", "DTB_HK1")));
-            ((TextView) itemView.findViewById(R.id.tvTB2)).setText(formatScore(findValue(item, "DiemHK2", "DTB_HK2")));
-            ((TextView) itemView.findViewById(R.id.tvTBCN)).setText(formatScore(findValue(item, "DiemCaNam", "DiemTrungBinhMon", "TBCN")));
+            itemView.setOnClickListener(v -> showChoiceDialog(item));
         });
         rvKetQua.setAdapter(adapter);
+    }
+
+    private void showChoiceDialog(Map<String, Object> item) {
+        String hoTen = getStringValue(findValue(item, "HoTen", "hoTen", "HOTEN"));
+        String[] options = {"Tra cứu thông tin", "Tra cứu điểm"};
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Lựa chọn cho " + hoTen)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        Intent intent = new Intent(this, StudentInfoActivity.class);
+                        intent.putExtra("student_data", (Serializable) new HashMap<>(item));
+                        startActivity(intent);
+                    } else if (which == 1) {
+                        Intent intent = new Intent(this, StudentScoreActivity.class);
+                        intent.putExtra("student_data", (Serializable) new HashMap<>(item));
+                        startActivity(intent);
+                    }
+                })
+                .show();
     }
 
     private Object findValue(Map<String, Object> map, String... keys) {

@@ -89,44 +89,72 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Input Mã HS -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilSearchMaHS"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:hint="Mã HS"
-                app:endIconMode="clear_text"
-                app:startIconDrawable="@android:drawable/ic_menu_edit">
+                android:layout_marginBottom="12dp">
 
-                <AutoCompleteTextView
-                    android:id="@+id/edtSearchMaHS"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilSearchMaHS"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:completionThreshold="1"
-                    android:importantForAutofill="no"
-                    android:inputType="text|textNoSuggestions" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:hint="Mã HS"
+                    app:endIconMode="clear_text"
+                    app:startIconDrawable="@android:drawable/ic_menu_edit">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/edtSearchMaHS"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:completionThreshold="1"
+                        android:importantForAutofill="no"
+                        android:inputType="textCapWords" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <ProgressBar
+                    android:id="@+id/pbMaHSLoading"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="40dp"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <!-- Input Tên Học Sinh -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilSearchTen"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="Tên học sinh"
-                app:endIconMode="clear_text"
-                app:startIconDrawable="@android:drawable/ic_menu_myplaces">
+                android:layout_marginBottom="16dp">
 
-                <AutoCompleteTextView
-                    android:id="@+id/edtSearchTen"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilSearchTen"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:completionThreshold="1"
-                    android:importantForAutofill="no"
-                    android:inputType="textPersonName|textNoSuggestions" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:hint="Tên học sinh"
+                    app:endIconMode="clear_text"
+                    app:startIconDrawable="@android:drawable/ic_menu_myplaces">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/edtSearchTen"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:completionThreshold="1"
+                        android:importantForAutofill="no"
+                        android:inputType="textPersonName" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <ProgressBar
+                    android:id="@+id/pbTenHSLoading"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="40dp"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <!-- Search Button -->
             <com.google.android.material.button.MaterialButton
