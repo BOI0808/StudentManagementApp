@@ -2,14 +2,19 @@ package com.example.studentmanagementapp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.View;
 import android.widget.ImageButton;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.studentmanagementapp.api.ApiClient;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import okhttp3.ResponseBody;
 import org.json.JSONObject;
 import java.util.HashMap;
@@ -21,8 +26,10 @@ import retrofit2.Response;
 public class SystemParametersActivity extends AppCompatActivity {
 
     private TextInputEditText edtTuoiMin, edtTuoiMax, edtSiSoMin, edtSiSoMax, edtDiemMin, edtDiemMax, edtDiemDatMon, edtDiemDatHK;
+    private TextInputLayout tilTuoiMin, tilTuoiMax, tilSiSoMin, tilSiSoMax, tilDiemMin, tilDiemMax, tilDiemDatMon, tilDiemDatHK;
     private MaterialButton btnUpdate;
     private ImageButton btnBack;
+    private LinearProgressIndicator progressIndicator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,9 +37,9 @@ public class SystemParametersActivity extends AppCompatActivity {
         setContentView(R.layout.activity_system_parameters);
 
         initViews();
+        setupTextWatchers();
         loadCurrentParameters();
 
-        // Cài đặt sự kiện nút quay lại để quay về màn hình chính
         if (btnBack != null) {
             btnBack.setOnClickListener(v -> {
                 Intent intent = new Intent(SystemParametersActivity.this, MainActivity.class);
@@ -54,14 +61,62 @@ public class SystemParametersActivity extends AppCompatActivity {
         edtDiemMax = findViewById(R.id.edtDiemToiDa);
         edtDiemDatMon = findViewById(R.id.edtDiemDat);
         edtDiemDatHK = findViewById(R.id.edtDiemTBDat);
+
+        tilTuoiMin = findViewById(R.id.tilTuoiToiThieu);
+        tilTuoiMax = findViewById(R.id.tilTuoiToiDa);
+        tilSiSoMin = findViewById(R.id.tilSiSoToiThieu);
+        tilSiSoMax = findViewById(R.id.tilSiSoToiDa);
+        tilDiemMin = findViewById(R.id.tilDiemToiThieu);
+        tilDiemMax = findViewById(R.id.tilDiemToiDa);
+        tilDiemDatMon = findViewById(R.id.tilDiemDat);
+        tilDiemDatHK = findViewById(R.id.tilDiemTBDat);
+
         btnUpdate = findViewById(R.id.btnCapNhatQuyDinh);
         btnBack = findViewById(R.id.btnBack);
+        progressIndicator = findViewById(R.id.progressIndicator);
+    }
+
+    private void showLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+        btnUpdate.setEnabled(false);
+    }
+
+    private void hideLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+        btnUpdate.setEnabled(true);
+    }
+
+    private void setupTextWatchers() {
+        addWatcher(edtTuoiMin, tilTuoiMin);
+        addWatcher(edtTuoiMax, tilTuoiMax);
+        addWatcher(edtSiSoMin, tilSiSoMin);
+        addWatcher(edtSiSoMax, tilSiSoMax);
+        addWatcher(edtDiemMin, tilDiemMin);
+        addWatcher(edtDiemMax, tilDiemMax);
+        addWatcher(edtDiemDatMon, tilDiemDatMon);
+        addWatcher(edtDiemDatHK, tilDiemDatHK);
+    }
+
+    private void addWatcher(TextInputEditText edt, TextInputLayout til) {
+        edt.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                til.setError(null);
+                til.setErrorEnabled(false);
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void loadCurrentParameters() {
+        showLoading();
         ApiClient.getApiService().getSystemParameters().enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(@NonNull Call<Map<String, Object>> call, @NonNull Response<Map<String, Object>> response) {
+                hideLoading();
                 if (response.isSuccessful() && response.body() != null) {
                     Map<String, Object> p = response.body();
                     edtTuoiMin.setText(formatValue(p.get("TuoiToiThieu")));
@@ -76,7 +131,8 @@ public class SystemParametersActivity extends AppCompatActivity {
             }
             @Override
             public void onFailure(@NonNull Call<Map<String, Object>> call, @NonNull Throwable t) {
-                Toast.makeText(SystemParametersActivity.this, "Không thể tải quy định hiện tại", Toast.LENGTH_SHORT).show();
+                hideLoading();
+                showErrorDialog("Lỗi", "Không thể tải quy định hiện tại. Vui lòng thử lại sau.");
             }
         });
     }
@@ -91,78 +147,92 @@ public class SystemParametersActivity extends AppCompatActivity {
     }
 
     private void performUpdate() {
+        boolean isValid = true;
         Map<String, Object> params = new HashMap<>();
+
         try {
-            params.put("TuoiToiThieu", parseSafeInt(edtTuoiMin, "Tuổi tối thiểu"));
-            params.put("TuoiToiDa", parseSafeInt(edtTuoiMax, "Tuổi tối đa"));
-            params.put("SiSoToiThieu", parseSafeInt(edtSiSoMin, "Sĩ số tối thiểu"));
-            params.put("SiSoToiDa", parseSafeInt(edtSiSoMax, "Sĩ số tối đa"));
-            params.put("DiemToiThieu", parseSafeFloat(edtDiemMin, "Điểm tối thiểu"));
-            params.put("DiemToiDa", parseSafeFloat(edtDiemMax, "Điểm tối đa"));
-            params.put("DiemDatMon", parseSafeFloat(edtDiemDatMon, "Điểm đạt môn"));
-            params.put("DiemDat", parseSafeFloat(edtDiemDatHK, "Điểm đạt học kỳ"));
-        } catch (NumberFormatException e) {
-            return;
+            params.put("TuoiToiThieu", parseInputInt(edtTuoiMin, tilTuoiMin, "Tuổi tối thiểu"));
+            params.put("TuoiToiDa", parseInputInt(edtTuoiMax, tilTuoiMax, "Tuổi tối đa"));
+            params.put("SiSoToiThieu", parseInputInt(edtSiSoMin, tilSiSoMin, "Sĩ số tối thiểu"));
+            params.put("SiSoToiDa", parseInputInt(edtSiSoMax, tilSiSoMax, "Sĩ số tối đa"));
+            params.put("DiemToiThieu", parseInputFloat(edtDiemMin, tilDiemMin, "Điểm tối thiểu"));
+            params.put("DiemToiDa", parseInputFloat(edtDiemMax, tilDiemMax, "Điểm tối đa"));
+            params.put("DiemDatMon", parseInputFloat(edtDiemDatMon, tilDiemDatMon, "Điểm đạt môn"));
+            params.put("DiemDat", parseInputFloat(edtDiemDatHK, tilDiemDatHK, "Điểm đạt học kỳ"));
+        } catch (Exception e) {
+            isValid = false;
         }
 
-        btnUpdate.setEnabled(false);
+        if (!isValid) return;
+
+        showLoading();
         ApiClient.getApiService().updateSystemParameters(params).enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(@NonNull Call<Map<String, Object>> call, @NonNull Response<Map<String, Object>> response) {
-                btnUpdate.setEnabled(true);
+                hideLoading();
                 if (response.isSuccessful()) {
-                    Toast.makeText(SystemParametersActivity.this, "Cập nhật quy định thành công!", Toast.LENGTH_SHORT).show();
-                    loadCurrentParameters();
+                    new MaterialAlertDialogBuilder(SystemParametersActivity.this)
+                            .setTitle("Thành công")
+                            .setMessage("Đã cập nhật quy định hệ thống mới.")
+                            .setPositiveButton("OK", (dialog, which) -> loadCurrentParameters())
+                            .show();
                 } else {
+                    String errorMsg = "Dữ liệu không hợp lệ";
                     try (ResponseBody errorBody = response.errorBody()) {
                         if (errorBody != null) {
-                            String errorContent = errorBody.string();
-                            JSONObject jObjError = new JSONObject(errorContent);
-                            String errorMsg = jObjError.has("error") ? jObjError.getString("error") : "Dữ liệu không hợp lệ";
-                            Toast.makeText(SystemParametersActivity.this, "Lỗi: " + errorMsg, Toast.LENGTH_LONG).show();
+                            JSONObject jObjError = new JSONObject(errorBody.string());
+                            if (jObjError.has("error")) errorMsg = jObjError.getString("error");
                         }
-                    } catch (Exception e) {
-                        Toast.makeText(SystemParametersActivity.this, "Lỗi Server", Toast.LENGTH_SHORT).show();
-                    }
+                    } catch (Exception ignored) {}
+                    showErrorDialog("Thất bại", errorMsg);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, Object>> call, @NonNull Throwable t) {
-                btnUpdate.setEnabled(true);
-                Toast.makeText(SystemParametersActivity.this, "Lỗi kết nối Server", Toast.LENGTH_SHORT).show();
+                hideLoading();
+                showErrorDialog("Lỗi kết nối", "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng.");
             }
         });
     }
 
-    private int parseSafeInt(TextInputEditText edt, String label) {
+    private int parseInputInt(TextInputEditText edt, TextInputLayout til, String label) throws Exception {
         String s = edt.getText().toString().trim();
         if (TextUtils.isEmpty(s)) {
-            Toast.makeText(this, "Vui lòng nhập " + label, Toast.LENGTH_SHORT).show();
-            throw new NumberFormatException();
+            til.setErrorEnabled(true);
+            til.setError("Nhập " + label.toLowerCase());
+            throw new Exception();
         }
         try {
-            if (s.contains(".")) {
-                return (int) Float.parseFloat(s);
-            }
-            return Integer.parseInt(s);
+            return (int) Float.parseFloat(s);
         } catch (Exception e) {
-            Toast.makeText(this, label + " không đúng định dạng số", Toast.LENGTH_SHORT).show();
-            throw new NumberFormatException();
+            til.setErrorEnabled(true);
+            til.setError("Số không hợp lệ");
+            throw new Exception();
         }
     }
 
-    private float parseSafeFloat(TextInputEditText edt, String label) {
+    private float parseInputFloat(TextInputEditText edt, TextInputLayout til, String label) throws Exception {
         String s = edt.getText().toString().trim().replace(',', '.');
         if (TextUtils.isEmpty(s)) {
-            Toast.makeText(this, "Vui lòng nhập " + label, Toast.LENGTH_SHORT).show();
-            throw new NumberFormatException();
+            til.setErrorEnabled(true);
+            til.setError("Nhập " + label.toLowerCase());
+            throw new Exception();
         }
         try {
             return Float.parseFloat(s);
         } catch (Exception e) {
-            Toast.makeText(this, label + " không đúng định dạng số", Toast.LENGTH_SHORT).show();
-            throw new NumberFormatException();
+            til.setErrorEnabled(true);
+            til.setError("Số không hợp lệ");
+            throw new Exception();
         }
+    }
+
+    private void showErrorDialog(String title, String message) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("Đóng", null)
+                .show();
     }
 }
