@@ -1,14 +1,21 @@
 package com.example.studentmanagementapp;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.studentmanagementapp.api.ApiClient;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import okhttp3.ResponseBody;
+import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 import retrofit2.Call;
@@ -17,47 +24,68 @@ import retrofit2.Response;
 
 public class ChangePasswordActivity extends AppCompatActivity {
 
-    private TextInputEditText edtUsername;
-    private TextInputEditText edtOldPassword;
-    private TextInputEditText edtNewPassword;
-    private TextInputEditText edtConfirmPassword;
-    private MaterialButton btnCancel;
+    private TextInputEditText edtUsername, edtOldPassword, edtNewPassword, edtConfirmPassword;
+    private TextInputLayout tilUsername, tilOldPassword, tilNewPassword, tilConfirmPassword;
     private MaterialButton btnSavePassword;
     private ImageButton btnBack;
+    private LinearProgressIndicator progressIndicator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_change_password);
 
+        initViews();
+        setupTextWatchers();
+
+        btnBack.setOnClickListener(v -> finish());
+        btnSavePassword.setOnClickListener(v -> performChangePassword());
+    }
+
+    private void initViews() {
         edtUsername = findViewById(R.id.edtUsernameChangePass);
         edtOldPassword = findViewById(R.id.edtOldPassword);
         edtNewPassword = findViewById(R.id.edtNewPassword);
         edtConfirmPassword = findViewById(R.id.edtConfirmPassword);
-        btnCancel = findViewById(R.id.btnCancel);
+
+        tilUsername = findViewById(R.id.tilUsername);
+        tilOldPassword = findViewById(R.id.tilOldPassword);
+        tilNewPassword = findViewById(R.id.tilNewPassword);
+        tilConfirmPassword = findViewById(R.id.tilConfirmPassword);
+
         btnSavePassword = findViewById(R.id.btnSavePassword);
         btnBack = findViewById(R.id.btnBack);
+        progressIndicator = findViewById(R.id.progressIndicator);
+    }
 
-        btnBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+    private void showLoading() {
+        progressIndicator.setVisibility(View.VISIBLE);
+        btnSavePassword.setEnabled(false);
+    }
 
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Quay về màn hình trước đó
-                finish();
-            }
-        });
+    private void hideLoading() {
+        progressIndicator.setVisibility(View.GONE);
+        btnSavePassword.setEnabled(true);
+    }
 
-        btnSavePassword.setOnClickListener(new View.OnClickListener() {
+    private void setupTextWatchers() {
+        addWatcher(edtUsername, tilUsername);
+        addWatcher(edtOldPassword, tilOldPassword);
+        addWatcher(edtNewPassword, tilNewPassword);
+        addWatcher(edtConfirmPassword, tilConfirmPassword);
+    }
+
+    private void addWatcher(TextInputEditText edt, TextInputLayout til) {
+        edt.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onClick(View v) {
-                performChangePassword();
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                til.setError(null);
+                til.setErrorEnabled(false);
             }
+            @Override
+            public void afterTextChanged(Editable s) {}
         });
     }
 
@@ -67,20 +95,32 @@ public class ChangePasswordActivity extends AppCompatActivity {
         String newPass = edtNewPassword.getText().toString().trim();
         String confirmPass = edtConfirmPassword.getText().toString().trim();
 
-        if (username.isEmpty() || oldPass.isEmpty() || newPass.isEmpty() || confirmPass.isEmpty()) {
-            Toast.makeText(ChangePasswordActivity.this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
-            return;
+        boolean isValid = true;
+
+        if (TextUtils.isEmpty(username)) {
+            tilUsername.setError("Vui lòng nhập tên tài khoản");
+            isValid = false;
+        }
+        if (TextUtils.isEmpty(oldPass)) {
+            tilOldPassword.setError("Vui lòng nhập mật khẩu cũ");
+            isValid = false;
+        }
+        if (TextUtils.isEmpty(newPass)) {
+            tilNewPassword.setError("Vui lòng nhập mật khẩu mới");
+            isValid = false;
+        } else if (newPass.length() < 6) {
+            tilNewPassword.setError("Mật khẩu mới phải có ít nhất 6 ký tự");
+            isValid = false;
+        }
+        if (TextUtils.isEmpty(confirmPass)) {
+            tilConfirmPassword.setError("Vui lòng xác nhận mật khẩu mới");
+            isValid = false;
+        } else if (!newPass.equals(confirmPass)) {
+            tilConfirmPassword.setError("Mật khẩu xác nhận không khớp");
+            isValid = false;
         }
 
-        if (!newPass.equals(confirmPass)) {
-            Toast.makeText(ChangePasswordActivity.this, "Mật khẩu xác nhận không khớp", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (newPass.length() < 6) {
-            Toast.makeText(ChangePasswordActivity.this, "Mật khẩu mới phải có ít nhất 6 ký tự", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (!isValid) return;
 
         Map<String, String> data = new HashMap<>();
         data.put("TenDangNhap", username);
@@ -88,32 +128,60 @@ public class ChangePasswordActivity extends AppCompatActivity {
         data.put("MatKhauMoi", newPass);
         data.put("XacNhanMatKhau", confirmPass);
 
-        btnSavePassword.setEnabled(false);
+        showLoading();
         ApiClient.getApiService().changePassword(data).enqueue(new Callback<Map<String, String>>() {
             @Override
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
-                btnSavePassword.setEnabled(true);
+                hideLoading();
                 if (response.isSuccessful()) {
-                    Toast.makeText(ChangePasswordActivity.this, "Đổi mật khẩu thành công!", Toast.LENGTH_SHORT).show();
-                    finish();
+                    new MaterialAlertDialogBuilder(ChangePasswordActivity.this)
+                            .setTitle("Thành công")
+                            .setMessage("Đã đổi mật khẩu thành công.")
+                            .setPositiveButton("OK", (dialog, which) -> finish())
+                            .setCancelable(false)
+                            .show();
                 } else {
-                    String errorMsg = "Lỗi đổi mật khẩu";
                     try {
-                        if (response.errorBody() != null) {
-                            android.util.Log.e("ChangePass", "Error body: " + response.errorBody().string());
-                            // Bạn có thể parse JSON để lấy message lỗi cụ thể từ backend ở đây nếu cần
+                        String errorJson = "";
+                        try (ResponseBody errorBody = response.errorBody()) {
+                            if (errorBody != null) {
+                                errorJson = errorBody.string();
+                            }
+                        }
+
+                        String errorMsg = "";
+                        if (!errorJson.isEmpty()) {
+                            JSONObject jObjError = new JSONObject(errorJson);
+                            errorMsg = jObjError.optString("error", jObjError.optString("message", "")).toLowerCase();
+                        }
+
+                        if (errorMsg.contains("tài khoản") || errorMsg.contains("không tồn tại")) {
+                            tilUsername.setErrorEnabled(true);
+                            tilUsername.setError("Tài khoản không chính xác hoặc không tồn tại");
+                        } else if (errorMsg.contains("mật khẩu cũ") || errorMsg.contains("không đúng")) {
+                            tilOldPassword.setErrorEnabled(true);
+                            tilOldPassword.setError("Mật khẩu cũ không chính xác");
+                        } else {
+                            new MaterialAlertDialogBuilder(ChangePasswordActivity.this)
+                                    .setTitle("Thất bại")
+                                    .setMessage(!errorMsg.isEmpty() ? errorMsg : "Không thể đổi mật khẩu. Vui lòng thử lại sau.")
+                                    .setPositiveButton("Đóng", null)
+                                    .show();
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    Toast.makeText(ChangePasswordActivity.this, "Lỗi: Mật khẩu cũ không đúng hoặc tài khoản sai", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
-                btnSavePassword.setEnabled(true);
-                Toast.makeText(ChangePasswordActivity.this, "Lỗi kết nối Server", Toast.LENGTH_SHORT).show();
+                hideLoading();
+                new MaterialAlertDialogBuilder(ChangePasswordActivity.this)
+                        .setTitle("Lỗi kết nối")
+                        .setMessage("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng.")
+                        .setPositiveButton("OK", null)
+                        .show();
             }
         });
     }
