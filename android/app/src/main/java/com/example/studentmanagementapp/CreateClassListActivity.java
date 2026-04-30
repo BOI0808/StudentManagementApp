@@ -1,0 +1,811 @@
+package com.example.studentmanagementapp;
+
+import android.content.Context;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.ImageButton;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.studentmanagementapp.api.ApiClient;
+import com.example.studentmanagementapp.model.ClassModel;
+import com.example.studentmanagementapp.model.Student;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.textfield.TextInputLayout;
+import org.apache.poi.ss.usermodel.*;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class CreateClassListActivity extends AppCompatActivity {
+
+    private AutoCompleteTextView autoLop, autoHocSinh, autoNamHoc, autoHocKy;
+    private TextInputLayout tilNamHoc, tilHocKy, tilMaLop, tilHocSinh;
+    private MaterialButton btnThem, btnLuu;
+    private ImageButton btnImportExcel, btnBack;
+    private RecyclerView rvHocSinh;
+    private LinearProgressIndicator progressIndicator;
+    private ProgressBar pbStudentLoading;
+    private TextView tvSiSo;
+
+    private final List<Student> listHocSinhSelected = new ArrayList<>();
+    private GenericAdapter<Student> adapter;
+    private String selectedMaLop = "", selectedMaHK = "";
+    private Student selectedStudentToAdd = null;
+
+    private final Map<String, String> mapErrors = new HashMap<>();
+    private List<Map<String, String>> semesterList = new ArrayList<>();
+    private List<ClassModel> allClassList = new ArrayList<>();
+
+    private boolean isProgrammaticChange = false;
+    private Uri selectedFileUri;
+    private int maxSiSo = 40;
+
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable studentRunnable;
+
+    private final ActivityResultLauncher<String> filePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    selectedFileUri = uri;
+                    showLoading();
+                    new Thread(() -> processExcelFile(uri)).start();
+                }
+            }
+    );
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_create_class_list);
+
+        System.setProperty("java.io.tmpdir", getCacheDir().getAbsolutePath());
+
+        initViews();
+        setupFilters();
+        setupStudentAutocomplete();
+        loadSystemParameters();
+
+        btnBack.setOnClickListener(v -> finish());
+        btnThem.setOnClickListener(v -> addStudentToList());
+        btnLuu.setOnClickListener(v -> saveClassList());
+        
+        btnImportExcel.setOnClickListener(v -> {
+            clearAllErrors();
+            boolean isValid = true;
+            if (autoNamHoc.getText().toString().isEmpty()) {
+                tilNamHoc.setErrorEnabled(true);
+                tilNamHoc.setError("Vui lòng chọn năm học");
+                isValid = false;
+            }
+            if (autoHocKy.getText().toString().isEmpty()) {
+                tilHocKy.setErrorEnabled(true);
+                tilHocKy.setError("Vui lòng chọn học kỳ");
+                isValid = false;
+            }
+            if (autoLop.getText().toString().isEmpty()) {
+                tilMaLop.setErrorEnabled(true);
+                tilMaLop.setError("Vui lòng chọn tên lớp");
+                isValid = false;
+            }
+
+            if (!isValid) {
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Thất bại")
+                        .setMessage("Vui lòng chọn đầy đủ thông tin lớp trước khi Import")
+                        .setPositiveButton("OK", null)
+                        .show();
+                return;
+            }
+            filePickerLauncher.launch("*/*");
+        });
+
+        handleIntentData();
+    }
+
+    private void initViews() {
+        tilNamHoc = findViewById(R.id.tilNamHoc);
+        tilHocKy = findViewById(R.id.tilHocKy);
+        tilMaLop = findViewById(R.id.tilMaLop);
+        tilHocSinh = findViewById(R.id.tilHocSinh);
+
+        autoNamHoc = findViewById(R.id.autoCompleteNamHoc);
+        autoHocKy = findViewById(R.id.autoCompleteHocKy);
+        autoLop = findViewById(R.id.autoCompleteMaLop);
+        autoHocSinh = findViewById(R.id.autoCompleteHocSinh);
+
+        btnThem = findViewById(R.id.btnThemVaoLop);
+        btnLuu = findViewById(R.id.btnLuuDanhSachLop);
+        btnImportExcel = findViewById(R.id.btnImportExcel);
+        rvHocSinh = findViewById(R.id.rvDanhSachHocSinhMoi);
+        btnBack = findViewById(R.id.btnBack);
+        progressIndicator = findViewById(R.id.progressIndicator);
+        pbStudentLoading = findViewById(R.id.pbStudentLoading);
+        tvSiSo = findViewById(R.id.tvSiSo);
+
+        rvHocSinh.setLayoutManager(new LinearLayoutManager(this));
+        setupAdapter();
+        updateSiSo();
+    }
+
+    private void setupFilters() {
+        ApiClient.getApiService().getSemesterList().enqueue(new Callback<List<Map<String, String>>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Map<String, String>>> call, @NonNull Response<List<Map<String, String>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    semesterList = response.body();
+                    loadNamHoc(semesterList);
+                }
+            }
+            @Override public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {}
+        });
+
+        autoHocKy.setOnItemClickListener((parent, view, position, id) -> {
+            tilMaLop.setEnabled(true);
+            tilHocKy.setError(null);
+            tilHocKy.setErrorEnabled(false);
+
+            String year = autoNamHoc.getText().toString();
+            String term = (String) parent.getItemAtPosition(position);
+            for (Map<String, String> m : semesterList) {
+                if (year.equals(m.get("namhoc")) && term.equals(m.get("hocky"))) {
+                    selectedMaHK = m.get("ma");
+                    break;
+                }
+            }
+            autoLop.setText("");
+            selectedMaLop = "";
+            filterClasses();
+        });
+
+        ApiClient.getApiService().getClassList().enqueue(new Callback<List<ClassModel>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ClassModel>> call, @NonNull Response<List<ClassModel>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    allClassList = response.body();
+                }
+            }
+            @Override public void onFailure(@NonNull Call<List<ClassModel>> call, @NonNull Throwable t) {}
+        });
+
+        autoLop.setOnItemClickListener((p, v, pos, id) -> {
+            tilMaLop.setError(null);
+            tilMaLop.setErrorEnabled(false);
+            ClassModel sel = (ClassModel) p.getItemAtPosition(pos);
+            selectedMaLop = sel.getMaLop();
+            hideKeyboard();
+            loadExistingStudents(selectedMaLop);
+        });
+    }
+
+    private void loadNamHoc(List<Map<String, String>> fullList) {
+        Calendar cal = Calendar.getInstance();
+        int currentYear = cal.get(Calendar.YEAR);
+        int currentMonth = cal.get(Calendar.MONTH);
+        int effectiveSchoolStartYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
+
+        List<String> distinctYears = new ArrayList<>();
+        for (Map<String, String> m : fullList) {
+            String y = m.get("namhoc");
+            if (y == null || distinctYears.contains(y)) continue;
+            try {
+                String startYearStr = y.contains("-") ? y.split("-")[0].trim() : y.trim();
+                int startYear = Integer.parseInt(startYearStr);
+                if (startYear >= effectiveSchoolStartYear) {
+                    distinctYears.add(y);
+                }
+            } catch (Exception e) {
+                Log.e("LoadNamHoc", "Lỗi định dạng năm học: " + y);
+            }
+        }
+
+        autoNamHoc.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, distinctYears));
+        autoNamHoc.setOnItemClickListener((parent, view, position, id) -> {
+            tilHocKy.setEnabled(true);
+            tilNamHoc.setError(null);
+            tilNamHoc.setErrorEnabled(false);
+
+            String year = (String) parent.getItemAtPosition(position);
+            List<String> terms = new ArrayList<>();
+            for (Map<String, String> m : fullList) {
+                if (year.equals(m.get("namhoc"))) {
+                    terms.add(m.get("hocky"));
+                }
+            }
+            autoHocKy.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, terms));
+            autoHocKy.setText("");
+            autoLop.setText("");
+            tilMaLop.setEnabled(false);
+            selectedMaHK = "";
+            selectedMaLop = "";
+        });
+    }
+
+    private void filterClasses() {
+        if (selectedMaHK.isEmpty()) return;
+        List<ClassModel> filtered = new ArrayList<>();
+        for (ClassModel c : allClassList) {
+            if (selectedMaHK.equalsIgnoreCase(c.getMaHocKyNamHoc())) filtered.add(c);
+        }
+        autoLop.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, filtered));
+    }
+
+    private void loadSystemParameters() {
+        ApiClient.getApiService().getSystemParameters().enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(@NonNull Call<Map<String, Object>> call, @NonNull Response<Map<String, Object>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Object val = response.body().get("SiSoToiDa");
+                    if (val != null) {
+                        try {
+                            maxSiSo = (int) Double.parseDouble(val.toString());
+                            updateSiSo();
+                        } catch (Exception e) {
+                            Log.e("SystemParam", "Lỗi parse SiSoToiDa", e);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Map<String, Object>> call, @NonNull Throwable t) {
+                Log.e("SystemParam", "Lỗi tải tham số hệ thống", t);
+            }
+        });
+    }
+
+    private void showLoading() {
+        progressIndicator.setVisibility(View.VISIBLE);
+    }
+
+    private void hideLoading() {
+        progressIndicator.setVisibility(View.GONE);
+    }
+
+    private void hideKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
+        }
+    }
+
+    private void resetUI() {
+        isProgrammaticChange = true;
+        autoLop.setText("", false);
+        autoHocKy.setText("", false);
+        autoNamHoc.setText("", false);
+        isProgrammaticChange = true;
+        autoHocSinh.setText("", false);
+
+        tilHocKy.setEnabled(false);
+        tilMaLop.setEnabled(false);
+        clearAllErrors();
+
+        listHocSinhSelected.clear();
+        mapErrors.clear();
+        selectedMaLop = "";
+        selectedMaHK = "";
+        selectedStudentToAdd = null;
+
+        if (adapter != null) adapter.notifyDataSetChanged();
+        updateSiSo();
+        autoNamHoc.requestFocus();
+    }
+
+    private void handleIntentData() {
+        if (getIntent() != null) {
+            String maLop = getIntent().getStringExtra("MaLop");
+            String tenLop = getIntent().getStringExtra("TenLop");
+            if (maLop != null && tenLop != null) {
+                selectedMaLop = maLop;
+                isProgrammaticChange = true;
+                autoLop.setText(tenLop, false);
+                loadExistingStudents(maLop);
+            }
+        }
+    }
+
+    private void updateSiSo() {
+        int count = listHocSinhSelected.size();
+        tvSiSo.setText("Sĩ số: " + count + "/" + maxSiSo);
+        if (count >= maxSiSo) {
+            tvSiSo.setTextColor(android.graphics.Color.RED);
+        } else {
+            tvSiSo.setTextColor(android.graphics.Color.parseColor("#666666"));
+        }
+    }
+
+    private void processExcelFile(Uri uri) {
+        try {
+            File tempFile = copyUriToInternalStorage(uri);
+            List<Student> studentsFromExcel = new ArrayList<>();
+
+            try (Workbook workbook = WorkbookFactory.create(tempFile)) {
+                Sheet sheet = workbook.getSheetAt(0);
+                DataFormatter formatter = new DataFormatter();
+
+                Row headerRow = sheet.getRow(0);
+                if (headerRow == null) throw new Exception("File Excel không có dữ liệu tiêu đề.");
+
+                int idxMaHS = -1, idxHoTen = -1, idxGioiTinh = -1, idxNgaySinh = -1;
+
+                List<String> mahsVariants = Arrays.asList("mã học sinh", "mahs", "mã hs", "student id", "msid");
+                List<String> hotenVariants = Arrays.asList("họ và tên", "hoten", "họ tên", "full name", "name", "tên học sinh");
+                List<String> gioitinhVariants = Arrays.asList("giới tính", "gioitinh", "gender", "sex");
+                List<String> ngaysinhVariants = Arrays.asList("ngày sinh", "ngaysinh", "birthday", "dob", "birth date", "ngày sinh nhật");
+
+                for (Cell cell : headerRow) {
+                    String title = formatter.formatCellValue(cell).trim().toLowerCase();
+                    
+                    if (mahsVariants.contains(title)) {
+                        idxMaHS = cell.getColumnIndex();
+                    } else if (hotenVariants.contains(title)) {
+                        idxHoTen = cell.getColumnIndex();
+                    } else if (gioitinhVariants.contains(title)) {
+                        idxGioiTinh = cell.getColumnIndex();
+                    } else if (ngaysinhVariants.contains(title)) {
+                        idxNgaySinh = cell.getColumnIndex();
+                    }
+                }
+
+                if (idxMaHS == -1 || idxHoTen == -1 || idxGioiTinh == -1 || idxNgaySinh == -1) {
+                    final List<String> missingCols = new ArrayList<>();
+                    if (idxMaHS == -1) missingCols.add("Mã học sinh");
+                    if (idxHoTen == -1) missingCols.add("Họ và tên");
+                    if (idxGioiTinh == -1) missingCols.add("Giới tính");
+                    if (idxNgaySinh == -1) missingCols.add("Ngày sinh");
+                    
+                    final String msg = "File Excel thiếu cột: " + String.join(", ", missingCols);
+                    runOnUiThread(() -> {
+                        hideLoading();
+                        new MaterialAlertDialogBuilder(CreateClassListActivity.this)
+                                .setTitle("Thất bại")
+                                .setMessage(msg)
+                                .setPositiveButton("OK", null)
+                                .show();
+                    });
+                    return;
+                }
+
+                for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    if (row == null) continue;
+
+                    String maHS = formatter.formatCellValue(row.getCell(idxMaHS)).trim();
+                    String hoTen = formatter.formatCellValue(row.getCell(idxHoTen)).trim();
+                    if (maHS.isEmpty() || hoTen.isEmpty()) continue;
+
+                    Student student = new Student();
+                    student.setMaHocSinh(maHS);
+                    student.setHoTen(hoTen);
+
+                    Cell dateCell = row.getCell(idxNgaySinh);
+                    if (dateCell != null && dateCell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(dateCell)) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        student.setNgaySinh(sdf.format(dateCell.getDateCellValue()));
+                    } else {
+                        String rawDate = formatter.formatCellValue(dateCell).trim();
+                        student.setNgaySinh(formatDateString(rawDate));
+                    }
+
+                    String genderText = formatter.formatCellValue(row.getCell(idxGioiTinh)).trim();
+                    if (genderText.equalsIgnoreCase("Nam") || genderText.equalsIgnoreCase("GT1")) student.setMaGioiTinh("GT1");
+                    else if (genderText.equalsIgnoreCase("Nữ") || genderText.equalsIgnoreCase("Nu") || genderText.equalsIgnoreCase("GT2")) student.setMaGioiTinh("GT2");
+                    else student.setMaGioiTinh("GT3");
+
+                    studentsFromExcel.add(student);
+                }
+            }
+
+            if (!studentsFromExcel.isEmpty()) {
+                runOnUiThread(() -> {
+                    Map<String, Student> uniqueMap = new LinkedHashMap<>();
+                    for (Student s : listHocSinhSelected) {
+                        if (s.getMaHocSinh() != null) uniqueMap.put(s.getMaHocSinh(), s);
+                    }
+                    for (Student s : studentsFromExcel) {
+                        if (s.getMaHocSinh() != null) uniqueMap.put(s.getMaHocSinh(), s);
+                    }
+
+                    listHocSinhSelected.clear();
+                    listHocSinhSelected.addAll(uniqueMap.values());
+                    adapter.notifyDataSetChanged();
+                    updateSiSo();
+                    hideLoading();
+
+                    String tenLop = autoLop.getText().toString().trim();
+
+                    new MaterialAlertDialogBuilder(CreateClassListActivity.this)
+                            .setTitle("Import thành công")
+                            .setMessage("Đã thêm thành công " + studentsFromExcel.size() + " học sinh vào danh sách chờ của lớp " + tenLop + ". Vui lòng kiểm tra lại và nhấn Lưu để hoàn tất.")
+                            .setPositiveButton("OK", null)
+                            .show();
+                });
+            } else {
+                runOnUiThread(() -> {
+                    hideLoading();
+                    new MaterialAlertDialogBuilder(CreateClassListActivity.this)
+                            .setTitle("Import thất bại")
+                            .setMessage("File Excel không có dữ liệu học sinh hợp lệ hoặc sai định dạng tiêu đề cột")
+                            .setPositiveButton("OK", null)
+                            .show();
+                });
+            }
+
+        } catch (Exception e) {
+            Log.e("ExcelError", "Lỗi xử lý file: ", e);
+            runOnUiThread(() -> {
+                hideLoading();
+                new MaterialAlertDialogBuilder(CreateClassListActivity.this)
+                        .setTitle("Lỗi đọc file")
+                        .setMessage(e.getMessage())
+                        .setPositiveButton("OK", null)
+                        .show();
+            });
+        }
+    }
+
+    private String formatDateString(String rawDate) {
+        if (rawDate == null || rawDate.isEmpty()) return "";
+        try {
+            String[] formats = {"dd/MM/yyyy", "dd-MM-yyyy", "yyyy-MM-dd", "MM/dd/yyyy"};
+            for (String f : formats) {
+                try {
+                    SimpleDateFormat inputSdf = new SimpleDateFormat(f, Locale.getDefault());
+                    Date date = inputSdf.parse(rawDate);
+                    if (date != null) {
+                        SimpleDateFormat outputSdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        return outputSdf.format(date);
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            Log.e("DateFormat", "Error parsing date: " + rawDate);
+        }
+        return rawDate;
+    }
+
+    private File copyUriToInternalStorage(Uri uri) throws Exception {
+        File destinationFile = new File(getCacheDir(), "import_temp_class.xlsx");
+        int maxRetries = 3;
+        int retryCount = 0;
+        Exception lastException = null;
+        while (retryCount < maxRetries) {
+            try (InputStream is = getContentResolver().openInputStream(uri);
+                 FileOutputStream os = new FileOutputStream(destinationFile)) {
+                if (is == null) throw new Exception("Không thể mở tệp.");
+                byte[] buffer = new byte[8192];
+                int length;
+                while ((length = is.read(buffer)) != -1) os.write(buffer, 0, length);
+                os.flush();
+                if (destinationFile.length() > 0) return destinationFile;
+            } catch (Exception e) {
+                lastException = e;
+                retryCount++;
+                Thread.sleep(500);
+            }
+        }
+        throw new Exception("Lỗi truy cập tệp: " + (lastException != null ? lastException.getLocalizedMessage() : "Không rõ"));
+    }
+
+    private void setupStudentAutocomplete() {
+        autoHocSinh.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (isProgrammaticChange) { isProgrammaticChange = false; return; }
+                if (studentRunnable != null) searchHandler.removeCallbacks(studentRunnable);
+                if (s.length() >= 2) {
+                    if (pbStudentLoading != null) pbStudentLoading.setVisibility(View.VISIBLE);
+                    studentRunnable = () -> {
+                        ApiClient.getApiService().searchStudent(s.toString()).enqueue(new Callback<List<Student>>() {
+                            @Override
+                            public void onResponse(@NonNull Call<List<Student>> call, @NonNull Response<List<Student>> response) {
+                                if (pbStudentLoading != null) pbStudentLoading.setVisibility(View.GONE);
+                                if (response.isSuccessful() && response.body() != null) {
+                                    List<Student> list = response.body();
+                                    ArrayAdapter<Student> adapter = new ArrayAdapter<Student>(CreateClassListActivity.this, R.layout.item_dropdown_2line, list) {
+                                        @NonNull
+                                        @Override
+                                        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                                            if (convertView == null) {
+                                                convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_dropdown_2line, parent, false);
+                                            }
+                                            Student item = getItem(position);
+                                            if (item != null) {
+                                                ((TextView) convertView.findViewById(R.id.text1)).setText(item.getHoTen());
+                                                ((TextView) convertView.findViewById(R.id.text2)).setText("Mã: " + item.getMaHocSinh() + " • Ngày sinh: " + item.getNgaySinh());
+                                            }
+                                            return convertView;
+                                        }
+                                    };
+                                    autoHocSinh.setAdapter(adapter);
+                                    autoHocSinh.showDropDown();
+                                }
+                            }
+                            @Override
+                            public void onFailure(@NonNull Call<List<Student>> call, @NonNull Throwable t) {
+                                if (pbStudentLoading != null) pbStudentLoading.setVisibility(View.GONE);
+                            }
+                        });
+                    };
+                    searchHandler.postDelayed(studentRunnable, 300);
+                } else {
+                    if (pbStudentLoading != null) pbStudentLoading.setVisibility(View.GONE);
+                }
+            }
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.length() > 0) {
+                    tilHocSinh.setError(null);
+                    tilHocSinh.setErrorEnabled(false);
+                }
+            }
+        });
+
+        autoHocSinh.setOnItemClickListener((parent, view, position, id) -> {
+            tilHocSinh.setError(null);
+            tilHocSinh.setErrorEnabled(false);
+            Student selected = (Student) parent.getItemAtPosition(position);
+            if (selected != null) {
+                selectedStudentToAdd = selected;
+                isProgrammaticChange = true;
+                autoHocSinh.setText(selected.getHoTen(), false);
+
+                autoHocSinh.dismissDropDown();
+                autoHocSinh.clearFocus();
+                hideKeyboard();
+            }
+        });
+    }
+
+    private void loadExistingStudents(String maLop) {
+        showLoading();
+        ApiClient.getApiService().getStudentsByClass(maLop).enqueue(new Callback<List<Map<String, String>>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Map<String, String>>> call, @NonNull Response<List<Map<String, String>>> response) {
+                hideLoading();
+                if (response.isSuccessful() && response.body() != null) {
+                    listHocSinhSelected.clear();
+                    mapErrors.clear();
+                    for (Map<String, String> m : response.body()) {
+                        Student s = new Student();
+                        s.setMaHocSinh(m.get("MaHocSinh"));
+                        s.setHoTen(m.get("HoTen"));
+                        String rawDate = m.get("NgaySinh");
+                        s.setNgaySinh(formatDateString(rawDate));
+                        s.setMaGioiTinh(m.get("MaGioiTinh"));
+                        listHocSinhSelected.add(s);
+                    }
+                    adapter.notifyDataSetChanged();
+                    updateSiSo();
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {
+                hideLoading();
+            }
+        });
+    }
+
+    private void setupAdapter() {
+        adapter = new GenericAdapter<>(listHocSinhSelected, R.layout.item_class_student, (student, itemView, position) -> {
+            ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
+            ((TextView) itemView.findViewById(R.id.tvMaHS)).setText(student.getMaHocSinh());
+            ((TextView) itemView.findViewById(R.id.tvTenHS)).setText(student.getHoTen());
+
+            String gt = "Nam";
+            if ("GT2".equals(student.getMaGioiTinh())) gt = "Nữ";
+            else if ("GT3".equals(student.getMaGioiTinh())) gt = "Khác";
+            ((TextView) itemView.findViewById(R.id.tvGioiTinh)).setText(gt);
+            ((TextView) itemView.findViewById(R.id.tvNgaySinh)).setText(student.getNgaySinh());
+
+            View errorLayout = itemView.findViewById(R.id.errorLayout);
+            TextView tvError = itemView.findViewById(R.id.tvError);
+            View itemContainer = itemView.findViewById(R.id.itemContainer);
+
+            String maHS = student.getMaHocSinh();
+            if (maHS != null && mapErrors.containsKey(maHS)) {
+                tvError.setText(mapErrors.get(maHS));
+                errorLayout.setVisibility(View.VISIBLE);
+                if (itemContainer != null) itemContainer.setBackgroundColor(android.graphics.Color.parseColor("#FFEBEE"));
+            } else {
+                errorLayout.setVisibility(View.GONE);
+                if (itemContainer != null) itemContainer.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            }
+
+            itemView.findViewById(R.id.btnXoaHocSinh).setOnClickListener(v -> {
+                if (student.getMaHocSinh() != null) mapErrors.remove(student.getMaHocSinh());
+                listHocSinhSelected.remove(position);
+                adapter.notifyDataSetChanged();
+                updateSiSo();
+            });
+        });
+        rvHocSinh.setAdapter(adapter);
+    }
+
+    private void addStudentToList() {
+        clearAllErrors();
+        boolean isValid = true;
+        if (autoNamHoc.getText().toString().isEmpty()) { 
+            tilNamHoc.setErrorEnabled(true);
+            tilNamHoc.setError("Vui lòng chọn năm học"); 
+            isValid = false; 
+        }
+        if (autoHocKy.getText().toString().isEmpty()) { 
+            tilHocKy.setErrorEnabled(true);
+            tilHocKy.setError("Vui lòng chọn học kỳ"); 
+            isValid = false; 
+        }
+        if (autoLop.getText().toString().isEmpty()) { 
+            tilMaLop.setErrorEnabled(true);
+            tilMaLop.setError("Vui lòng chọn tên lớp"); 
+            isValid = false; 
+        }
+        if (autoHocSinh.getText().toString().isEmpty()) { 
+            tilHocSinh.setErrorEnabled(true);
+            tilHocSinh.setError("Không được để trống"); 
+            isValid = false; 
+        }
+
+        if (!isValid) return;
+
+        if (selectedStudentToAdd == null) {
+            tilHocSinh.setErrorEnabled(true);
+            tilHocSinh.setError("Vui lòng chọn học sinh từ danh sách gợi ý");
+            return;
+        }
+
+        if (listHocSinhSelected.size() >= maxSiSo) {
+            Toast.makeText(this, "Lớp đã đạt sĩ số tối đa (" + maxSiSo + " học sinh)", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        for (Student s : listHocSinhSelected) {
+            if (s.getMaHocSinh() != null && s.getMaHocSinh().equals(selectedStudentToAdd.getMaHocSinh())) {
+                Toast.makeText(this, "Học sinh này đã có trong danh sách", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+        listHocSinhSelected.add(selectedStudentToAdd);
+        adapter.notifyDataSetChanged();
+        updateSiSo();
+        isProgrammaticChange = true;
+        autoHocSinh.setText("");
+        selectedStudentToAdd = null;
+        hideKeyboard();
+    }
+
+    private void clearAllErrors() {
+        tilNamHoc.setError(null);
+        tilNamHoc.setErrorEnabled(false);
+        tilHocKy.setError(null);
+        tilHocKy.setErrorEnabled(false);
+        tilMaLop.setError(null);
+        tilMaLop.setErrorEnabled(false);
+        tilHocSinh.setError(null);
+        tilHocSinh.setErrorEnabled(false);
+    }
+
+    private void saveClassList() {
+        if (selectedMaLop.isEmpty()) {
+            tilMaLop.setErrorEnabled(true);
+            tilMaLop.setError("Vui lòng chọn tên lớp");
+            return;
+        }
+        if (listHocSinhSelected.isEmpty()) {
+            Toast.makeText(this, "Danh sách học sinh đang trống", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        mapErrors.clear();
+        adapter.notifyDataSetChanged();
+
+        ClassModel data = new ClassModel();
+        data.setMaLop(selectedMaLop);
+        List<String> maHSList = new ArrayList<>();
+        for (Student s : listHocSinhSelected) {
+            if (s.getMaHocSinh() != null) maHSList.add(s.getMaHocSinh());
+        }
+        data.setDanhSachMaHS(maHSList);
+
+        btnLuu.setEnabled(false);
+        showLoading();
+        ApiClient.getApiService().saveClassList(data).enqueue(new Callback<Map<String, String>>() {
+            @Override
+            public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
+                btnLuu.setEnabled(true);
+                hideLoading();
+                if (response.isSuccessful()) {
+                    String tenLop = autoLop.getText().toString();
+                    new MaterialAlertDialogBuilder(CreateClassListActivity.this)
+                            .setTitle("Thành công")
+                            .setMessage("Đã xếp lớp thành công cho " + listHocSinhSelected.size() + " học sinh vào lớp " + tenLop + ". Bạn có muốn tiếp tục lập danh sách cho lớp khác không?")
+                            .setCancelable(false)
+                            .setPositiveButton("Tiếp tục lập", (dialog, which) -> resetUI())
+                            .setNegativeButton("Đóng", (dialog, which) -> finish())
+                            .show();
+                } else {
+                    try {
+                        String errorBody = response.errorBody().string();
+                        JSONObject json = new JSONObject(errorBody);
+                        if (json.has("errors")) {
+                            JSONArray arr = json.getJSONArray("errors");
+                            int firstErrorPos = -1;
+                            for (int i = 0; i < arr.length(); i++) {
+                                JSONObject obj = arr.getJSONObject(i);
+                                String maHS = obj.getString("maHocSinh");
+                                mapErrors.put(maHS, obj.getString("message"));
+                                if (firstErrorPos == -1) {
+                                    for (int j = 0; j < listHocSinhSelected.size(); j++) {
+                                        if (maHS.equals(listHocSinhSelected.get(j).getMaHocSinh())) {
+                                            firstErrorPos = j;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            adapter.notifyDataSetChanged();
+                            if (firstErrorPos != -1) rvHocSinh.smoothScrollToPosition(firstErrorPos);
+                            new MaterialAlertDialogBuilder(CreateClassListActivity.this)
+                                    .setTitle("Thất bại")
+                                    .setMessage("Có " + arr.length() + " học sinh không hợp lệ. Vui lòng kiểm tra các dòng màu đỏ trong danh sách.")
+                                    .setPositiveButton("Đã hiểu", null)
+                                    .show();
+                        } else {
+                            Toast.makeText(CreateClassListActivity.this, json.optString("error", "Lưu thất bại"), Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        Log.e("SaveError", "Parse error", e);
+                    }
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
+                btnLuu.setEnabled(true);
+                hideLoading();
+                Toast.makeText(CreateClassListActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+}

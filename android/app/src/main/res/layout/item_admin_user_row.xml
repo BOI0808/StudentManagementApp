@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="8dp"
+    android:gravity="center_vertical"
+    android:background="?android:attr/selectableItemBackground">
+
+    <TextView
+        android:id="@+id/tvSTT"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        tools:text="1"
+        android:textAlignment="center"
+        android:textColor="@color/black" />
+
+    <TextView
+        android:id="@+id/tvMaNV"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        tools:text="NV01"
+        android:textAlignment="center"
+        android:textColor="@color/black" />
+
+    <TextView
+        android:id="@+id/tvHoTen"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        tools:text="Nguyễn Văn A"
+        android:paddingStart="8dp"
+        android:textColor="@color/black"
+        android:maxLines="2"
+        android:ellipsize="end"/>
+
+    <TextView
+        android:id="@+id/tvSoDienThoai"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        tools:text="0901234567"
+        android:textAlignment="center"
+        android:textColor="@color/black" />
+
+    <TextView
+        android:id="@+id/tvTaiKhoan"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        tools:text="nguyenvana"
+        android:textAlignment="center"
+        android:textColor="@color/black" />
+
+    <TextView
+        android:id="@+id/tvMatKhau"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        tools:text="********"
+        android:textAlignment="center"
+        android:textColor="@color/black" />
+
+    <TextView
+        android:id="@+id/tvQuyen"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        tools:text="{1,2,3}"
+        android:paddingStart="8dp"
+        android:textColor="#1976D2"
+        android:textSize="13sp"
+        android:maxLines="2"
+        android:ellipsize="end"/>
+
+    <ImageButton
+        android:id="@+id/btnEdit"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_edit"
+        app:tint="#FF9800" />
+
+    <ImageButton
+        android:id="@+id/btnDelete"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_delete"
+        app:tint="#D32F2F" />
+
+</LinearLayout>

@@ -1,48 +1,54 @@
 const express = require("express");
-const mysql = require("mysql2");
 const cors = require("cors");
-require("dotenv").config();
+const studentRoutes = require("./routes/studentRoutes"); // Kết nối file route bạn đã tạo
+const configRoutes = require("./routes/configRoutes");
+const gradeRoutes = require("./routes/gradeRoutes");
+const reportRoutes = require("./routes/reportRoutes");
+const authRoutes = require("./routes/authRoutes");
+const classRoutes = require("./routes/classRoutes");
+const subjectRoutes = require("./routes/subjectRoutes");
+const semesterRoutes = require("./routes/semesterRoutes");
+const testTypeRoutes = require("./routes/testTypeRoutes");
+const userRoutes = require("./routes/userRoutes");
+const blockRoutes = require("./routes/blockRoutes");
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASS || "",
-  database: process.env.DB_NAME || "quan_ly_hoc_sinh",
-  waitForConnections: true,
-  connectionLimit: process.env.DB_CONN_LIMIT || 10,
-  queueLimit: 0,
-});
+// Kết nối các nhóm Route (Đây là nơi Vinh/Giang sẽ gọi API)
+// Đường dẫn sẽ là: http://localhost:3000/api/students/tiep-nhan-hoc-sinh và tương tự
+app.use("/api/students", studentRoutes);
+app.use("/api/configs", configRoutes);
+app.use("/api/grades", gradeRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/auths", authRoutes);
+app.use("/api/classes", classRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/semesters", semesterRoutes);
+app.use("/api/test-types", testTypeRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/blocks", blockRoutes);
 
-const db = pool.promise();
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.error("Kết nối Database thất bại: " + err.message);
-    return;
-  }
-  console.log("Đã kết nối MySQL qua Connection Pool thành công!");
-  connection.release();
-});
+const pool = require("./config/db"); // Import pool từ file db.js
 
-app.get("/", (req, res) => {
-  res.send("Server Backend đã được tối ưu!");
-});
-
-app.get("/api/quy-dinh", async (req, res) => {
+async function startServer() {
   try {
-    const [rows] = await db.query("SELECT * FROM ThamSo");
-    res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Lỗi truy vấn cơ sở dữ liệu" });
-  }
-});
+    // Thử thực hiện một truy vấn đơn giản để kiểm tra kết nối
+    await pool.query("SELECT 1");
+    console.log("✅ Kết nối Database thành công!");
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server đang chạy tại: http://localhost:${PORT}`);
-});
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("❌ Không thể kết nối Database. Server không thể khởi động.");
+    console.error(error.message);
+    process.exit(1); // Dừng tiến trình Node.js với mã lỗi
+  }
+}
+
+startServer();

@@ -1,0 +1,264 @@
+package com.example.studentmanagementapp;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageButton;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.studentmanagementapp.api.ApiClient;
+import com.example.studentmanagementapp.model.Subject;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import org.json.JSONObject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class CategorySubjectActivity extends AppCompatActivity {
+
+    private TextInputLayout tilTenMon;
+    private TextInputEditText edtTenMon;
+    private MaterialButton btnThem;
+    private RecyclerView rvMonHoc;
+    private ImageButton btnBack;
+    private LinearProgressIndicator progressIndicator;
+    
+    // Search fields
+    private TextInputEditText edtSearch;
+    private ProgressBar pbSearchLoading;
+    private Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable searchRunnable;
+
+    private List<Subject> fullSubjectList = new ArrayList<>();
+    private List<Subject> displayList = new ArrayList<>();
+    private GenericAdapter<Subject> adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_category_subject);
+
+        initViews();
+        setupListeners();
+        loadSubjectList();
+    }
+
+    private void initViews() {
+        tilTenMon = findViewById(R.id.tilTenMonHoc);
+        edtTenMon = findViewById(R.id.edtTenMonHoc);
+        btnThem = findViewById(R.id.btnThem);
+        rvMonHoc = findViewById(R.id.rvMonHoc);
+        btnBack = findViewById(R.id.btnBack);
+        progressIndicator = findViewById(R.id.progressIndicator);
+        
+        edtSearch = findViewById(R.id.edtSearchSubject);
+        pbSearchLoading = findViewById(R.id.pbSearchLoading);
+
+        rvMonHoc.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void setupListeners() {
+        btnBack.setOnClickListener(v -> finish());
+        btnThem.setOnClickListener(v -> performAddSubject());
+
+        edtTenMon.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (tilTenMon != null) {
+                    tilTenMon.setError(null);
+                    tilTenMon.setErrorEnabled(false);
+                }
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Setup Debounce Search
+        edtSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                searchHandler.removeCallbacks(searchRunnable);
+                pbSearchLoading.setVisibility(View.VISIBLE);
+                
+                searchRunnable = () -> performFilter(s.toString());
+                searchHandler.postDelayed(searchRunnable, 300); // 300ms debounce
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+    }
+
+    private void performFilter(String query) {
+        String filterPattern = query.toLowerCase().trim();
+        displayList.clear();
+        
+        if (filterPattern.isEmpty()) {
+            displayList.addAll(fullSubjectList);
+        } else {
+            for (Subject item : fullSubjectList) {
+                if (item.getTenMonHoc() != null && item.getTenMonHoc().toLowerCase().contains(filterPattern)) {
+                    displayList.add(item);
+                }
+            }
+        }
+        
+        pbSearchLoading.setVisibility(View.GONE);
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    private void showLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+        btnThem.setEnabled(false);
+    }
+
+    private void hideLoading() {
+        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+        btnThem.setEnabled(true);
+    }
+
+    private void loadSubjectList() {
+        showLoading();
+        ApiClient.getApiService().getSubjectList().enqueue(new Callback<List<Subject>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<Subject>> call, @NonNull Response<List<Subject>> response) {
+                hideLoading();
+                if (response.isSuccessful() && response.body() != null) {
+                    fullSubjectList = response.body();
+                    displayList.clear();
+                    displayList.addAll(fullSubjectList);
+                    updateRecyclerView();
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<List<Subject>> call, @NonNull Throwable t) {
+                hideLoading();
+                Toast.makeText(CategorySubjectActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateRecyclerView() {
+        adapter = new GenericAdapter<>(displayList, R.layout.item_category, (subject, itemView, position) -> {
+            ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
+            ((TextView) itemView.findViewById(R.id.tvMa)).setText(subject.getMaMonHoc());
+            ((TextView) itemView.findViewById(R.id.tvTen)).setText(subject.getTenMonHoc());
+            
+            itemView.findViewById(R.id.btnDelete).setOnClickListener(v -> {
+                String maMon = subject.getMaMonHoc();
+                if (maMon != null) {
+                    new MaterialAlertDialogBuilder(CategorySubjectActivity.this)
+                            .setTitle("Xác nhận xóa")
+                            .setMessage("Bạn có chắc chắn muốn ẩn môn học này khỏi danh sách không?")
+                            .setNegativeButton("Hủy", null)
+                            .setPositiveButton("Đồng ý", (dialog, which) -> performSoftDeleteSubject(maMon))
+                            .show();
+                }
+            });
+        });
+        rvMonHoc.setAdapter(adapter);
+    }
+
+    private void performSoftDeleteSubject(String maMon) {
+        Map<String, Integer> status = new HashMap<>();
+        status.put("TrangThai", 0);
+
+        showLoading();
+        ApiClient.getApiService().updateSubjectStatus(maMon, status).enqueue(new Callback<Map<String, String>>() {
+            @Override
+            public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
+                hideLoading();
+                if (response.isSuccessful()) {
+                    loadSubjectList();
+                } else {
+                    Toast.makeText(CategorySubjectActivity.this, "Không thể xóa môn học", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
+                hideLoading();
+                Toast.makeText(CategorySubjectActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void performAddSubject() {
+        String tenMon = edtTenMon.getText() != null ? edtTenMon.getText().toString().trim() : "";
+        
+        if (tenMon.isEmpty()) {
+            tilTenMon.setErrorEnabled(true);
+            tilTenMon.setError("Vui lòng nhập tên môn học");
+            return;
+        }
+
+        Subject newSubject = new Subject();
+        newSubject.setTenMonHocInput(tenMon);
+
+        showLoading();
+        ApiClient.getApiService().createSubject(newSubject).enqueue(new Callback<Map<String, String>>() {
+            @Override
+            public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
+                hideLoading();
+                if (response.isSuccessful()) {
+                    new MaterialAlertDialogBuilder(CategorySubjectActivity.this)
+                            .setTitle("Thành Công")
+                            .setMessage("Đã thêm môn học thành công vào hệ thống.")
+                            .setCancelable(false)
+                            .setPositiveButton("Tạo tiếp", (dialog, which) -> {
+                                edtTenMon.setText("");
+                                tilTenMon.setError(null);
+                                tilTenMon.setErrorEnabled(false);
+                                loadSubjectList();
+                            })
+                            .setNegativeButton("Đóng", (dialog, which) -> finish())
+                            .show();
+                } else {
+                    showErrorDetails(response);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
+                hideLoading();
+                Toast.makeText(CategorySubjectActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showErrorDetails(Response<?> response) {
+        try {
+            if (response.errorBody() != null) {
+                String errorBody = response.errorBody().string();
+                JSONObject jObjError = new JSONObject(errorBody);
+                String errorMsg = jObjError.optString("error", "Dữ liệu không hợp lệ");
+                Toast.makeText(this, "Thất bại: " + errorMsg, Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Lỗi Server: " + response.code(), Toast.LENGTH_SHORT).show();
+        }
+    }
+}

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 28, 2026 at 07:48 AM
+-- Generation Time: Apr 30, 2026 at 05:02 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,8 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `quan_ly_hoc_sinh`
 --
-CREATE DATABASE IF NOT EXISTS `quan_ly_hoc_sinh` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `quan_ly_hoc_sinh`;
 
 -- --------------------------------------------------------
 
@@ -29,27 +27,15 @@ USE `quan_ly_hoc_sinh`;
 -- Table structure for table `bangdiem`
 --
 
-DROP TABLE IF EXISTS `bangdiem`;
 CREATE TABLE `bangdiem` (
   `MaBangDiem` varchar(10) NOT NULL,
-  `MaLop` varchar(10) DEFAULT NULL,
+  `MaLop` varchar(15) NOT NULL,
   `MaMonHoc` varchar(10) DEFAULT NULL,
   `MaLoaiKiemTra` varchar(10) DEFAULT NULL,
   `MaHocSinh` varchar(10) DEFAULT NULL,
-  `Diem` float DEFAULT NULL
-) ;
-
---
--- RELATIONSHIPS FOR TABLE `bangdiem`:
---   `MaLop`
---       `lop` -> `MaLop`
---   `MaMonHoc`
---       `monhoc` -> `MaMonHoc`
---   `MaLoaiKiemTra`
---       `loaihinhkiemtra` -> `MaLoaiKiemTra`
---   `MaHocSinh`
---       `hocsinh` -> `MaHocSinh`
---
+  `Diem` float DEFAULT NULL,
+  `GhiChu` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -57,19 +43,40 @@ CREATE TABLE `bangdiem` (
 -- Table structure for table `chitietlop`
 --
 
-DROP TABLE IF EXISTS `chitietlop`;
 CREATE TABLE `chitietlop` (
-  `MaLop` varchar(10) NOT NULL,
+  `MaLop` varchar(15) NOT NULL,
   `MaHocSinh` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
 --
--- RELATIONSHIPS FOR TABLE `chitietlop`:
---   `MaLop`
---       `lop` -> `MaLop`
---   `MaHocSinh`
---       `hocsinh` -> `MaHocSinh`
+-- Table structure for table `chucnang`
 --
+
+CREATE TABLE `chucnang` (
+  `MaCN` varchar(10) NOT NULL,
+  `TenCN` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `chucnang`
+--
+
+INSERT INTO `chucnang` (`MaCN`, `TenCN`) VALUES
+('CNCDTSHT', 'Cài đặt tham số hệ thống'),
+('CNLBCTKHK', 'Lập báo cáo tổng kết học kỳ'),
+('CNLBCTKM', 'Lập báo cáo tổng kết môn'),
+('CNLDSHSCL', 'Lập danh sách học sinh cho lớp'),
+('CNLDSKL', 'Lập danh sách khối lớp'),
+('CNLDSL', 'Lập danh sách lớp'),
+('CNLDSMH', 'Lập danh sách môn học'),
+('CNLDSNH', 'Lập danh sách năm học'),
+('CNNBD', 'Nhập bảng điểm'),
+('CNNDSCLKT', 'Nhập danh sách các loại kiểm tra'),
+('CNQLND', 'Quản lý người dùng'),
+('CNTCHS', 'Tra cứu học sinh'),
+('CNTNHS', 'Tiếp nhận học sinh');
 
 -- --------------------------------------------------------
 
@@ -77,15 +84,19 @@ CREATE TABLE `chitietlop` (
 -- Table structure for table `gioitinh`
 --
 
-DROP TABLE IF EXISTS `gioitinh`;
 CREATE TABLE `gioitinh` (
   `MaGioiTinh` varchar(10) NOT NULL,
   `TenGioiTinh` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- RELATIONSHIPS FOR TABLE `gioitinh`:
+-- Dumping data for table `gioitinh`
 --
+
+INSERT INTO `gioitinh` (`MaGioiTinh`, `TenGioiTinh`) VALUES
+('GT1', 'Nam'),
+('GT2', 'Nữ'),
+('GT3', 'Khác');
 
 -- --------------------------------------------------------
 
@@ -93,19 +104,13 @@ CREATE TABLE `gioitinh` (
 -- Table structure for table `hocky_namhoc`
 --
 
-DROP TABLE IF EXISTS `hocky_namhoc`;
 CREATE TABLE `hocky_namhoc` (
   `MaHocKyNamHoc` varchar(10) NOT NULL,
-  `TenNamHoc` varchar(100) DEFAULT NULL,
+  `NamHocBatDau` int(11) DEFAULT NULL,
+  `NamHocKetThuc` int(11) DEFAULT NULL,
   `TenHocKy` varchar(100) DEFAULT NULL,
-  `NgayBatDau` date DEFAULT NULL,
-  `NgayKetThuc` date DEFAULT NULL,
-  `TrangThai` varchar(100) DEFAULT NULL
-) ;
-
---
--- RELATIONSHIPS FOR TABLE `hocky_namhoc`:
---
+  `TrangThai` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -113,7 +118,6 @@ CREATE TABLE `hocky_namhoc` (
 -- Table structure for table `hocsinh`
 --
 
-DROP TABLE IF EXISTS `hocsinh`;
 CREATE TABLE `hocsinh` (
   `MaHocSinh` varchar(10) NOT NULL,
   `HoTen` varchar(100) DEFAULT NULL,
@@ -123,11 +127,18 @@ CREATE TABLE `hocsinh` (
   `Email` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
 --
--- RELATIONSHIPS FOR TABLE `hocsinh`:
---   `MaGioiTinh`
---       `gioitinh` -> `MaGioiTinh`
+-- Table structure for table `ketqua_monhoc`
 --
+
+CREATE TABLE `ketqua_monhoc` (
+  `MaHocSinh` varchar(10) NOT NULL,
+  `MaMonHoc` varchar(10) NOT NULL,
+  `MaHocKyNamHoc` varchar(10) NOT NULL,
+  `DiemTrungBinhMon` float DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -135,15 +146,11 @@ CREATE TABLE `hocsinh` (
 -- Table structure for table `khoilop`
 --
 
-DROP TABLE IF EXISTS `khoilop`;
 CREATE TABLE `khoilop` (
   `MaKhoiLop` varchar(10) NOT NULL,
-  `TenKhoiLop` varchar(100) DEFAULT NULL
+  `TenKhoiLop` varchar(100) DEFAULT NULL,
+  `TrangThai` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- RELATIONSHIPS FOR TABLE `khoilop`:
---
 
 -- --------------------------------------------------------
 
@@ -151,16 +158,12 @@ CREATE TABLE `khoilop` (
 -- Table structure for table `loaihinhkiemtra`
 --
 
-DROP TABLE IF EXISTS `loaihinhkiemtra`;
 CREATE TABLE `loaihinhkiemtra` (
   `MaLoaiKiemTra` varchar(10) NOT NULL,
   `TenLoaiKiemTra` varchar(100) DEFAULT NULL,
-  `HeSo` int(11) DEFAULT NULL
-) ;
-
---
--- RELATIONSHIPS FOR TABLE `loaihinhkiemtra`:
---
+  `HeSo` int(11) DEFAULT NULL,
+  `TrangThai` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -168,21 +171,13 @@ CREATE TABLE `loaihinhkiemtra` (
 -- Table structure for table `lop`
 --
 
-DROP TABLE IF EXISTS `lop`;
 CREATE TABLE `lop` (
-  `MaLop` varchar(10) NOT NULL,
+  `MaLop` varchar(15) NOT NULL,
   `TenLop` varchar(100) DEFAULT NULL,
   `MaKhoiLop` varchar(10) DEFAULT NULL,
-  `MaHocKyNamHoc` varchar(10) DEFAULT NULL
+  `MaHocKyNamHoc` varchar(10) DEFAULT NULL,
+  `SiSo` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- RELATIONSHIPS FOR TABLE `lop`:
---   `MaKhoiLop`
---       `khoilop` -> `MaKhoiLop`
---   `MaHocKyNamHoc`
---       `hocky_namhoc` -> `MaHocKyNamHoc`
---
 
 -- --------------------------------------------------------
 
@@ -190,15 +185,11 @@ CREATE TABLE `lop` (
 -- Table structure for table `monhoc`
 --
 
-DROP TABLE IF EXISTS `monhoc`;
 CREATE TABLE `monhoc` (
   `MaMonHoc` varchar(10) NOT NULL,
-  `TenMonHoc` varchar(100) DEFAULT NULL
+  `TenMonHoc` varchar(100) DEFAULT NULL,
+  `TrangThai` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- RELATIONSHIPS FOR TABLE `monhoc`:
---
 
 -- --------------------------------------------------------
 
@@ -206,7 +197,6 @@ CREATE TABLE `monhoc` (
 -- Table structure for table `nguoidung`
 --
 
-DROP TABLE IF EXISTS `nguoidung`;
 CREATE TABLE `nguoidung` (
   `MaSo` varchar(10) NOT NULL,
   `HoTen` varchar(100) DEFAULT NULL,
@@ -214,12 +204,46 @@ CREATE TABLE `nguoidung` (
   `MatKhau` varchar(100) DEFAULT NULL,
   `Email` varchar(100) DEFAULT NULL,
   `SoDienThoai` varchar(15) DEFAULT NULL,
-  `PhanQuyen` varchar(100) DEFAULT NULL
-) ;
+  `PhanQuyen` varchar(100) DEFAULT NULL,
+  `TrangThai` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- RELATIONSHIPS FOR TABLE `nguoidung`:
+-- Dumping data for table `nguoidung`
 --
+
+INSERT INTO `nguoidung` (`MaSo`, `HoTen`, `TenDangNhap`, `MatKhau`, `Email`, `SoDienThoai`, `PhanQuyen`, `TrangThai`) VALUES
+('ADMIN01', 'Quản trị viên hệ thống', 'admin', 'admin123', 'admin@school.edu.vn', '0903596792', 'Quản trị viên', 1),
+('GV26001', 'Đinh Nhật Khôi', 'nhatkhoi', 'nhatkhoi123', 'nhatkhoi30@gmail.com', '0903596791', 'Giáo Viên', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `nguoidung_quyen`
+--
+
+CREATE TABLE `nguoidung_quyen` (
+  `MaSo` varchar(10) NOT NULL,
+  `MaCN` varchar(10) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `nguoidung_quyen`
+--
+
+INSERT INTO `nguoidung_quyen` (`MaSo`, `MaCN`) VALUES
+('ADMIN01', 'CNCDTSHT'),
+('ADMIN01', 'CNLBCTKHK'),
+('ADMIN01', 'CNLBCTKM'),
+('ADMIN01', 'CNLDSHSCL'),
+('ADMIN01', 'CNLDSKL'),
+('ADMIN01', 'CNLDSL'),
+('ADMIN01', 'CNLDSMH'),
+('ADMIN01', 'CNLDSNH'),
+('ADMIN01', 'CNNBD'),
+('ADMIN01', 'CNNDSCLKT'),
+('ADMIN01', 'CNTCHS'),
+('ADMIN01', 'CNTNHS');
 
 -- --------------------------------------------------------
 
@@ -227,7 +251,6 @@ CREATE TABLE `nguoidung` (
 -- Table structure for table `thamso`
 --
 
-DROP TABLE IF EXISTS `thamso`;
 CREATE TABLE `thamso` (
   `ma_tham_so` int(11) NOT NULL,
   `ten_tham_so` varchar(50) NOT NULL,
@@ -235,8 +258,18 @@ CREATE TABLE `thamso` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- RELATIONSHIPS FOR TABLE `thamso`:
+-- Dumping data for table `thamso`
 --
+
+INSERT INTO `thamso` (`ma_tham_so`, `ten_tham_so`, `gia_tri`) VALUES
+(1, 'TuoiToiThieu', 15),
+(2, 'TuoiToiDa', 20),
+(3, 'SiSoToiDa', 40),
+(4, 'DiemDat', 5),
+(5, 'DiemDatMon', 5),
+(6, 'SiSoToiThieu', 15),
+(7, 'DiemToiThieu', 0),
+(8, 'DiemToiDa', 10);
 
 --
 -- Indexes for dumped tables
@@ -260,6 +293,12 @@ ALTER TABLE `chitietlop`
   ADD KEY `MaHocSinh` (`MaHocSinh`);
 
 --
+-- Indexes for table `chucnang`
+--
+ALTER TABLE `chucnang`
+  ADD PRIMARY KEY (`MaCN`);
+
+--
 -- Indexes for table `gioitinh`
 --
 ALTER TABLE `gioitinh`
@@ -277,6 +316,13 @@ ALTER TABLE `hocky_namhoc`
 ALTER TABLE `hocsinh`
   ADD PRIMARY KEY (`MaHocSinh`),
   ADD KEY `MaGioiTinh` (`MaGioiTinh`);
+
+--
+-- Indexes for table `ketqua_monhoc`
+--
+ALTER TABLE `ketqua_monhoc`
+  ADD PRIMARY KEY (`MaHocSinh`,`MaMonHoc`,`MaHocKyNamHoc`),
+  ADD KEY `MaMonHoc` (`MaMonHoc`);
 
 --
 -- Indexes for table `khoilop`
@@ -313,6 +359,13 @@ ALTER TABLE `nguoidung`
   ADD UNIQUE KEY `TenDangNhap` (`TenDangNhap`);
 
 --
+-- Indexes for table `nguoidung_quyen`
+--
+ALTER TABLE `nguoidung_quyen`
+  ADD PRIMARY KEY (`MaSo`,`MaCN`),
+  ADD KEY `MaCN` (`MaCN`);
+
+--
 -- Indexes for table `thamso`
 --
 ALTER TABLE `thamso`
@@ -326,7 +379,7 @@ ALTER TABLE `thamso`
 -- AUTO_INCREMENT for table `thamso`
 --
 ALTER TABLE `thamso`
-  MODIFY `ma_tham_so` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `ma_tham_so` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Constraints for dumped tables
@@ -336,17 +389,17 @@ ALTER TABLE `thamso`
 -- Constraints for table `bangdiem`
 --
 ALTER TABLE `bangdiem`
-  ADD CONSTRAINT `bangdiem_ibfk_1` FOREIGN KEY (`MaLop`) REFERENCES `lop` (`MaLop`),
   ADD CONSTRAINT `bangdiem_ibfk_2` FOREIGN KEY (`MaMonHoc`) REFERENCES `monhoc` (`MaMonHoc`),
   ADD CONSTRAINT `bangdiem_ibfk_3` FOREIGN KEY (`MaLoaiKiemTra`) REFERENCES `loaihinhkiemtra` (`MaLoaiKiemTra`),
-  ADD CONSTRAINT `bangdiem_ibfk_4` FOREIGN KEY (`MaHocSinh`) REFERENCES `hocsinh` (`MaHocSinh`);
+  ADD CONSTRAINT `bangdiem_ibfk_4` FOREIGN KEY (`MaHocSinh`) REFERENCES `hocsinh` (`MaHocSinh`),
+  ADD CONSTRAINT `fk_bangdiem_lop` FOREIGN KEY (`MaLop`) REFERENCES `lop` (`MaLop`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `chitietlop`
 --
 ALTER TABLE `chitietlop`
-  ADD CONSTRAINT `chitietlop_ibfk_1` FOREIGN KEY (`MaLop`) REFERENCES `lop` (`MaLop`),
-  ADD CONSTRAINT `chitietlop_ibfk_2` FOREIGN KEY (`MaHocSinh`) REFERENCES `hocsinh` (`MaHocSinh`);
+  ADD CONSTRAINT `chitietlop_ibfk_2` FOREIGN KEY (`MaHocSinh`) REFERENCES `hocsinh` (`MaHocSinh`),
+  ADD CONSTRAINT `fk_chitietlop_lop` FOREIGN KEY (`MaLop`) REFERENCES `lop` (`MaLop`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `hocsinh`
@@ -355,11 +408,25 @@ ALTER TABLE `hocsinh`
   ADD CONSTRAINT `hocsinh_ibfk_1` FOREIGN KEY (`MaGioiTinh`) REFERENCES `gioitinh` (`MaGioiTinh`);
 
 --
+-- Constraints for table `ketqua_monhoc`
+--
+ALTER TABLE `ketqua_monhoc`
+  ADD CONSTRAINT `ketqua_monhoc_ibfk_1` FOREIGN KEY (`MaHocSinh`) REFERENCES `hocsinh` (`MaHocSinh`),
+  ADD CONSTRAINT `ketqua_monhoc_ibfk_2` FOREIGN KEY (`MaMonHoc`) REFERENCES `monhoc` (`MaMonHoc`);
+
+--
 -- Constraints for table `lop`
 --
 ALTER TABLE `lop`
   ADD CONSTRAINT `lop_ibfk_1` FOREIGN KEY (`MaKhoiLop`) REFERENCES `khoilop` (`MaKhoiLop`),
   ADD CONSTRAINT `lop_ibfk_2` FOREIGN KEY (`MaHocKyNamHoc`) REFERENCES `hocky_namhoc` (`MaHocKyNamHoc`);
+
+--
+-- Constraints for table `nguoidung_quyen`
+--
+ALTER TABLE `nguoidung_quyen`
+  ADD CONSTRAINT `nguoidung_quyen_ibfk_1` FOREIGN KEY (`MaSo`) REFERENCES `nguoidung` (`MaSo`),
+  ADD CONSTRAINT `nguoidung_quyen_ibfk_2` FOREIGN KEY (`MaCN`) REFERENCES `chucnang` (`MaCN`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
