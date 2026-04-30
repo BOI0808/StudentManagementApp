@@ -10,7 +10,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp">
+        android:layout_marginBottom="8dp">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -32,11 +32,20 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progressIndicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="#1976D2" />
+
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardCornerRadius="8dp"
         app:cardElevation="2dp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp">
 
         <LinearLayout
@@ -46,6 +55,7 @@
             android:padding="16dp">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilNamHoc"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -60,10 +70,12 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilHocKy"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Học kỳ">
+                android:hint="Học kỳ"
+                android:enabled="false">
 
                 <AutoCompleteTextView
                     android:id="@+id/autoCompleteHocKy"
@@ -75,8 +87,11 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLapBaoCaoHocKy"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Xem Báo Cáo"
+                android:layout_height="55dp"
+                android:text="XEM BÁO CÁO"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                app:cornerRadius="8dp"
                 android:layout_marginTop="16dp" />
 
         </LinearLayout>
@@ -86,7 +101,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#E0E0E0"
+        android:background="#1976D2"
         android:padding="8dp"
         android:weightSum="10">
 
@@ -95,7 +110,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1.5"
             android:text="STT"
+            android:textSize="14sp"
             android:textStyle="bold"
+            android:textColor="#FFFFFF"
             android:textAlignment="center" />
 
         <TextView
@@ -103,7 +120,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="2.5"
             android:text="Lớp"
+            android:textSize="14sp"
             android:textStyle="bold"
+            android:textColor="#FFFFFF"
             android:textAlignment="center" />
 
         <TextView
@@ -111,15 +130,19 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Sĩ số"
+            android:textSize="14sp"
             android:textStyle="bold"
+            android:textColor="#FFFFFF"
             android:textAlignment="center" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
-            android:text="SL đạt"
+            android:text="Số lượng đạt"
+            android:textSize="14sp"
             android:textStyle="bold"
+            android:textColor="#FFFFFF"
             android:textAlignment="center" />
 
         <TextView
@@ -127,6 +150,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Tỉ lệ"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:textAlignment="center" />
     </LinearLayout>

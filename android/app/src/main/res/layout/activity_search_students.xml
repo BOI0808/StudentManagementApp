@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Tra Cứu Học Sinh"
+            android:text="Tra cứu học sinh"
             android:textColor="#1976D2"
             android:textSize="20sp"
             android:textStyle="bold" />

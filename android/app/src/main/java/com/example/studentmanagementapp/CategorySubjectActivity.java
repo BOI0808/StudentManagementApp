@@ -2,11 +2,14 @@ package com.example.studentmanagementapp;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -37,7 +40,15 @@ public class CategorySubjectActivity extends AppCompatActivity {
     private RecyclerView rvMonHoc;
     private ImageButton btnBack;
     private LinearProgressIndicator progressIndicator;
-    private List<Subject> subjectList = new ArrayList<>();
+    
+    // Search fields
+    private TextInputEditText edtSearch;
+    private ProgressBar pbSearchLoading;
+    private Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable searchRunnable;
+
+    private List<Subject> fullSubjectList = new ArrayList<>();
+    private List<Subject> displayList = new ArrayList<>();
     private GenericAdapter<Subject> adapter;
 
     @Override
@@ -57,6 +68,9 @@ public class CategorySubjectActivity extends AppCompatActivity {
         rvMonHoc = findViewById(R.id.rvMonHoc);
         btnBack = findViewById(R.id.btnBack);
         progressIndicator = findViewById(R.id.progressIndicator);
+        
+        edtSearch = findViewById(R.id.edtSearchSubject);
+        pbSearchLoading = findViewById(R.id.pbSearchLoading);
 
         rvMonHoc.setLayoutManager(new LinearLayoutManager(this));
     }
@@ -68,7 +82,6 @@ public class CategorySubjectActivity extends AppCompatActivity {
         edtTenMon.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (tilTenMon != null) {
@@ -76,10 +89,45 @@ public class CategorySubjectActivity extends AppCompatActivity {
                     tilTenMon.setErrorEnabled(false);
                 }
             }
-
             @Override
             public void afterTextChanged(Editable s) {}
         });
+
+        // Setup Debounce Search
+        edtSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                searchHandler.removeCallbacks(searchRunnable);
+                pbSearchLoading.setVisibility(View.VISIBLE);
+                
+                searchRunnable = () -> performFilter(s.toString());
+                searchHandler.postDelayed(searchRunnable, 300); // 300ms debounce
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+    }
+
+    private void performFilter(String query) {
+        String filterPattern = query.toLowerCase().trim();
+        displayList.clear();
+        
+        if (filterPattern.isEmpty()) {
+            displayList.addAll(fullSubjectList);
+        } else {
+            for (Subject item : fullSubjectList) {
+                if (item.getTenMonHoc() != null && item.getTenMonHoc().toLowerCase().contains(filterPattern)) {
+                    displayList.add(item);
+                }
+            }
+        }
+        
+        pbSearchLoading.setVisibility(View.GONE);
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     private void showLoading() {
@@ -92,16 +140,6 @@ public class CategorySubjectActivity extends AppCompatActivity {
         btnThem.setEnabled(true);
     }
 
-    private void hideKeyboard() {
-        View view = this.getCurrentFocus();
-        if (view != null) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) {
-                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-            }
-        }
-    }
-
     private void loadSubjectList() {
         showLoading();
         ApiClient.getApiService().getSubjectList().enqueue(new Callback<List<Subject>>() {
@@ -109,7 +147,9 @@ public class CategorySubjectActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<List<Subject>> call, @NonNull Response<List<Subject>> response) {
                 hideLoading();
                 if (response.isSuccessful() && response.body() != null) {
-                    subjectList = response.body();
+                    fullSubjectList = response.body();
+                    displayList.clear();
+                    displayList.addAll(fullSubjectList);
                     updateRecyclerView();
                 }
             }
@@ -122,7 +162,7 @@ public class CategorySubjectActivity extends AppCompatActivity {
     }
 
     private void updateRecyclerView() {
-        adapter = new GenericAdapter<>(subjectList, R.layout.item_category, (subject, itemView, position) -> {
+        adapter = new GenericAdapter<>(displayList, R.layout.item_category, (subject, itemView, position) -> {
             ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
             ((TextView) itemView.findViewById(R.id.tvMa)).setText(subject.getMaMonHoc());
             ((TextView) itemView.findViewById(R.id.tvTen)).setText(subject.getTenMonHoc());
