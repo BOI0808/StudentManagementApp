@@ -101,7 +101,11 @@ exports.getHocSinhTheoLop = async (req, res) => {
       FROM chitietlop ctl
       JOIN hocsinh hs ON ctl.MaHocSinh = hs.MaHocSinh
       WHERE ctl.MaLop = ?
-      ORDER BY hs.HoTen ASC
+      ORDER BY 
+        /* Tách lấy tên (từ cuối cùng) để sắp xếp */
+        SUBSTRING_INDEX(hs.HoTen, ' ', -1) ASC, 
+        /* Nếu trùng tên thì mới xét đến toàn bộ họ tên */
+        hs.HoTen ASC
     `;
     const [rows] = await db.query(query, [MaLop]);
     res.json(rows);
