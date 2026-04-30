@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 30, 2026 at 05:02 AM
+-- Generation Time: Apr 30, 2026 at 05:19 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -213,8 +213,7 @@ CREATE TABLE `nguoidung` (
 --
 
 INSERT INTO `nguoidung` (`MaSo`, `HoTen`, `TenDangNhap`, `MatKhau`, `Email`, `SoDienThoai`, `PhanQuyen`, `TrangThai`) VALUES
-('ADMIN01', 'Quản trị viên hệ thống', 'admin', 'admin123', 'admin@school.edu.vn', '0903596792', 'Quản trị viên', 1),
-('GV26001', 'Đinh Nhật Khôi', 'nhatkhoi', 'nhatkhoi123', 'nhatkhoi30@gmail.com', '0903596791', 'Giáo Viên', 1);
+('ADMIN01', 'Quản trị viên hệ thống', 'admin', 'admin123', 'admin@school.edu.vn', '0903596792', 'Quản trị viên', 1);
 
 -- --------------------------------------------------------
 
