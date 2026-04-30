@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 07, 2026 at 06:45 AM
+-- Generation Time: Apr 30, 2026 at 05:02 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -37,16 +37,6 @@ CREATE TABLE `bangdiem` (
   `GhiChu` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `bangdiem`
---
-
-INSERT INTO `bangdiem` (`MaBangDiem`, `MaLop`, `MaMonHoc`, `MaLoaiKiemTra`, `MaHocSinh`, `Diem`, `GhiChu`) VALUES
-('BD74637600', '10A1HK1-2627', 'TOANHOC', 'KT15P', 'HS260001', 9.5, 'Giỏi'),
-('BD76199500', '10A1HK2-2627', 'TOANHOC', 'KT15P', 'HS260001', 9, 'Giỏi'),
-('BD76200101', '10A1HK2-2627', 'TOANHOC', 'KT15P', 'HS260002', 3, ''),
-('BD76413101', '10A1HK1-2627', 'TOANHOC', 'KT15P', 'HS260002', 4, '');
-
 -- --------------------------------------------------------
 
 --
@@ -57,14 +47,6 @@ CREATE TABLE `chitietlop` (
   `MaLop` varchar(15) NOT NULL,
   `MaHocSinh` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `chitietlop`
---
-
-INSERT INTO `chitietlop` (`MaLop`, `MaHocSinh`) VALUES
-('10A1HK1-2627', 'HS260001'),
-('10A1HK1-2627', 'HS260002');
 
 -- --------------------------------------------------------
 
@@ -126,18 +108,9 @@ CREATE TABLE `hocky_namhoc` (
   `MaHocKyNamHoc` varchar(10) NOT NULL,
   `NamHocBatDau` int(11) DEFAULT NULL,
   `NamHocKetThuc` int(11) DEFAULT NULL,
-  `TenHocKy` varchar(100) DEFAULT NULL
+  `TenHocKy` varchar(100) DEFAULT NULL,
+  `TrangThai` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `hocky_namhoc`
---
-
-INSERT INTO `hocky_namhoc` (`MaHocKyNamHoc`, `NamHocBatDau`, `NamHocKetThuc`, `TenHocKy`) VALUES
-('HK1-2526', 2025, 2026, 'Học kỳ 1'),
-('HK1-2627', 2026, 2027, 'Học kỳ 1'),
-('HK2-2526', 2025, 2026, 'Học kỳ 2'),
-('HK2-2627', 2026, 2027, 'Học kỳ 2');
 
 -- --------------------------------------------------------
 
@@ -154,14 +127,6 @@ CREATE TABLE `hocsinh` (
   `Email` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `hocsinh`
---
-
-INSERT INTO `hocsinh` (`MaHocSinh`, `HoTen`, `NgaySinh`, `MaGioiTinh`, `DiaChi`, `Email`) VALUES
-('HS260001', 'Đinh Nhật Khôi', '2009-08-15', 'GT1', 'Thành phố Thủ Đức, TP.HCM', 'nhatkhoi.pro@gmail.com'),
-('HS260002', 'Nguyễn Văn A', '2010-05-20', 'GT1', 'Quận Thủ Đức, TP.HCM', 'nguyenvana@gmail.com');
-
 -- --------------------------------------------------------
 
 --
@@ -175,16 +140,6 @@ CREATE TABLE `ketqua_monhoc` (
   `DiemTrungBinhMon` float DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `ketqua_monhoc`
---
-
-INSERT INTO `ketqua_monhoc` (`MaHocSinh`, `MaMonHoc`, `MaHocKyNamHoc`, `DiemTrungBinhMon`) VALUES
-('HS260001', 'TOANHOC', 'HK1-2627', 9.5),
-('HS260001', 'TOANHOC', 'HK2-2627', 9),
-('HS260002', 'TOANHOC', 'HK1-2627', 4),
-('HS260002', 'TOANHOC', 'HK2-2627', 3);
-
 -- --------------------------------------------------------
 
 --
@@ -196,14 +151,6 @@ CREATE TABLE `khoilop` (
   `TenKhoiLop` varchar(100) DEFAULT NULL,
   `TrangThai` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `khoilop`
---
-
-INSERT INTO `khoilop` (`MaKhoiLop`, `TenKhoiLop`, `TrangThai`) VALUES
-('K10', '10', 1),
-('K11', '11', 1);
 
 -- --------------------------------------------------------
 
@@ -217,15 +164,6 @@ CREATE TABLE `loaihinhkiemtra` (
   `HeSo` int(11) DEFAULT NULL,
   `TrangThai` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `loaihinhkiemtra`
---
-
-INSERT INTO `loaihinhkiemtra` (`MaLoaiKiemTra`, `TenLoaiKiemTra`, `HeSo`, `TrangThai`) VALUES
-('KT15P', '15 phút', 1, 1),
-('KT1T', '1 tiết', 2, 1),
-('KTCK', 'Cuối kỳ', 3, 1);
 
 -- --------------------------------------------------------
 
@@ -241,16 +179,6 @@ CREATE TABLE `lop` (
   `SiSo` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `lop`
---
-
-INSERT INTO `lop` (`MaLop`, `TenLop`, `MaKhoiLop`, `MaHocKyNamHoc`, `SiSo`) VALUES
-('10A1HK1-2526', '10A1', 'K10', 'HK1-2526', 0),
-('10A1HK1-2627', '10A1', 'K10', 'HK1-2627', 2),
-('10A1HK2-2526', '10A1', 'K10', 'HK2-2526', 0),
-('10A1HK2-2627', '10A1', 'K10', 'HK2-2627', 0);
-
 -- --------------------------------------------------------
 
 --
@@ -262,14 +190,6 @@ CREATE TABLE `monhoc` (
   `TenMonHoc` varchar(100) DEFAULT NULL,
   `TrangThai` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `monhoc`
---
-
-INSERT INTO `monhoc` (`MaMonHoc`, `TenMonHoc`, `TrangThai`) VALUES
-('NGUVAN', 'Ngữ văn', 1),
-('TOANHOC', 'Toán học', 1);
 
 -- --------------------------------------------------------
 
@@ -293,7 +213,8 @@ CREATE TABLE `nguoidung` (
 --
 
 INSERT INTO `nguoidung` (`MaSo`, `HoTen`, `TenDangNhap`, `MatKhau`, `Email`, `SoDienThoai`, `PhanQuyen`, `TrangThai`) VALUES
-('ADMIN01', 'Quản trị viên hệ thống', 'admin', 'admin123', 'admin@school.edu.vn', '0123456789', 'Quản trị viên', 1);
+('ADMIN01', 'Quản trị viên hệ thống', 'admin', 'admin123', 'admin@school.edu.vn', '0903596792', 'Quản trị viên', 1),
+('GV26001', 'Đinh Nhật Khôi', 'nhatkhoi', 'nhatkhoi123', 'nhatkhoi30@gmail.com', '0903596791', 'Giáo Viên', 1);
 
 -- --------------------------------------------------------
 
@@ -321,7 +242,6 @@ INSERT INTO `nguoidung_quyen` (`MaSo`, `MaCN`) VALUES
 ('ADMIN01', 'CNLDSNH'),
 ('ADMIN01', 'CNNBD'),
 ('ADMIN01', 'CNNDSCLKT'),
-('ADMIN01', 'CNQLND'),
 ('ADMIN01', 'CNTCHS'),
 ('ADMIN01', 'CNTNHS');
 

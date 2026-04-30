@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Nhập Bảng Điểm"
+            android:text="Nhập bảng điểm"
             android:textColor="#1976D2"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -175,6 +175,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="STT"
+            android:textSize="14sp"
             android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />
@@ -184,6 +185,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Mã HS"
+            android:textSize="14sp"
             android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />
@@ -193,6 +195,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="3"
             android:text="Họ tên"
+            android:textSize="14sp"
             android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />
@@ -202,6 +205,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Điểm"
+            android:textSize="14sp"
             android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />
@@ -211,6 +215,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Ghi chú"
+            android:textSize="14sp"
             android:textColor="#FFFFFF"
             android:textAlignment="center"
             android:textStyle="bold" />

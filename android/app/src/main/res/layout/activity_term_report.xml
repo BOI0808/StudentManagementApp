@@ -87,8 +87,9 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLapBaoCaoHocKy"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Xem Báo Cáo"
+                android:layout_height="55dp"
+                android:text="XEM BÁO CÁO"
+                android:textStyle="bold"
                 android:textSize="16sp"
                 app:cornerRadius="8dp"
                 android:layout_marginTop="16dp" />
@@ -109,6 +110,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1.5"
             android:text="STT"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:textAlignment="center" />
@@ -118,6 +120,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2.5"
             android:text="Lớp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:textAlignment="center" />
@@ -127,6 +130,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Sĩ số"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:textAlignment="center" />
@@ -136,6 +140,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Số lượng đạt"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:textAlignment="center" />
@@ -145,6 +150,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Tỉ lệ"
+            android:textSize="14sp"
             android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:textAlignment="center" />

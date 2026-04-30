@@ -27,7 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Lập danh sách học sinh\ncho lớp"
+            android:text="Xếp học sinh cho lớp"
             android:textColor="#1976D2"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -265,7 +265,7 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLuuDanhSachLop"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="60dp"
         android:text="LƯU DANH SÁCH LỚP"
         android:textSize="16sp"
         android:textStyle="bold"

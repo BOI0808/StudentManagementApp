@@ -144,7 +144,9 @@ public class LoginActivity extends AppCompatActivity {
                 
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponse loginResponse = response.body();
-                    saveUserPermissions(loginResponse);
+                    
+                    // LƯU THÔNG TIN NGƯỜI DÙNG VÀ QUYỀN VÀO SHAREDPREFERENCES
+                    saveUserData(loginResponse);
 
                     String phanQuyen = loginResponse.getUser().getPhanQuyen();
                     if (phanQuyen.equalsIgnoreCase("Admin") || phanQuyen.equalsIgnoreCase("Quản trị viên")) {
@@ -156,6 +158,7 @@ public class LoginActivity extends AppCompatActivity {
                         startActivity(intent);
                         finish();
                     }
+                    
                     Toast.makeText(LoginActivity.this, loginResponse.getMessage(), Toast.LENGTH_SHORT).show();
                 } else {
                     // Xử lý lỗi từ Server
@@ -199,13 +202,22 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void saveUserPermissions(LoginResponse response) {
+    private void saveUserData(LoginResponse response) {
         SharedPreferences sharedPref = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         
-        List<String> permissions = response.getUser().getQuyen();
-        Set<String> set = new HashSet<>(permissions);
-        editor.putStringSet("user_permissions", set);
+        // Lưu họ tên người dùng
+        if (response.getUser() != null) {
+            editor.putString("user_fullname", response.getUser().getHoTen());
+            
+            // Lưu quyền (Permissions)
+            List<String> permissions = response.getUser().getQuyen();
+            if (permissions != null) {
+                Set<String> set = new HashSet<>(permissions);
+                editor.putStringSet("user_permissions", set);
+            }
+        }
+
         editor.apply();
     }
 }

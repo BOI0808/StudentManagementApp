@@ -138,6 +138,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:text="THÊM VÀO HỆ THỐNG"
+                android:textStyle="bold"
+                android:textSize="16sp"
                 app:cornerRadius="8dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -189,6 +191,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1.5"
             android:text="STT"
+            android:textSize="14sp"
             android:textAlignment="center"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
@@ -198,6 +201,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="4"
             android:text="Năm học"
+            android:textSize="14sp"
             android:textAlignment="center"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
@@ -207,6 +211,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2.5"
             android:text="Học kỳ"
+            android:textSize="14sp"
             android:textAlignment="center"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
@@ -216,6 +221,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:text="Xóa"
+            android:textSize="14sp"
             android:textAlignment="center"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
