@@ -43,7 +43,6 @@ public class AdminUserListActivity extends AppCompatActivity {
     private final List<User> filteredUserList = new ArrayList<>();
     private GenericAdapter<User> adapter;
 
-    // Debouncing cho tìm kiếm
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
 
@@ -72,15 +71,13 @@ public class AdminUserListActivity extends AppCompatActivity {
     }
 
     private void setupSingletonAdapter() {
-        // Khởi tạo adapter một lần duy nhất với filteredUserList là nguồn dữ liệu
         adapter = new GenericAdapter<>(filteredUserList, R.layout.item_admin_user_row, (user, itemView, position) -> {
             ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
             ((TextView) itemView.findViewById(R.id.tvMaNV)).setText(user.getMaSo() != null ? user.getMaSo() : "");
             ((TextView) itemView.findViewById(R.id.tvHoTen)).setText(user.getHoTen() != null ? user.getHoTen() : "");
             ((TextView) itemView.findViewById(R.id.tvSoDienThoai)).setText(user.getSoDienThoai() != null ? user.getSoDienThoai() : "");
             ((TextView) itemView.findViewById(R.id.tvTaiKhoan)).setText(user.getTenDangNhap() != null ? user.getTenDangNhap() : "");
-            
-            // Bảo mật: Luôn hiển thị chuỗi cố định cho mật khẩu
+
             ((TextView) itemView.findViewById(R.id.tvMatKhau)).setText("••••••");
             
             String rightsDisplay = user.getQuyenHeThong() != null ? user.getQuyenHeThong() : "-";
@@ -108,10 +105,9 @@ public class AdminUserListActivity extends AppCompatActivity {
         edtSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // Hiển thị loading tìm kiếm ngay khi gõ
+
                 if (pbSearchLoading != null) pbSearchLoading.setVisibility(View.VISIBLE);
                 
-                // Kỹ thuật Debouncing: Chỉ lọc sau khi người dùng ngừng gõ 300ms
                 if (searchRunnable != null) {
                     searchHandler.removeCallbacks(searchRunnable);
                 }
@@ -169,7 +165,6 @@ public class AdminUserListActivity extends AppCompatActivity {
             }
         }
 
-        // Cập nhật giao diện Empty State
         if (filteredUserList.isEmpty()) {
             layoutEmpty.setVisibility(View.VISIBLE);
             rvUserList.setVisibility(View.GONE);
@@ -178,12 +173,10 @@ public class AdminUserListActivity extends AppCompatActivity {
             rvUserList.setVisibility(View.VISIBLE);
         }
         
-        // Cập nhật adapter thông minh
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
         
-        // Ẩn loading tìm kiếm sau khi hoàn thành
         if (pbSearchLoading != null) pbSearchLoading.setVisibility(View.GONE);
     }
 

@@ -11,7 +11,6 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.studentmanagementapp.api.ApiClient;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
@@ -74,11 +74,28 @@ public class CategoryTermActivity extends AppCompatActivity {
         rvNamHoc.setLayoutManager(new LinearLayoutManager(this));
     }
 
+    private void showErrorDialog(String title, String message) {
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
+    }
+
+    private void showRetrySnackbar(String message, Runnable retryAction) {
+        runOnUiThread(() -> {
+            Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+                    .setAction("Thử lại", v -> retryAction.run())
+                    .show();
+        });
+    }
+
     private void setupListeners() {
         btnBack.setOnClickListener(v -> finish());
         findViewById(R.id.btnThemNamHoc).setOnClickListener(v -> performAddTerm());
 
-        // Auto-fill: Năm kết thúc = Năm bắt đầu + 1
         edtNamBatDau.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -144,7 +161,6 @@ public class CategoryTermActivity extends AppCompatActivity {
                     termList.clear();
                     termList.addAll(response.body());
 
-                    // Sắp xếp danh sách giảm dần (Năm mới nhất, Học kỳ mới nhất lên đầu)
                     Collections.sort(termList, (o1, o2) -> {
                         int yearCompare = o2.get("namhoc").compareTo(o1.get("namhoc"));
                         if (yearCompare != 0) return yearCompare;
@@ -158,7 +174,7 @@ public class CategoryTermActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {
                 progressIndicator.setVisibility(View.GONE);
-                Toast.makeText(CategoryTermActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi tải danh sách học kỳ", CategoryTermActivity.this::loadTermList);
             }
         });
     }
@@ -215,14 +231,14 @@ public class CategoryTermActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     loadTermList();
                 } else {
-                    Toast.makeText(CategoryTermActivity.this, "Không thể xóa học kỳ này", Toast.LENGTH_SHORT).show();
+                    showErrorDialog("Thất bại", "Không thể xóa học kỳ này. Có thể học kỳ đã có dữ liệu lớp học liên quan.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 progressIndicator.setVisibility(View.GONE);
-                Toast.makeText(CategoryTermActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối máy chủ", () -> deleteTerm(ma));
             }
         });
     }
@@ -278,13 +294,13 @@ public class CategoryTermActivity extends AppCompatActivity {
         String hockySuccessText;
         int checkedId = rgHocKy.getCheckedRadioButtonId();
         if (checkedId == R.id.rbHocKy1) {
-            if (hasHK1) { showSimpleErrorDialog("Học kỳ 1 đã tồn tại trong năm học " + targetYear); return; }
+            if (hasHK1) { showErrorDialog("Thất bại", "Học kỳ 1 đã tồn tại trong năm học " + targetYear); return; }
             hockyValueToSend = 1; hockySuccessText = "học kỳ 1";
         } else if (checkedId == R.id.rbHocKy2) {
-            if (hasHK2) { showSimpleErrorDialog("Học kỳ 2 đã tồn tại trong năm học " + targetYear); return; }
+            if (hasHK2) { showErrorDialog("Thất bại", "Học kỳ 2 đã tồn tại trong năm học " + targetYear); return; }
             hockyValueToSend = 2; hockySuccessText = "học kỳ 2";
         } else {
-            if (hasHK1 && hasHK2) { showSimpleErrorDialog("Năm học " + targetYear + " đã có cả 2 học kỳ!"); return; }
+            if (hasHK1 && hasHK2) { showErrorDialog("Thất bại", "Năm học " + targetYear + " đã có cả 2 học kỳ!"); return; }
             else if (hasHK1) { hockyValueToSend = 2; hockySuccessText = "bổ sung học kỳ 2"; }
             else if (hasHK2) { hockyValueToSend = 1; hockySuccessText = "bổ sung học kỳ 1"; }
             else { hockyValueToSend = 3; hockySuccessText = "học kỳ 1 và học kỳ 2"; }
@@ -322,21 +338,13 @@ public class CategoryTermActivity extends AppCompatActivity {
                             .setNegativeButton("Đóng", (dialog, which) -> finish())
                             .show();
                 } else {
-                    showSimpleErrorDialog("Học kỳ này đã tồn tại trên hệ thống!");
+                    showErrorDialog("Thất bại", "Học kỳ này đã tồn tại trên hệ thống!");
                 }
             }
             @Override public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 progressIndicator.setVisibility(View.GONE);
-                Toast.makeText(CategoryTermActivity.this, "Lỗi kết nối Server", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối Server", () -> performAddTerm());
             }
         });
-    }
-
-    private void showSimpleErrorDialog(String message) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Thất bại")
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show();
     }
 }

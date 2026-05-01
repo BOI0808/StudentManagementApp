@@ -42,7 +42,6 @@ public class StudentScoreActivity extends AppCompatActivity {
         tvMaHS.setText("Mã HS: " + getValue(data, "MaHocSinh", "maHocSinh", "MAHOCSINH", "MaHS"));
         tvLop.setText("Lớp: " + getValue(data, "TenLop", "lop", "TENLOP", "TenLopHoc"));
 
-        // Thêm các trường key có thể có từ API
         tvDiemHK1.setText(formatScore(findValue(data, "DiemHK1", "DTB_HK1", "diemHK1", "dtbHK1", "DiemTrungBinhHK1")));
         tvDiemHK2.setText(formatScore(findValue(data, "DiemHK2", "DTB_HK2", "diemHK2", "dtbHK2", "DiemTrungBinhHK2")));
         tvDiemCaNam.setText(formatScore(findValue(data, "DiemCaNam", "TBCN", "DiemTrungBinhMon", "diemCaNam", "tbcn", "DiemTrungBinhCaNam")));
@@ -63,7 +62,6 @@ public class StudentScoreActivity extends AppCompatActivity {
         if (obj == null || obj.toString().isEmpty() || obj.toString().equalsIgnoreCase("null")) return "-";
         try {
             double score = Double.parseDouble(obj.toString());
-            // Làm tròn 1 chữ số thập phân
             return String.format(Locale.getDefault(), "%.1f", score);
         } catch (Exception e) {
             return obj.toString();

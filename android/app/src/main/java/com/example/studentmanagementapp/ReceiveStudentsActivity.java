@@ -76,7 +76,7 @@ public class ReceiveStudentsActivity extends AppCompatActivity {
             uri -> {
                 if (uri != null) {
                     selectedFileUri = uri;
-                    showLoading(); // Hiển thị Progress ngay lập tức khi chọn file
+                    showLoading();
                     processExcelFile(uri);
                 }
             }

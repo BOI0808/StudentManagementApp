@@ -41,12 +41,7 @@ public class SystemParametersActivity extends AppCompatActivity {
         loadCurrentParameters();
 
         if (btnBack != null) {
-            btnBack.setOnClickListener(v -> {
-                Intent intent = new Intent(SystemParametersActivity.this, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
-                finish();
-            });
+            btnBack.setOnClickListener(v -> navigateToMain());
         }
 
         btnUpdate.setOnClickListener(v -> performUpdate());
@@ -174,7 +169,8 @@ public class SystemParametersActivity extends AppCompatActivity {
                     new MaterialAlertDialogBuilder(SystemParametersActivity.this)
                             .setTitle("Thành công")
                             .setMessage("Đã cập nhật quy định hệ thống mới.")
-                            .setPositiveButton("OK", (dialog, which) -> loadCurrentParameters())
+                            .setPositiveButton("Đóng", (dialog, which) -> navigateToMain())
+                            .setCancelable(false)
                             .show();
                 } else {
                     String errorMsg = "Dữ liệu không hợp lệ";
@@ -194,6 +190,13 @@ public class SystemParametersActivity extends AppCompatActivity {
                 showErrorDialog("Lỗi kết nối", "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng.");
             }
         });
+    }
+
+    private void navigateToMain() {
+        Intent intent = new Intent(SystemParametersActivity.this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
     }
 
     private int parseInputInt(TextInputEditText edt, TextInputLayout til, String label) throws Exception {
@@ -232,7 +235,7 @@ public class SystemParametersActivity extends AppCompatActivity {
         new MaterialAlertDialogBuilder(this)
                 .setTitle(title)
                 .setMessage(message)
-                .setPositiveButton("Đóng", null)
+                .setPositiveButton("OK", null)
                 .show();
     }
 }

@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.studentmanagementapp.api.ApiClient;
@@ -17,6 +16,7 @@ import com.example.studentmanagementapp.model.ClassModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
@@ -204,6 +204,14 @@ public class CreateClassActivity extends AppCompatActivity {
         }
     }
 
+    private void showErrorDialog(String message) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Thất bại")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
     private void performCreateClass() {
         final String tenLop = (edtTenLop.getText() != null) ? edtTenLop.getText().toString().trim() : "";
         String tenKhoi = autoCompleteKhoiLop.getText().toString();
@@ -277,14 +285,16 @@ public class CreateClassActivity extends AppCompatActivity {
                             .setCancelable(false)
                             .show();
                 } else {
-                    Toast.makeText(CreateClassActivity.this, "Lớp đã tồn tại hoặc dữ liệu lỗi", Toast.LENGTH_SHORT).show();
+                    showErrorDialog("Lớp học đã tồn tại trong hệ thống hoặc dữ liệu không hợp lệ. Vui lòng kiểm tra lại.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(CreateClassActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                Snackbar.make(findViewById(android.R.id.content), "Lỗi kết nối đến máy chủ. Vui lòng kiểm tra mạng.", Snackbar.LENGTH_LONG)
+                        .setAction("Thử lại", v -> performCreateClass())
+                        .show();
             }
         });
     }
