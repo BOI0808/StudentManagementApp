@@ -19,20 +19,16 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
 
-            <TextView
+            <ImageButton
                 android:id="@+id/btnLogout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="8dp"
-                android:text="Đăng xuất"
-                android:textColor="#D32F2F"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_lock_power_off"
+                app:tint="#D32F2F"
+                android:contentDescription="Đăng xuất" />
 
             <TextView
                 android:id="@+id/tvTitle"
@@ -66,7 +62,6 @@
             app:indicatorColor="#1976D2"
             app:trackColor="#E3F2FD" />
 
-        <!-- Nhóm 1: Thông tin cá nhân -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -132,7 +127,6 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Nhóm 2: Tài khoản hệ thống -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -185,7 +179,6 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Nhóm 3: Phân quyền -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

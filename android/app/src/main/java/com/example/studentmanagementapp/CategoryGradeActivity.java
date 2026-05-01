@@ -6,7 +6,6 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -16,6 +15,7 @@ import com.example.studentmanagementapp.model.Block;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
@@ -58,6 +58,24 @@ public class CategoryGradeActivity extends AppCompatActivity {
         rvKhoiLop.setLayoutManager(new LinearLayoutManager(this));
     }
 
+    private void showErrorDialog(String title, String message) {
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
+    }
+
+    private void showRetrySnackbar(String message, Runnable retryAction) {
+        runOnUiThread(() -> {
+            Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+                    .setAction("Thử lại", v -> retryAction.run())
+                    .show();
+        });
+    }
+
     private void setupListeners() {
         btnBack.setOnClickListener(v -> finish());
         btnThem.setOnClickListener(v -> performAddBlock());
@@ -80,13 +98,17 @@ public class CategoryGradeActivity extends AppCompatActivity {
     }
 
     private void showLoading() {
-        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
-        btnThem.setEnabled(false);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+            btnThem.setEnabled(false);
+        });
     }
 
     private void hideLoading() {
-        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
-        btnThem.setEnabled(true);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+            btnThem.setEnabled(true);
+        });
     }
 
     private void loadBlockList() {
@@ -105,7 +127,7 @@ public class CategoryGradeActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<List<Block>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(CategoryGradeActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi tải danh sách khối lớp", () -> loadBlockList());
             }
         });
     }
@@ -124,7 +146,7 @@ public class CategoryGradeActivity extends AppCompatActivity {
             btnDelete.setOnClickListener(v -> {
                 new MaterialAlertDialogBuilder(this)
                         .setTitle("Xác nhận xóa")
-                        .setMessage("Bạn có chắc chắn muốn xóa khối lớp này không?")
+                        .setMessage("Bạn có chắc chắn muốn xóa khối lớp " + item.getTenKhoiLop() + " không?")
                         .setNegativeButton("Hủy", null)
                         .setPositiveButton("Xóa", (dialog, which) -> performDeleteBlock(item.getMaKhoiLop()))
                         .show();
@@ -164,18 +186,14 @@ public class CategoryGradeActivity extends AppCompatActivity {
                             .setNegativeButton("Đóng", (dialog, which) -> finish())
                             .show();
                 } else {
-                    new MaterialAlertDialogBuilder(CategoryGradeActivity.this)
-                            .setTitle("Thất bại")
-                            .setMessage("Khối lớp " + tenKhoi + " đã tồn tại")
-                            .setPositiveButton("OK", null)
-                            .show();
+                    showErrorDialog("Thất bại", "Khối lớp " + tenKhoi + " đã tồn tại hoặc dữ liệu không hợp lệ.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(CategoryGradeActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối khi thêm khối lớp", () -> performAddBlock());
             }
         });
     }
@@ -190,17 +208,17 @@ public class CategoryGradeActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
                 hideLoading();
                 if (response.isSuccessful()) {
-                    Toast.makeText(CategoryGradeActivity.this, "Xóa thành công", Toast.LENGTH_SHORT).show();
+                    Snackbar.make(findViewById(android.R.id.content), "Xóa thành công", Snackbar.LENGTH_SHORT).show();
                     loadBlockList();
                 } else {
-                    Toast.makeText(CategoryGradeActivity.this, "Không thể xóa khối đang có lớp", Toast.LENGTH_SHORT).show();
+                    showErrorDialog("Thất bại", "Không thể xóa khối lớp này. Có thể khối đang có các lớp học liên quan.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(CategoryGradeActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối khi xóa khối lớp", () -> performDeleteBlock(maKhoiLop));
             }
         });
     }

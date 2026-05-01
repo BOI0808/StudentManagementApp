@@ -18,7 +18,6 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,6 +29,7 @@ import com.example.studentmanagementapp.model.Student;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -87,7 +87,6 @@ public class SearchStudentsActivity extends AppCompatActivity {
         pbMaHSLoading = findViewById(R.id.pbMaHSLoading);
         pbTenHSLoading = findViewById(R.id.pbTenHSLoading);
 
-        // Khóa hai ô tìm kiếm học sinh ban đầu
         tilSearchMaHS.setEnabled(false);
         tilSearchTen.setEnabled(false);
 
@@ -106,8 +105,25 @@ public class SearchStudentsActivity extends AppCompatActivity {
         rvKetQua.setLayoutManager(new LinearLayoutManager(this));
     }
 
+    private void showErrorDialog(String title, String message) {
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
+    }
+
+    private void showRetrySnackbar(String message, Runnable retryAction) {
+        runOnUiThread(() -> {
+            Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+                    .setAction("Thử lại", v -> retryAction.run())
+                    .show();
+        });
+    }
+
     private void setupFilters() {
-        // 1. Tải danh sách Học kỳ/Năm học
         ApiClient.getApiService().getSemesterList().enqueue(new Callback<List<Map<String, String>>>() {
             @Override
             public void onResponse(@NonNull Call<List<Map<String, String>>> call, @NonNull Response<List<Map<String, String>>> response) {
@@ -116,10 +132,11 @@ public class SearchStudentsActivity extends AppCompatActivity {
                     loadNamHoc(semesterList);
                 }
             }
-            @Override public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {}
+            @Override public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {
+                showRetrySnackbar("Lỗi tải danh sách học kỳ", () -> setupFilters());
+            }
         });
 
-        // 2. Tải danh sách lớp
         if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
         ApiClient.getApiService().getClassList().enqueue(new Callback<List<ClassModel>>() {
             @Override
@@ -128,7 +145,6 @@ public class SearchStudentsActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     allClassList = response.body();
 
-                    // Nếu người dùng đã chọn Năm học trước khi lớp tải xong, lọc ngay
                     if (!autoNamHoc.getText().toString().isEmpty()) {
                         filterClasses();
                     }
@@ -136,6 +152,7 @@ public class SearchStudentsActivity extends AppCompatActivity {
             }
             @Override public void onFailure(@NonNull Call<List<ClassModel>> call, @NonNull Throwable t) {
                 if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+                showRetrySnackbar("Lỗi tải danh sách lớp", () -> setupFilters());
             }
         });
 
@@ -146,7 +163,6 @@ public class SearchStudentsActivity extends AppCompatActivity {
             tilMaLop.setError(null);
             tilMaLop.setErrorEnabled(false);
 
-            // Mở khóa các ô tìm kiếm khi đã chọn lớp
             tilSearchMaHS.setEnabled(true);
             tilSearchTen.setEnabled(true);
 
@@ -185,7 +201,6 @@ public class SearchStudentsActivity extends AppCompatActivity {
             tilMaLop.setError(null);
             tilMaLop.setErrorEnabled(false);
 
-            // Khóa lại các ô tìm kiếm khi đổi năm học (vì chưa chọn lớp mới)
             tilSearchMaHS.setEnabled(false);
             tilSearchTen.setEnabled(false);
 
@@ -203,7 +218,6 @@ public class SearchStudentsActivity extends AppCompatActivity {
         for (ClassModel c : allClassList) {
             String classYear = c.getNamHoc();
 
-            // Đối chiếu năm học dựa trên mã nếu cần
             if (classYear == null || classYear.equals("Chưa có")) {
                 for (Map<String, String> s : semesterList) {
                     if (s.get("ma") != null && s.get("ma").equalsIgnoreCase(c.getMaHocKyNamHoc())) {
@@ -232,7 +246,7 @@ public class SearchStudentsActivity extends AppCompatActivity {
         } else {
             tilMaLop.setEnabled(false);
             if (!allClassList.isEmpty()) {
-                Toast.makeText(this, "Năm học " + year + " chưa có lớp nào.", Toast.LENGTH_SHORT).show();
+                showErrorDialog("Thông báo", "Năm học " + year + " hiện chưa có lớp nào được tạo.");
             }
         }
     }
@@ -241,12 +255,12 @@ public class SearchStudentsActivity extends AppCompatActivity {
         autoMaHS.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (isProgrammaticChange) return; // Chặn hoàn toàn logic khi code tự điền
+                if (isProgrammaticChange) return;
                 
                 tilSearchMaHS.setError(null);
                 tilSearchMaHS.setErrorEnabled(false);
 
-                searchHandler.removeCallbacksAndMessages(null); // Hủy sạch các Runnable đang chờ
+                searchHandler.removeCallbacksAndMessages(null);
                 
                 if (s.length() > 0) {
                     pbMaHSLoading.setVisibility(View.VISIBLE);
@@ -265,12 +279,12 @@ public class SearchStudentsActivity extends AppCompatActivity {
         autoTenHS.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (isProgrammaticChange) return; // Chặn hoàn toàn logic khi code tự điền
+                if (isProgrammaticChange) return;
                 
                 tilSearchTen.setError(null);
                 tilSearchTen.setErrorEnabled(false);
 
-                searchHandler.removeCallbacksAndMessages(null); // Hủy sạch các Runnable đang chờ
+                searchHandler.removeCallbacksAndMessages(null);
                 
                 if (s.length() > 0) {
                     pbTenHSLoading.setVisibility(View.VISIBLE);
@@ -332,6 +346,7 @@ public class SearchStudentsActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {
                 hideLoading();
+                showRetrySnackbar("Lỗi tải danh sách học sinh trong lớp", () -> loadStudentsInClass(maLop));
             }
         });
     }
@@ -343,7 +358,6 @@ public class SearchStudentsActivity extends AppCompatActivity {
             return;
         }
 
-        // Adapter cho ô Mã Học Sinh - Lọc theo Mã
         ArrayAdapter<Student> adapterMa = new ArrayAdapter<Student>(this, R.layout.item_dropdown_2line, new ArrayList<>(studentListInClass)) {
             @NonNull
             @Override
@@ -389,7 +403,6 @@ public class SearchStudentsActivity extends AppCompatActivity {
             }
         };
 
-        // Adapter cho ô Tên Học Sinh - Lọc theo Tên
         ArrayAdapter<Student> adapterTen = new ArrayAdapter<Student>(this, R.layout.item_dropdown_2line, new ArrayList<>(studentListInClass)) {
             @NonNull
             @Override
@@ -443,17 +456,17 @@ public class SearchStudentsActivity extends AppCompatActivity {
 
     private void setupStudentAutocomplete() {
         autoMaHS.setOnItemClickListener((parent, view, position, id) -> {
-            searchHandler.removeCallbacksAndMessages(null); // Hủy mọi lệnh hiện dropdown đang chờ
-            pbMaHSLoading.setVisibility(View.GONE); // Ẩn Spinner trực tiếp
+            searchHandler.removeCallbacksAndMessages(null);
+            pbMaHSLoading.setVisibility(View.GONE);
             pbTenHSLoading.setVisibility(View.GONE);
 
             Student selected = (Student) parent.getItemAtPosition(position);
             if (selected != null) {
                 isProgrammaticChange = true;
-                autoMaHS.setText(selected.getMaHocSinh(), false); // false để không kích hoạt filter
+                autoMaHS.setText(selected.getMaHocSinh(), false);
                 autoMaHS.dismissDropDown();
                 
-                autoTenHS.setText(selected.getHoTen(), false); // false để không kích hoạt filter
+                autoTenHS.setText(selected.getHoTen(), false);
                 autoTenHS.dismissDropDown();
                 
                 autoMaHS.clearFocus();
@@ -463,17 +476,17 @@ public class SearchStudentsActivity extends AppCompatActivity {
         });
 
         autoTenHS.setOnItemClickListener((parent, view, position, id) -> {
-            searchHandler.removeCallbacksAndMessages(null); // Hủy mọi lệnh hiện dropdown đang chờ
-            pbMaHSLoading.setVisibility(View.GONE); // Ẩn Spinner trực tiếp
+            searchHandler.removeCallbacksAndMessages(null);
+            pbMaHSLoading.setVisibility(View.GONE);
             pbTenHSLoading.setVisibility(View.GONE);
 
             Student selected = (Student) parent.getItemAtPosition(position);
             if (selected != null) {
                 isProgrammaticChange = true;
-                autoMaHS.setText(selected.getMaHocSinh(), false); // false để không kích hoạt filter
+                autoMaHS.setText(selected.getMaHocSinh(), false);
                 autoMaHS.dismissDropDown();
                 
-                autoTenHS.setText(selected.getHoTen(), false); // false để không kích hoạt filter
+                autoTenHS.setText(selected.getHoTen(), false);
                 autoTenHS.dismissDropDown();
 
                 autoTenHS.clearFocus();
@@ -513,6 +526,7 @@ public class SearchStudentsActivity extends AppCompatActivity {
                     if (searchResults.isEmpty()) {
                         layoutEmpty.setVisibility(View.VISIBLE);
                         rvKetQua.setVisibility(View.GONE);
+                        Snackbar.make(findViewById(android.R.id.content), "Không tìm thấy kết quả phù hợp", Snackbar.LENGTH_SHORT).show();
                     } else {
                         layoutEmpty.setVisibility(View.GONE);
                         rvKetQua.setVisibility(View.VISIBLE);
@@ -524,7 +538,7 @@ public class SearchStudentsActivity extends AppCompatActivity {
             public void onFailure(@NonNull Call<List<Map<String, Object>>> call, @NonNull Throwable t) {
                 hideLoading();
                 btnTimKiem.setEnabled(true);
-                Toast.makeText(SearchStudentsActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối máy chủ", () -> performSearch());
             }
         });
     }

@@ -111,14 +111,12 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void performLogin() {
-        // Dọn dẹp UI: Reset lỗi của cả 2 ô khi bắt đầu nhấn Đăng nhập
         tilUsername.setError(null);
         tilPassword.setError(null);
 
         String username = edtUsername.getText().toString().trim();
         String password = edtPassword.getText().toString().trim();
 
-        // Validation tuần tự
         if (username.isEmpty()) {
             tilUsername.setErrorEnabled(true);
             tilUsername.setError("Vui lòng nhập tài khoản");
@@ -145,7 +143,6 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponse loginResponse = response.body();
                     
-                    // LƯU THÔNG TIN NGƯỜI DÙNG VÀ QUYỀN VÀO SHAREDPREFERENCES
                     saveUserData(loginResponse);
 
                     String phanQuyen = loginResponse.getUser().getPhanQuyen();
@@ -161,7 +158,6 @@ public class LoginActivity extends AppCompatActivity {
                     
                     Toast.makeText(LoginActivity.this, loginResponse.getMessage(), Toast.LENGTH_SHORT).show();
                 } else {
-                    // Xử lý lỗi từ Server
                     try {
                         String errorJson = "";
                         try (ResponseBody errorBody = response.errorBody()) {
@@ -176,15 +172,14 @@ public class LoginActivity extends AppCompatActivity {
                             errorMsg = jObjError.optString("error", jObjError.optString("message", "")).toLowerCase();
                         }
 
-                        // Logic báo lỗi chi tiết theo từ khóa
                         if (errorMsg.contains("không tồn tại") || errorMsg.contains("không tìm thấy") || errorMsg.contains("tài khoản sai")) {
                             tilUsername.setErrorEnabled(true);
                             tilUsername.setError("Tài khoản không tồn tại");
-                            tilPassword.setError(null); // Xóa lỗi ô còn lại
+                            tilPassword.setError(null);
                         } else if (errorMsg.contains("mật khẩu")) {
                             tilPassword.setErrorEnabled(true);
                             tilPassword.setError("Mật khẩu không chính xác");
-                            tilUsername.setError(null); // Xóa lỗi ô còn lại
+                            tilUsername.setError(null);
                         } else {
                             Toast.makeText(LoginActivity.this, "Đăng nhập thất bại: Sai tài khoản hoặc mật khẩu", Toast.LENGTH_SHORT).show();
                         }
@@ -206,11 +201,9 @@ public class LoginActivity extends AppCompatActivity {
         SharedPreferences sharedPref = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         
-        // Lưu họ tên người dùng
         if (response.getUser() != null) {
             editor.putString("user_fullname", response.getUser().getHoTen());
             
-            // Lưu quyền (Permissions)
             List<String> permissions = response.getUser().getQuyen();
             if (permissions != null) {
                 Set<String> set = new HashSet<>(permissions);

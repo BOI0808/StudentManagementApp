@@ -8,7 +8,6 @@
     android:background="#F8F9FA"
     tools:context=".MainActivity">
 
-    <!-- Header Section -->
     <RelativeLayout
         android:id="@+id/headerLayout"
         android:layout_width="match_parent"
@@ -67,7 +66,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Nhóm Nghiệp vụ -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -85,7 +83,6 @@
                 android:columnCount="2"
                 android:columnOrderPreserved="false">
 
-                <!-- Tiếp nhận học sinh -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardTiepNhan"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -123,7 +120,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Lập danh sách lớp -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardDanhSachLop"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -161,7 +157,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Lập danh sách học sinh cho lớp -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardDanhSachHSChoLop"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -199,7 +194,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Tra cứu học sinh -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardTraCuu"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -237,7 +231,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Nhập bảng điểm -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardNhapDiem"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -276,7 +269,6 @@
                 </com.google.android.material.card.MaterialCardView>
             </GridLayout>
 
-            <!-- Nhóm Báo cáo -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -294,7 +286,6 @@
                 android:columnCount="2"
                 android:columnOrderPreserved="false">
 
-                <!-- Báo cáo tổng kết môn -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardBaoCaoMon"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -332,7 +323,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Báo cáo tổng kết học kỳ -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardBaoCaoHocKy"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -371,7 +361,6 @@
                 </com.google.android.material.card.MaterialCardView>
             </GridLayout>
 
-            <!-- Nhóm Hệ thống -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -388,7 +377,6 @@
                 android:columnCount="2"
                 android:columnOrderPreserved="false">
 
-                <!-- Quản lý năm học -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardNamHoc"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -426,7 +414,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Quản lý khối lớp -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardKhoiLop"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -464,7 +451,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Quản lý môn học -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardMonHoc"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -502,7 +488,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Loại hình kiểm tra -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardLoaiHinhKiemTra"
                     style="@style/Widget.MaterialComponents.CardView"
@@ -540,7 +525,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Cài đặt tham số -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardCaiDatThamSo"
                     style="@style/Widget.MaterialComponents.CardView"

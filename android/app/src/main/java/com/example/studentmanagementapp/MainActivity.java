@@ -37,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void displayUserInfo() {
         SharedPreferences sharedPref = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
-        // Giả sử tên người dùng được lưu với key "user_fullname" hoặc "user_name" khi đăng nhập
         String fullName = sharedPref.getString("user_fullname", "Người dùng");
         tvUserName.setText(fullName);
     }
@@ -46,18 +45,15 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPref = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
         Set<String> permissions = sharedPref.getStringSet("user_permissions", new HashSet<>());
 
-        // Nhóm Nghiệp vụ
         setupCard(R.id.cardTiepNhan, "CNTNHS", permissions, ReceiveStudentsActivity.class);
         setupCard(R.id.cardDanhSachLop, "CNLDSL", permissions, CreateClassActivity.class);
         setupCard(R.id.cardDanhSachHSChoLop, "CNLDSHSCL", permissions, CreateClassListActivity.class);
         setupCard(R.id.cardTraCuu, "CNTCHS", permissions, SearchStudentsActivity.class);
         setupCard(R.id.cardNhapDiem, "CNNBD", permissions, GradeEntryActivity.class);
 
-        // Nhóm Báo cáo
         setupCard(R.id.cardBaoCaoMon, "CNLBCTKM", permissions, SubjectReportActivity.class);
         setupCard(R.id.cardBaoCaoHocKy, "CNLBCTKHK", permissions, TermReportActivity.class);
 
-        // Nhóm Hệ thống
         setupCard(R.id.cardNamHoc, "CNLDSNH", permissions, CategoryTermActivity.class);
         setupCard(R.id.cardKhoiLop, "CNLDSKL", permissions, CategoryGradeActivity.class);
         setupCard(R.id.cardMonHoc, "CNLDSMH", permissions, CategorySubjectActivity.class);
@@ -90,7 +86,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void performLogout() {
-        // Xóa thông tin phiên làm việc nếu cần
         SharedPreferences sharedPref = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
         sharedPref.edit().clear().apply();
 

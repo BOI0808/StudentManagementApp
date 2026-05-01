@@ -39,6 +39,14 @@
                 android:textStyle="bold" />
         </RelativeLayout>
 
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progressIndicator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="#1976D2" />
 
         <FrameLayout
             android:layout_width="match_parent"

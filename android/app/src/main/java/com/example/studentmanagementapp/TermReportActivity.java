@@ -88,10 +88,9 @@ public class TermReportActivity extends AppCompatActivity {
     }
 
     private void setupSemesterSpinners() {
-        // 1. Xác định niên khóa hiện tại
         Calendar cal = Calendar.getInstance();
         int currentYear = cal.get(Calendar.YEAR);
-        int currentMonth = cal.get(Calendar.MONTH); // Tháng 9 là Calendar.SEPTEMBER (8)
+        int currentMonth = cal.get(Calendar.MONTH);
         int thresholdYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
 
         List<String> years = new ArrayList<>();
@@ -99,7 +98,6 @@ public class TermReportActivity extends AppCompatActivity {
             String namhoc = m.get("namhoc");
             if (namhoc != null && !years.contains(namhoc)) {
                 try {
-                    // 2. Lọc dữ liệu: Lấy năm bắt đầu (VD: "2023-2024" -> 2023)
                     String startYearStr = namhoc.split("-")[0].trim();
                     int startYear = Integer.parseInt(startYearStr);
                     if (startYear >= thresholdYear) {
@@ -109,13 +107,11 @@ public class TermReportActivity extends AppCompatActivity {
             }
         }
 
-        // 3. Sắp xếp giảm dần
         Collections.sort(years, Collections.reverseOrder());
 
         autoNamHoc.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, years));
 
         autoNamHoc.setOnItemClickListener((parent, view, position, id) -> {
-            // Xóa lỗi và reset trạng thái
             tilNamHoc.setError(null);
             tilNamHoc.setErrorEnabled(false);
             
