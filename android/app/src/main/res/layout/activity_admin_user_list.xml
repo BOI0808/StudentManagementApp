@@ -9,7 +9,6 @@
     android:padding="16dp"
     tools:context=".AdminUserListActivity">
 
-    <!-- Header Section -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -35,7 +34,6 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
-    <!-- Progress Indicator -->
     <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/progressIndicator"
         android:layout_width="match_parent"
@@ -44,7 +42,6 @@
         android:indeterminate="true"
         android:visibility="gone" />
 
-    <!-- Search Section -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -77,7 +74,6 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- Content Card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -102,7 +98,6 @@
                     android:layout_height="match_parent"
                     android:orientation="vertical">
 
-                    <!-- Table Header -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -117,7 +112,6 @@
                         <TextView android:layout_width="120dp" android:textColor="#FFFFFF" android:layout_height="wrap_content" android:text="Điện thoại" android:textStyle="bold" android:textAlignment="center" />
                         <TextView android:layout_width="120dp" android:textColor="#FFFFFF" android:layout_height="wrap_content" android:text="Tài khoản" android:textStyle="bold" android:textAlignment="center" />
 
-                        <!-- Bảo mật Column -->
                         <LinearLayout
                             android:layout_width="100dp"
                             android:layout_height="wrap_content"
@@ -169,7 +163,6 @@
                 </LinearLayout>
             </HorizontalScrollView>
 
-            <!-- Empty State -->
             <LinearLayout
                 android:id="@+id/layoutEmpty"
                 android:layout_width="match_parent"
@@ -195,7 +188,6 @@
         </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Action Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLuuDanhSach"
         android:layout_width="match_parent"

@@ -55,7 +55,6 @@ public class EditExamTypeActivity extends AppCompatActivity {
             btnBack.setOnClickListener(v -> finish());
         }
 
-        // Xóa lỗi khi gõ cho Hệ số mới
         edtNewCoefficient.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -119,7 +118,6 @@ public class EditExamTypeActivity extends AppCompatActivity {
             return;
         }
 
-        // Backend mới chỉ yêu cầu HeSo
         Map<String, Object> body = new HashMap<>();
         body.put("HeSo", newHeSo);
 
@@ -133,7 +131,7 @@ public class EditExamTypeActivity extends AppCompatActivity {
                             .setTitle("Thành công")
                             .setMessage("Cập nhật hệ số mới thành công!")
                             .setCancelable(false)
-                            .setPositiveButton("OK", (dialog, which) -> {
+                            .setPositiveButton("Đóng", (dialog, which) -> {
                                 setResult(RESULT_OK);
                                 finish();
                             })

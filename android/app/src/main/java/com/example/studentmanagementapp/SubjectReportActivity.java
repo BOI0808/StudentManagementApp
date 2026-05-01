@@ -6,7 +6,6 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -14,7 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.studentmanagementapp.api.ApiClient;
 import com.example.studentmanagementapp.model.Subject;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -70,17 +71,38 @@ public class SubjectReportActivity extends AppCompatActivity {
     }
 
     private void showLoading() {
-        progressIndicator.setVisibility(View.VISIBLE);
-        rvReport.setVisibility(View.GONE);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+            rvReport.setVisibility(View.GONE);
+        });
     }
 
     private void hideLoading() {
-        progressIndicator.setVisibility(View.GONE);
-        rvReport.setVisibility(View.VISIBLE);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+            rvReport.setVisibility(View.VISIBLE);
+        });
+    }
+
+    private void showErrorDialog(String title, String message) {
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setPositiveButton("Đóng", null)
+                    .show();
+        });
+    }
+
+    private void showRetrySnackbar(String message, Runnable retryAction) {
+        runOnUiThread(() -> {
+            Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+                    .setAction("Thử lại", v -> retryAction.run())
+                    .show();
+        });
     }
 
     private void loadFilters() {
-        // Tải Năm học & Học kỳ
         ApiClient.getApiService().getSemesterList().enqueue(new Callback<List<Map<String, String>>>() {
             @Override
             public void onResponse(@NonNull Call<List<Map<String, String>>> call, @NonNull Response<List<Map<String, String>>> response) {
@@ -90,10 +112,11 @@ public class SubjectReportActivity extends AppCompatActivity {
                 }
             }
             @Override
-            public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {}
+            public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {
+                showRetrySnackbar("Lỗi tải bộ lọc thời gian", SubjectReportActivity.this::loadFilters);
+            }
         });
 
-        // Tải Môn học
         ApiClient.getApiService().getSubjectList().enqueue(new Callback<List<Subject>>() {
             @Override
             public void onResponse(@NonNull Call<List<Subject>> call, @NonNull Response<List<Subject>> response) {
@@ -115,16 +138,16 @@ public class SubjectReportActivity extends AppCompatActivity {
                 }
             }
             @Override
-            public void onFailure(@NonNull Call<List<Subject>> call, @NonNull Throwable t) {}
+            public void onFailure(@NonNull Call<List<Subject>> call, @NonNull Throwable t) {
+                showRetrySnackbar("Lỗi tải danh sách môn học", SubjectReportActivity.this::loadFilters);
+            }
         });
     }
 
     private void setupSemesterSpinners() {
-        // 1. Xác định niên khóa hiện tại
         Calendar cal = Calendar.getInstance();
         int currentYear = cal.get(Calendar.YEAR);
-        int currentMonth = cal.get(Calendar.MONTH); // Tháng bắt đầu từ 0 (Tháng 1 là 0)
-        // Nếu từ tháng 9 trở đi, năm học bắt đầu từ currentYear. Ngược lại là currentYear - 1
+        int currentMonth = cal.get(Calendar.MONTH); 
         int thresholdYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
 
         List<String> years = new ArrayList<>();
@@ -132,20 +155,15 @@ public class SubjectReportActivity extends AppCompatActivity {
             String namhoc = m.get("namhoc");
             if (namhoc != null && !years.contains(namhoc)) {
                 try {
-                    // 2. Lọc dữ liệu: Lấy năm bắt đầu từ chuỗi (VD: "2023-2024" -> 2023)
                     String startYearStr = namhoc.split("-")[0].trim();
                     int startYear = Integer.parseInt(startYearStr);
-                    
                     if (startYear >= thresholdYear) {
                         years.add(namhoc);
                     }
-                } catch (Exception e) {
-                    // Tối ưu: Bỏ qua nếu chuỗi namhoc không đúng định dạng để tránh crash
-                }
+                } catch (Exception ignored) {}
             }
         }
         
-        // 3. Sắp xếp danh sách giảm dần (Mới nhất ở trên đầu)
         Collections.sort(years, Collections.reverseOrder());
 
         autoNamHoc.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, years));
@@ -208,9 +226,11 @@ public class SubjectReportActivity extends AppCompatActivity {
                 hideLoading();
                 if (response.isSuccessful() && response.body() != null) {
                     reportData = response.body();
-                    setupAdapter();
                     if (reportData.isEmpty()) {
-                        Toast.makeText(SubjectReportActivity.this, "Không có dữ liệu báo cáo", Toast.LENGTH_SHORT).show();
+                        showErrorDialog("Thông báo", "Không có dữ liệu báo cáo cho môn học và học kỳ đã chọn.");
+                        setupAdapter();
+                    } else {
+                        setupAdapter();
                     }
                 }
             }
@@ -218,7 +238,7 @@ public class SubjectReportActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<List<Map<String, Object>>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(SubjectReportActivity.this, "Lỗi kết nối máy chủ", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối máy chủ", SubjectReportActivity.this::loadReport);
             }
         });
     }

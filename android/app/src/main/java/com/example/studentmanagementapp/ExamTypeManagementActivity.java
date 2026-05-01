@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -21,6 +20,7 @@ import com.example.studentmanagementapp.api.ApiService;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,15 +38,14 @@ public class ExamTypeManagementActivity extends AppCompatActivity {
     private RecyclerView rvExamTypes;
     private LinearProgressIndicator progressIndicator;
     private GenericAdapter<Map<String, Object>> adapter;
-    private List<Map<String, Object>> examTypeList = new ArrayList<>();
+    private final List<Map<String, Object>> examTypeList = new ArrayList<>();
     private ApiService apiService;
 
-    // Launcher để nhận kết quả khi quay về từ màn hình Sửa
     private final ActivityResultLauncher<Intent> editLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (result.getResultCode() == RESULT_OK) {
-                    loadExamTypes(); // Tải lại danh sách sau khi sửa thành công
+                    loadExamTypes();
                 }
             }
     );
@@ -78,7 +77,6 @@ public class ExamTypeManagementActivity extends AppCompatActivity {
         btnAddExamType = findViewById(R.id.btnAddExamType);
         rvExamTypes = findViewById(R.id.rvExamTypes);
 
-        // Xóa lỗi khi gõ cho Tên loại kiểm tra
         edtTestTypeName.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -88,7 +86,6 @@ public class ExamTypeManagementActivity extends AppCompatActivity {
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Xóa lỗi khi gõ cho Hệ số
         edtCoefficient.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -100,13 +97,35 @@ public class ExamTypeManagementActivity extends AppCompatActivity {
     }
 
     private void showLoading() {
-        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
-        if (btnAddExamType != null) btnAddExamType.setEnabled(false);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+            if (btnAddExamType != null) btnAddExamType.setEnabled(false);
+        });
     }
 
     private void hideLoading() {
-        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
-        if (btnAddExamType != null) btnAddExamType.setEnabled(true);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+            if (btnAddExamType != null) btnAddExamType.setEnabled(true);
+        });
+    }
+
+    private void showErrorDialog(String title, String message) {
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
+    }
+
+    private void showRetrySnackbar(String message, Runnable retryAction) {
+        runOnUiThread(() -> {
+            Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+                    .setAction("Thử lại", v -> retryAction.run())
+                    .show();
+        });
     }
 
     private void setupRecyclerView() {
@@ -126,7 +145,7 @@ public class ExamTypeManagementActivity extends AppCompatActivity {
                 String id = String.valueOf(item.get("MaLoaiKiemTra"));
                 new MaterialAlertDialogBuilder(this)
                         .setTitle("Xác nhận xóa")
-                        .setMessage("Bạn có chắc chắn muốn xóa loại kiểm tra này không?")
+                        .setMessage("Bạn có chắc chắn muốn xóa loại kiểm tra '" + item.get("TenLoaiKiemTra") + "' không?")
                         .setNegativeButton("Hủy", null)
                         .setPositiveButton("Xóa", (dialog, which) -> deleteExamType(id))
                         .show();
@@ -154,14 +173,14 @@ public class ExamTypeManagementActivity extends AppCompatActivity {
                     examTypeList.addAll(response.body());
                     adapter.notifyDataSetChanged();
                 } else {
-                    Toast.makeText(ExamTypeManagementActivity.this, "Không thể tải danh sách", Toast.LENGTH_SHORT).show();
+                    showRetrySnackbar("Không thể tải danh sách loại kiểm tra", ExamTypeManagementActivity.this::loadExamTypes);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<List<Map<String, Object>>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(ExamTypeManagementActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối máy chủ", ExamTypeManagementActivity.this::loadExamTypes);
             }
         });
     }
@@ -217,14 +236,14 @@ public class ExamTypeManagementActivity extends AppCompatActivity {
                             .setNegativeButton("Đóng", (dialog, which) -> finish())
                             .show();
                 } else {
-                    Toast.makeText(ExamTypeManagementActivity.this, "Lỗi: " + response.message(), Toast.LENGTH_SHORT).show();
+                    showErrorDialog("Thất bại", "Không thể tạo loại kiểm tra. Có thể tên đã tồn tại hoặc dữ liệu không hợp lệ.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, Object>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(ExamTypeManagementActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối khi tạo mới", ExamTypeManagementActivity.this::createExamType);
             }
         });
     }
@@ -236,20 +255,17 @@ public class ExamTypeManagementActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
                 hideLoading();
                 if (response.isSuccessful()) {
-                    new MaterialAlertDialogBuilder(ExamTypeManagementActivity.this)
-                            .setTitle("Thông báo")
-                            .setMessage("Đã xóa thành công!")
-                            .setPositiveButton("OK", (dialog, which) -> loadExamTypes())
-                            .show();
+                    Snackbar.make(findViewById(android.R.id.content), "Đã xóa thành công", Snackbar.LENGTH_SHORT).show();
+                    loadExamTypes();
                 } else {
-                    Toast.makeText(ExamTypeManagementActivity.this, "Lỗi khi xóa", Toast.LENGTH_SHORT).show();
+                    showErrorDialog("Thất bại", "Không thể xóa loại kiểm tra này. Có thể nó đang được sử dụng trong hệ thống điểm.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(ExamTypeManagementActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối khi xóa", () -> deleteExamType(id));
             }
         });
     }

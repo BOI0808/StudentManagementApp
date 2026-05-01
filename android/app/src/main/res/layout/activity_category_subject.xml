@@ -9,7 +9,6 @@
     android:padding="16dp"
     tools:context=".CategorySubjectActivity">
 
-    <!-- Header Section -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -37,7 +36,6 @@
             android:textAlignment="center" />
     </RelativeLayout>
 
-    <!-- Progress Indicator -->
     <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/progressIndicator"
         android:layout_width="match_parent"
@@ -46,7 +44,6 @@
         android:indeterminate="true"
         android:visibility="gone" />
 
-    <!-- Input Card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -75,7 +72,7 @@
                     android:layout_height="wrap_content"
                     android:autofillHints="none"
                     android:importantForAutofill="no"
-                    android:inputType="textCapWords"
+                    android:inputType="textCapSentences"
                     android:paddingTop="12dp"
                     android:paddingBottom="12dp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -91,7 +88,6 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Search Section -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -110,7 +106,7 @@
                 android:id="@+id/edtSearchSubject"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text" />
+                android:inputType="textCapSentences" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <ProgressBar
@@ -124,7 +120,6 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- Table Header Row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -174,7 +169,6 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Subjects List -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMonHoc"
         android:layout_width="match_parent"

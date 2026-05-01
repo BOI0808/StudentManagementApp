@@ -52,7 +52,8 @@ import retrofit2.Response;
 
 public class AdminCreateUserActivity extends AppCompatActivity {
 
-    private TextView btnLogout, tvTitle;
+    private TextView tvTitle;
+    private ImageButton btnLogout;
     private TextInputLayout tilFullName, tilEmail, tilPhone, tilUsername, tilPassword;
     private TextInputEditText edtFullName, edtUsername, edtPassword, edtEmail, edtPhone;
     private MaterialButton btnCreateAccount, btnXemDanhSach;
