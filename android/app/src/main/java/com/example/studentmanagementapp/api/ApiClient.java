@@ -11,7 +11,6 @@ public class ApiClient {
 
     public static ApiService getApiService() {
         if (retrofit == null) {
-            // Thêm Logging để debug API dễ dàng hơn
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
             

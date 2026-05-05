@@ -32,8 +32,10 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import java.io.Serializable;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -528,6 +530,21 @@ public class SearchStudentsActivity extends AppCompatActivity {
                         rvKetQua.setVisibility(View.GONE);
                         Snackbar.make(findViewById(android.R.id.content), "Không tìm thấy kết quả phù hợp", Snackbar.LENGTH_SHORT).show();
                     } else {
+                        Collator collator = Collator.getInstance(new Locale("vi", "VN"));
+                        Collections.sort(searchResults, (map1, map2) -> {
+                            String fullName1 = getStringValue(findValue(map1, "HoTen", "hoTen", "HOTEN"));
+                            String fullName2 = getStringValue(findValue(map2, "HoTen", "hoTen", "HOTEN"));
+                            
+                            String lastName1 = getLastName(fullName1);
+                            String lastName2 = getLastName(fullName2);
+                            
+                            int res = collator.compare(lastName1, lastName2);
+                            if (res == 0) {
+                                return collator.compare(fullName1, fullName2);
+                            }
+                            return res;
+                        });
+
                         layoutEmpty.setVisibility(View.GONE);
                         rvKetQua.setVisibility(View.VISIBLE);
                         setupAdapter();
@@ -541,6 +558,15 @@ public class SearchStudentsActivity extends AppCompatActivity {
                 showRetrySnackbar("Lỗi kết nối máy chủ", () -> performSearch());
             }
         });
+    }
+
+    private String getLastName(String fullName) {
+        if (fullName == null || fullName.trim().isEmpty() || fullName.equals("N/A")) return "";
+        String[] parts = fullName.trim().split("\\s+");
+        if (parts.length > 0) {
+            return parts[parts.length - 1];
+        }
+        return "";
     }
 
     private void setupAdapter() {
