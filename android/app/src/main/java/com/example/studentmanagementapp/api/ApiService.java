@@ -24,7 +24,6 @@ import retrofit2.http.Part;
 
 public interface ApiService {
 
-    // I. Quản lý tài khoản
     @GET("api/users/danh-sach-tai-khoan")
     Call<List<User>> getAccountList();
 
@@ -41,14 +40,12 @@ public interface ApiService {
     @POST("api/users/import-excel")
     Call<Map<String, String>> importExcel(@Part MultipartBody.Part file);
 
-    // II. Đăng nhập & đổi mật khẩu
     @POST("api/auths/dang-nhap")
     Call<LoginResponse> login(@Body Map<String, String> loginData);
 
     @POST("api/auths/doi-mat-khau")
     Call<Map<String, String>> changePassword(@Body Map<String, String> changePasswordData);
 
-    // III. Lập danh mục khối lớp
     @GET("api/blocks/danh-sach-khoi-lop")
     Call<List<Block>> getBlockList();
 
@@ -58,7 +55,6 @@ public interface ApiService {
     @PUT("api/blocks/cap-nhat-khoi-lop/{MaKhoiLop}")
     Call<Map<String, String>> updateBlockStatus(@Path("MaKhoiLop") String maKhoiLop, @Body Map<String, Integer> status);
 
-    // IV. Lập danh mục môn học
     @GET("api/subjects/danh-sach-mon-hoc")
     Call<List<Subject>> getSubjectList();
 
@@ -68,7 +64,6 @@ public interface ApiService {
     @PUT("api/subjects/cap-nhat-mon-hoc/{MaMonHoc}")
     Call<Map<String, String>> updateSubjectStatus(@Path("MaMonHoc") String maMonHoc, @Body Map<String, Integer> status);
 
-    // V. Tiếp nhận học sinh
     @POST("api/students/tiep-nhan-hoc-sinh")
     Call<Map<String, String>> receiveStudent(@Body Student student);
 
@@ -82,7 +77,6 @@ public interface ApiService {
     @POST("api/students/import-excel")
     Call<Map<String, String>> importStudentExcel(@Part MultipartBody.Part file);
 
-    // VI. Lập danh mục học kỳ năm học
     @GET("api/semesters/danh-sach-hoc-ky-nam-hoc")
     Call<List<Map<String, String>>> getSemesterList();
 
@@ -92,7 +86,6 @@ public interface ApiService {
     @DELETE("api/semesters/xoa-hoc-ky-nam-hoc/{MaHocKyNamHoc}")
     Call<Map<String, String>> deleteSemester(@Path("MaHocKyNamHoc") String maHocKy);
 
-    // VII. Lập lớp học & Lập danh sách học sinh cho lớp
     @POST("api/classes/lap-danh-sach-lop")
     Call<Map<String, String>> createClass(@Body ClassModel classModel);
 
@@ -108,7 +101,6 @@ public interface ApiService {
     @POST("api/classes/luu-danh-sach-lop")
     Call<Map<String, String>> saveClassList(@Body ClassModel classModel);
 
-    // VIII. Tra cứu học sinh
     @GET("api/students/ket-qua-tra-cuu")
     Call<List<Map<String, Object>>> getSearchResult(
         @Query("maLop") String maLop,
@@ -119,7 +111,6 @@ public interface ApiService {
     @GET("api/students/lich-su-hoc-tap/{maHocSinh}")
     Call<List<Map<String, String>>> getStudentHistory(@Path("maHocSinh") String maHocSinh);
 
-    // IX. Nhập danh sách các loại kiểm tra
     @GET("api/test-types/danh-sach-loai-kiem-tra")
     Call<List<Map<String, Object>>> getTestTypeList();
 
@@ -132,7 +123,6 @@ public interface ApiService {
     @PATCH("api/test-types/cap-nhat-he-so/{MaLoaiKiemTra}")
     Call<Map<String, String>> updateTestTypeWeight(@Path("MaLoaiKiemTra") String maLoai, @Body Map<String, Object> weight);
 
-    // X. Nhập bảng điểm môn
     @GET("api/grades/nhap-diem/danh-sach")
     Call<List<Map<String, Object>>> getHocSinhNhapDiem(
         @Query("MaLop") String maLop,
@@ -154,7 +144,6 @@ public interface ApiService {
         @Part("MaHocKyNamHoc") RequestBody maHK
     );
 
-    // XI & XII. Báo cáo
     @GET("api/reports/bao-cao-mon")
     Call<List<Map<String, Object>>> getSubjectReport(
         @Query("MaHocKyNamHoc") String maHK,
@@ -164,7 +153,6 @@ public interface ApiService {
     @GET("api/reports/bao-cao-hoc-ky")
     Call<List<Map<String, Object>>> getTermReport(@Query("MaHocKyNamHoc") String maHK);
 
-    // XIII. Thay đổi quy định
     @GET("api/configs/danh-sach-tham-so")
     Call<Map<String, Object>> getSystemParameters();
 
