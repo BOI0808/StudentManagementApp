@@ -13,11 +13,9 @@ import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,6 +25,7 @@ import com.example.studentmanagementapp.model.Subject;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import org.apache.poi.ss.usermodel.*;
 import org.json.JSONObject;
@@ -86,11 +85,7 @@ public class GradeEntryActivity extends AppCompatActivity {
         btnImportExcel.setOnClickListener(v -> {
             if (validateFilters()) {
                 if (listDiem.isEmpty()) {
-                    new MaterialAlertDialogBuilder(this)
-                            .setTitle("Thông báo")
-                            .setMessage("Hãy đảm bảo danh sách học sinh đã được tải trước khi Import")
-                            .setPositiveButton("OK", null)
-                            .show();
+                    showErrorDialog("Thông báo", "Hãy đảm bảo danh sách học sinh đã được tải trước khi Import");
                     return;
                 }
                 filePickerLauncher.launch("*/*");
@@ -122,11 +117,33 @@ public class GradeEntryActivity extends AppCompatActivity {
     }
 
     private void showLoading() {
-        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+        });
     }
 
     private void hideLoading() {
-        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+        });
+    }
+
+    private void showErrorDialog(String title, String message) {
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
+    }
+
+    private void showRetrySnackbar(String message, Runnable retryAction) {
+        runOnUiThread(() -> {
+            Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+                    .setAction("Thử lại", v -> retryAction.run())
+                    .show();
+        });
     }
 
     private void checkAndAutoLoad() {
@@ -170,73 +187,75 @@ public class GradeEntryActivity extends AppCompatActivity {
     }
 
     private void setupFilters() {
+        loadSemesters();
+        loadClasses();
+        loadSubjects();
+        loadTestTypes();
+    }
+
+    private void loadSemesters() {
         ApiClient.getApiService().getSemesterList().enqueue(new Callback<List<Map<String, String>>>() {
             @Override
             public void onResponse(@NonNull Call<List<Map<String, String>>> call, @NonNull Response<List<Map<String, String>>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     semesterList = response.body();
-                    
-                    Calendar cal = Calendar.getInstance();
-                    int currentYear = cal.get(Calendar.YEAR);
-                    int currentMonth = cal.get(Calendar.MONTH);
-                    // Nếu từ tháng 9 trở đi, tính từ năm hiện tại. Ngược lại tính từ năm trước.
-                    int effectiveSchoolStartYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
-
-                    List<String> years = new ArrayList<>();
-                    for (Map<String, String> m : semesterList) {
-                        String y = m.get("namhoc");
-                        if (y == null || years.contains(y)) continue;
-                        try {
-                            String startYearStr = y.contains("-") ? y.split("-")[0].trim() : y.trim();
-                            int startYear = Integer.parseInt(startYearStr);
-                            if (startYear >= effectiveSchoolStartYear) {
-                                years.add(y);
-                            }
-                        } catch (Exception ignored) {}
-                    }
-                    Collections.sort(years, Collections.reverseOrder());
-                    autoNamHoc.setAdapter(new ArrayAdapter<>(GradeEntryActivity.this, android.R.layout.simple_list_item_1, years));
+                    setupNamHocAdapter();
                 }
             }
-            @Override public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {}
+            @Override public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {
+                showRetrySnackbar("Lỗi tải danh sách niên khóa", () -> loadSemesters());
+            }
         });
+    }
 
+    private void setupNamHocAdapter() {
+        Calendar cal = Calendar.getInstance();
+        int currentYear = cal.get(Calendar.YEAR);
+        int currentMonth = cal.get(Calendar.MONTH);
+        int thresholdYear = (currentMonth >= Calendar.SEPTEMBER) ? currentYear : currentYear - 1;
+
+        List<String> years = new ArrayList<>();
+        for (Map<String, String> m : semesterList) {
+            String y = m.get("namhoc");
+            if (y == null || years.contains(y)) continue;
+            try {
+                String startYearStr = y.contains("-") ? y.split("-")[0].trim() : y.trim();
+                int startYear = Integer.parseInt(startYearStr);
+                if (startYear >= thresholdYear) {
+                    years.add(y);
+                }
+            } catch (Exception ignored) {}
+        }
+        Collections.sort(years, Collections.reverseOrder());
+        autoNamHoc.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, years));
         autoNamHoc.setOnItemClickListener((parent, view, position, id) -> {
             tilNamHoc.setError(null);
             tilNamHoc.setErrorEnabled(false);
-            
-            // Xóa trắng và khóa lại các ô sau khi đổi năm học
             autoHocKy.setText("");
             autoLop.setText("");
             selectedMaHK = "";
             selectedMaLop = "";
             tilHocKy.setEnabled(true);
             tilLop.setEnabled(false);
-            
             listDiem.clear();
             if (adapter != null) adapter.notifyDataSetChanged();
-
             String year = (String) parent.getItemAtPosition(position);
             List<String> terms = new ArrayList<>();
             for (Map<String, String> m : semesterList) {
                 if (year.equals(m.get("namhoc"))) terms.add(m.get("hocky"));
             }
             autoHocKy.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, terms));
-            
             checkAndAutoLoad();
         });
 
         autoHocKy.setOnItemClickListener((parent, view, position, id) -> {
             tilHocKy.setError(null);
             tilHocKy.setErrorEnabled(false);
-            
             autoLop.setText("");
             selectedMaLop = "";
             tilLop.setEnabled(true);
-            
             listDiem.clear();
             if (adapter != null) adapter.notifyDataSetChanged();
-
             String year = autoNamHoc.getText().toString();
             String term = (String) parent.getItemAtPosition(position);
             for (Map<String, String> m : semesterList) {
@@ -248,15 +267,20 @@ public class GradeEntryActivity extends AppCompatActivity {
             filterClasses();
             checkAndAutoLoad();
         });
+    }
 
+    private void loadClasses() {
         ApiClient.getApiService().getClassList().enqueue(new Callback<List<ClassModel>>() {
             @Override
             public void onResponse(@NonNull Call<List<ClassModel>> call, @NonNull Response<List<ClassModel>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     allClassList = response.body();
+                    if (!autoNamHoc.getText().toString().isEmpty()) filterClasses();
                 }
             }
-            @Override public void onFailure(@NonNull Call<List<ClassModel>> call, @NonNull Throwable t) {}
+            @Override public void onFailure(@NonNull Call<List<ClassModel>> call, @NonNull Throwable t) {
+                showRetrySnackbar("Lỗi tải danh sách lớp", () -> loadClasses());
+            }
         });
 
         autoLop.setOnItemClickListener((p, v, pos, id) -> {
@@ -266,7 +290,9 @@ public class GradeEntryActivity extends AppCompatActivity {
             selectedMaLop = sel.getMaLop();
             checkAndAutoLoad();
         });
+    }
 
+    private void loadSubjects() {
         ApiClient.getApiService().getSubjectList().enqueue(new Callback<List<Subject>>() {
             @Override
             public void onResponse(@NonNull Call<List<Subject>> call, @NonNull Response<List<Subject>> response) {
@@ -283,9 +309,13 @@ public class GradeEntryActivity extends AppCompatActivity {
                     });
                 }
             }
-            @Override public void onFailure(@NonNull Call<List<Subject>> call, @NonNull Throwable t) {}
+            @Override public void onFailure(@NonNull Call<List<Subject>> call, @NonNull Throwable t) {
+                showRetrySnackbar("Lỗi tải danh sách môn học", () -> loadSubjects());
+            }
         });
+    }
 
+    private void loadTestTypes() {
         ApiClient.getApiService().getTestTypeList().enqueue(new Callback<List<Map<String, Object>>>() {
             @Override
             public void onResponse(@NonNull Call<List<Map<String, Object>>> call, @NonNull Response<List<Map<String, Object>>> response) {
@@ -302,7 +332,9 @@ public class GradeEntryActivity extends AppCompatActivity {
                     });
                 }
             }
-            @Override public void onFailure(@NonNull Call<List<Map<String, Object>>> call, @NonNull Throwable t) {}
+            @Override public void onFailure(@NonNull Call<List<Map<String, Object>>> call, @NonNull Throwable t) {
+                showRetrySnackbar("Lỗi tải các loại kiểm tra", () -> loadTestTypes());
+            }
         });
     }
 
@@ -313,6 +345,10 @@ public class GradeEntryActivity extends AppCompatActivity {
             if (selectedMaHK.equalsIgnoreCase(c.getMaHocKyNamHoc())) filtered.add(c);
         }
         autoLop.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, filtered));
+        
+        if (filtered.isEmpty() && !allClassList.isEmpty()) {
+            showErrorDialog("Thông báo", "Năm học hiện tại chưa có lớp nào được tạo.");
+        }
     }
 
     private void loadGradeList() {
@@ -327,20 +363,12 @@ public class GradeEntryActivity extends AppCompatActivity {
                 } else {
                     listDiem.clear();
                     if (adapter != null) adapter.notifyDataSetChanged();
-                    new MaterialAlertDialogBuilder(GradeEntryActivity.this)
-                            .setTitle("Thông báo")
-                            .setMessage("Học sinh trong lớp này đã được nhập điểm hoặc lớp trống.")
-                            .setPositiveButton("OK", null)
-                            .show();
+                    showErrorDialog("Thông báo", "Học sinh trong lớp này đã được nhập điểm hoặc lớp trống.");
                 }
             }
             @Override public void onFailure(@NonNull Call<List<Map<String, Object>>> call, @NonNull Throwable t) {
                 hideLoading();
-                new MaterialAlertDialogBuilder(GradeEntryActivity.this)
-                        .setTitle("Lỗi")
-                        .setMessage("Không thể kết nối đến server")
-                        .setPositiveButton("OK", null)
-                        .show();
+                showRetrySnackbar("Lỗi tải danh sách học sinh", () -> loadGradeList());
             }
         });
     }
@@ -356,16 +384,10 @@ public class GradeEntryActivity extends AppCompatActivity {
 
                 int idxMaHS = -1, idxDiem = -1, idxGhiChu = -1;
                 for (Cell cell : headerRow) {
-                    String h = formatter.formatCellValue(cell).trim();
-                    String lowH = h.toLowerCase();
-                    
-                    if (h.contains("Mã học sinh") || lowH.equals("mã học sinh") || lowH.equals("mã hs")) {
-                        idxMaHS = cell.getColumnIndex();
-                    } else if (h.contains("Điểm") || lowH.equals("điểm") || lowH.equals("grade")) {
-                        idxDiem = cell.getColumnIndex();
-                    } else if (h.contains("Ghi chú") || lowH.equals("ghi chú") || lowH.equals("note")) {
-                        idxGhiChu = cell.getColumnIndex();
-                    }
+                    String h = formatter.formatCellValue(cell).trim().toLowerCase();
+                    if (h.contains("mã học sinh") || h.equals("mahs") || h.equals("mã hs")) idxMaHS = cell.getColumnIndex();
+                    else if (h.contains("điểm") || h.equals("grade")) idxDiem = cell.getColumnIndex();
+                    else if (h.contains("ghi chú") || h.equals("note")) idxGhiChu = cell.getColumnIndex();
                 }
 
                 if (idxMaHS == -1 || idxDiem == -1) {
@@ -376,7 +398,6 @@ public class GradeEntryActivity extends AppCompatActivity {
                 for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                     Row row = sheet.getRow(i);
                     if (row == null) continue;
-
                     String maHS = formatter.formatCellValue(row.getCell(idxMaHS)).trim();
                     String diem = formatter.formatCellValue(row.getCell(idxDiem)).trim().replace(",", ".");
                     String ghiChu = idxGhiChu != -1 ? formatter.formatCellValue(row.getCell(idxGhiChu)).trim() : "";
@@ -393,24 +414,14 @@ public class GradeEntryActivity extends AppCompatActivity {
                 int finalCount = count;
                 runOnUiThread(() -> {
                     hideLoading();
-                    if (adapter != null) {
-                        adapter.notifyDataSetChanged();
-                    }
-                    new MaterialAlertDialogBuilder(GradeEntryActivity.this)
-                            .setTitle("Import thành công")
-                            .setMessage("Đã import thành công " + finalCount + " học sinh từ file Excel. Vui lòng kiểm tra lại điểm trước khi nhấn Lưu.")
-                            .setPositiveButton("OK", null)
-                            .show();
+                    if (adapter != null) adapter.notifyDataSetChanged();
+                    showErrorDialog("Import thành công", "Đã import thành công " + finalCount + " học sinh từ file Excel. Vui lòng kiểm tra lại trước khi nhấn Lưu.");
                 });
             }
         } catch (Exception e) {
             runOnUiThread(() -> {
                 hideLoading();
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Import thất bại")
-                        .setMessage(e.getMessage())
-                        .setPositiveButton("OK", null)
-                        .show();
+                showErrorDialog("Import thất bại", e.getMessage());
             });
         }
     }
@@ -419,6 +430,7 @@ public class GradeEntryActivity extends AppCompatActivity {
         File destinationFile = new File(getCacheDir(), "import_temp_grade.xlsx");
         try (InputStream is = getContentResolver().openInputStream(uri);
              FileOutputStream os = new FileOutputStream(destinationFile)) {
+            if (is == null) throw new Exception("Không thể mở tệp.");
             byte[] buffer = new byte[8192];
             int length;
             while ((length = is.read(buffer)) != -1) os.write(buffer, 0, length);
@@ -432,34 +444,41 @@ public class GradeEntryActivity extends AppCompatActivity {
             ((TextView) itemView.findViewById(R.id.tvSTT)).setText(String.valueOf(position + 1));
             ((TextView) itemView.findViewById(R.id.tvMaHS)).setText(String.valueOf(item.get("maHocSinh")));
             ((TextView) itemView.findViewById(R.id.tvHoTen)).setText(String.valueOf(item.get("hoTen")));
-            
-            EditText edtDiem = itemView.findViewById(R.id.edtDiem);
-            edtDiem.setText(String.valueOf(item.get("diem")));
-            
-            EditText edtGhiChu = itemView.findViewById(R.id.edtGhiChu);
-            edtGhiChu.setText(String.valueOf(item.get("ghiChu")));
 
-            edtDiem.setTag(position);
-            edtDiem.addTextChangedListener(new TextWatcher() {
+            EditText edtDiem = itemView.findViewById(R.id.edtDiem);
+            EditText edtGhiChu = itemView.findViewById(R.id.edtGhiChu);
+
+            if (edtDiem.getTag() instanceof TextWatcher) {
+                edtDiem.removeTextChangedListener((TextWatcher) edtDiem.getTag());
+            }
+            if (edtGhiChu.getTag() instanceof TextWatcher) {
+                edtGhiChu.removeTextChangedListener((TextWatcher) edtGhiChu.getTag());
+            }
+
+            edtDiem.setText(String.valueOf(item.get("diem") != null ? item.get("diem") : ""));
+            edtGhiChu.setText(String.valueOf(item.get("ghiChu") != null ? item.get("ghiChu") : ""));
+
+            TextWatcher diemWatcher = new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (edtDiem.getTag() != null && (int)edtDiem.getTag() == position) {
-                        item.put("diem", s.toString());
-                    }
+                    item.put("diem", s.toString());
                 }
                 @Override public void afterTextChanged(Editable s) {}
-            });
-            
-            edtGhiChu.setTag(position);
-            edtGhiChu.addTextChangedListener(new TextWatcher() {
+            };
+
+            TextWatcher ghiChuWatcher = new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (edtGhiChu.getTag() != null && (int)edtGhiChu.getTag() == position) {
-                        item.put("ghiChu", s.toString());
-                    }
+                    item.put("ghiChu", s.toString());
                 }
                 @Override public void afterTextChanged(Editable s) {}
-            });
+            };
+
+            edtDiem.addTextChangedListener(diemWatcher);
+            edtDiem.setTag(diemWatcher);
+
+            edtGhiChu.addTextChangedListener(ghiChuWatcher);
+            edtGhiChu.setTag(ghiChuWatcher);
         });
         rvDiem.setAdapter(adapter);
     }
@@ -511,21 +530,13 @@ public class GradeEntryActivity extends AppCompatActivity {
                             })
                             .show();
                 } else {
-                    new MaterialAlertDialogBuilder(GradeEntryActivity.this)
-                            .setTitle("Thất bại")
-                            .setMessage("Lỗi Server: " + response.code())
-                            .setPositiveButton("OK", null)
-                            .show();
+                    showErrorDialog("Thất bại", "Không thể lưu điểm. Mã lỗi: " + response.code());
                 }
             }
             @Override public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 hideLoading();
                 btnLuu.setEnabled(true);
-                new MaterialAlertDialogBuilder(GradeEntryActivity.this)
-                        .setTitle("Lỗi kết nối")
-                        .setMessage("Không thể kết nối đến server. Vui lòng kiểm tra lại mạng.")
-                        .setPositiveButton("OK", null)
-                        .show();
+                showRetrySnackbar("Lỗi kết nối máy chủ", () -> saveGrades());
             }
         });
     }

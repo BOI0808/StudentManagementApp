@@ -28,7 +28,6 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!-- Tiêu đề cột (Header) -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

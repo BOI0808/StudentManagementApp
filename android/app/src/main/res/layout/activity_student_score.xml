@@ -8,7 +8,6 @@
     android:orientation="vertical"
     tools:context=".StudentScoreActivity">
 
-    <!-- Header Section Section (Thống nhất với các UI khác) -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -48,7 +47,6 @@
             android:paddingHorizontal="16dp"
             android:paddingBottom="24dp">
 
-            <!-- Student Info Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -97,7 +95,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Score Table Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -124,7 +121,6 @@
                         android:layout_height="wrap_content"
                         android:stretchColumns="1">
 
-                        <!-- Header Row -->
                         <TableRow
                             android:background="#1976D2"
                             android:paddingVertical="12dp"
@@ -142,7 +138,6 @@
                                 android:gravity="center"/>
                         </TableRow>
 
-                        <!-- Semester 1 -->
                         <TableRow
                             android:paddingVertical="12dp"
                             android:paddingHorizontal="8dp"
@@ -162,7 +157,6 @@
 
                         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
 
-                        <!-- Semester 2 -->
                         <TableRow
                             android:paddingVertical="12dp"
                             android:paddingHorizontal="8dp"
@@ -182,7 +176,6 @@
 
                         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
 
-                        <!-- Full Year -->
                         <TableRow
                             android:paddingVertical="12dp"
                             android:paddingHorizontal="8dp"

@@ -11,7 +11,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,6 +20,7 @@ import com.example.studentmanagementapp.model.Subject;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import org.json.JSONObject;
@@ -40,15 +40,14 @@ public class CategorySubjectActivity extends AppCompatActivity {
     private RecyclerView rvMonHoc;
     private ImageButton btnBack;
     private LinearProgressIndicator progressIndicator;
-    
-    // Search fields
+
     private TextInputEditText edtSearch;
     private ProgressBar pbSearchLoading;
-    private Handler searchHandler = new Handler(Looper.getMainLooper());
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
 
-    private List<Subject> fullSubjectList = new ArrayList<>();
-    private List<Subject> displayList = new ArrayList<>();
+    private final List<Subject> fullSubjectList = new ArrayList<>();
+    private final List<Subject> displayList = new ArrayList<>();
     private GenericAdapter<Subject> adapter;
 
     @Override
@@ -75,6 +74,24 @@ public class CategorySubjectActivity extends AppCompatActivity {
         rvMonHoc.setLayoutManager(new LinearLayoutManager(this));
     }
 
+    private void showErrorDialog(String title, String message) {
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
+    }
+
+    private void showRetrySnackbar(String message, Runnable retryAction) {
+        runOnUiThread(() -> {
+            Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+                    .setAction("Thử lại", v -> retryAction.run())
+                    .show();
+        });
+    }
+
     private void setupListeners() {
         btnBack.setOnClickListener(v -> finish());
         btnThem.setOnClickListener(v -> performAddSubject());
@@ -93,7 +110,6 @@ public class CategorySubjectActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        // Setup Debounce Search
         edtSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -103,7 +119,7 @@ public class CategorySubjectActivity extends AppCompatActivity {
                 pbSearchLoading.setVisibility(View.VISIBLE);
                 
                 searchRunnable = () -> performFilter(s.toString());
-                searchHandler.postDelayed(searchRunnable, 300); // 300ms debounce
+                searchHandler.postDelayed(searchRunnable, 300);
             }
             @Override
             public void afterTextChanged(Editable s) {}
@@ -131,13 +147,27 @@ public class CategorySubjectActivity extends AppCompatActivity {
     }
 
     private void showLoading() {
-        if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
-        btnThem.setEnabled(false);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+            btnThem.setEnabled(false);
+        });
     }
 
     private void hideLoading() {
-        if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
-        btnThem.setEnabled(true);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+            btnThem.setEnabled(true);
+        });
+    }
+
+    private void hideKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
+        }
     }
 
     private void loadSubjectList() {
@@ -147,7 +177,8 @@ public class CategorySubjectActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<List<Subject>> call, @NonNull Response<List<Subject>> response) {
                 hideLoading();
                 if (response.isSuccessful() && response.body() != null) {
-                    fullSubjectList = response.body();
+                    fullSubjectList.clear();
+                    fullSubjectList.addAll(response.body());
                     displayList.clear();
                     displayList.addAll(fullSubjectList);
                     updateRecyclerView();
@@ -156,7 +187,7 @@ public class CategorySubjectActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<List<Subject>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(CategorySubjectActivity.this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi tải danh sách môn học", CategorySubjectActivity.this::loadSubjectList);
             }
         });
     }
@@ -172,7 +203,7 @@ public class CategorySubjectActivity extends AppCompatActivity {
                 if (maMon != null) {
                     new MaterialAlertDialogBuilder(CategorySubjectActivity.this)
                             .setTitle("Xác nhận xóa")
-                            .setMessage("Bạn có chắc chắn muốn ẩn môn học này khỏi danh sách không?")
+                            .setMessage("Bạn có chắc chắn muốn ẩn môn học " + subject.getTenMonHoc() + " khỏi danh sách không?")
                             .setNegativeButton("Hủy", null)
                             .setPositiveButton("Đồng ý", (dialog, which) -> performSoftDeleteSubject(maMon))
                             .show();
@@ -192,16 +223,17 @@ public class CategorySubjectActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
                 hideLoading();
                 if (response.isSuccessful()) {
+                    Snackbar.make(findViewById(android.R.id.content), "Đã ẩn môn học thành công", Snackbar.LENGTH_SHORT).show();
                     loadSubjectList();
                 } else {
-                    Toast.makeText(CategorySubjectActivity.this, "Không thể xóa môn học", Toast.LENGTH_SHORT).show();
+                    showErrorDialog("Thất bại", "Không thể xóa môn học này. Có thể môn học đang có dữ liệu điểm liên quan.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(CategorySubjectActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối khi xóa môn học", () -> performSoftDeleteSubject(maMon));
             }
         });
     }
@@ -225,8 +257,8 @@ public class CategorySubjectActivity extends AppCompatActivity {
                 hideLoading();
                 if (response.isSuccessful()) {
                     new MaterialAlertDialogBuilder(CategorySubjectActivity.this)
-                            .setTitle("Thành Công")
-                            .setMessage("Đã thêm môn học thành công vào hệ thống.")
+                            .setTitle("Thành công")
+                            .setMessage("Đã thêm môn học " + tenMon + " vào hệ thống.")
                             .setCancelable(false)
                             .setPositiveButton("Tạo tiếp", (dialog, which) -> {
                                 edtTenMon.setText("");
@@ -244,7 +276,7 @@ public class CategorySubjectActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 hideLoading();
-                Toast.makeText(CategorySubjectActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối khi thêm môn học", CategorySubjectActivity.this::performAddSubject);
             }
         });
     }
@@ -255,10 +287,12 @@ public class CategorySubjectActivity extends AppCompatActivity {
                 String errorBody = response.errorBody().string();
                 JSONObject jObjError = new JSONObject(errorBody);
                 String errorMsg = jObjError.optString("error", "Dữ liệu không hợp lệ");
-                Toast.makeText(this, "Thất bại: " + errorMsg, Toast.LENGTH_LONG).show();
+                showErrorDialog("Thất bại", errorMsg);
+            } else {
+                showErrorDialog("Lỗi", "Lỗi Server: " + response.code());
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Lỗi Server: " + response.code(), Toast.LENGTH_SHORT).show();
+            showErrorDialog("Lỗi", "Lỗi xử lý thông báo lỗi từ server.");
         }
     }
 }

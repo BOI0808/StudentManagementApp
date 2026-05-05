@@ -17,12 +17,10 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,6 +30,7 @@ import com.example.studentmanagementapp.model.Student;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 import org.apache.poi.ss.usermodel.*;
 import org.json.JSONArray;
@@ -127,11 +126,7 @@ public class CreateClassListActivity extends AppCompatActivity {
             }
 
             if (!isValid) {
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle("Thất bại")
-                        .setMessage("Vui lòng chọn đầy đủ thông tin lớp trước khi Import")
-                        .setPositiveButton("OK", null)
-                        .show();
+                showErrorDialog("Thất bại", "Vui lòng chọn đầy đủ thông tin lớp trước khi Import");
                 return;
             }
             filePickerLauncher.launch("*/*");
@@ -165,6 +160,22 @@ public class CreateClassListActivity extends AppCompatActivity {
         updateSiSo();
     }
 
+    private void showErrorDialog(String title, String message) {
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
+    }
+
+    private void showRetrySnackbar(String message, Runnable retryAction) {
+        Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
+                .setAction("Thử lại", v -> retryAction.run())
+                .show();
+    }
+
     private void setupFilters() {
         ApiClient.getApiService().getSemesterList().enqueue(new Callback<List<Map<String, String>>>() {
             @Override
@@ -174,7 +185,9 @@ public class CreateClassListActivity extends AppCompatActivity {
                     loadNamHoc(semesterList);
                 }
             }
-            @Override public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {}
+            @Override public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {
+                showRetrySnackbar("Lỗi tải danh sách học kỳ", () -> setupFilters());
+            }
         });
 
         autoHocKy.setOnItemClickListener((parent, view, position, id) -> {
@@ -286,17 +299,21 @@ public class CreateClassListActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<Map<String, Object>> call, @NonNull Throwable t) {
-                Log.e("SystemParam", "Lỗi tải tham số hệ thống", t);
+                showRetrySnackbar("Lỗi tải tham số hệ thống", CreateClassListActivity.this::loadSystemParameters);
             }
         });
     }
 
     private void showLoading() {
-        progressIndicator.setVisibility(View.VISIBLE);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.VISIBLE);
+        });
     }
 
     private void hideLoading() {
-        progressIndicator.setVisibility(View.GONE);
+        runOnUiThread(() -> {
+            if (progressIndicator != null) progressIndicator.setVisibility(View.GONE);
+        });
     }
 
     private void hideKeyboard() {
@@ -365,7 +382,7 @@ public class CreateClassListActivity extends AppCompatActivity {
                 DataFormatter formatter = new DataFormatter();
 
                 Row headerRow = sheet.getRow(0);
-                if (headerRow == null) throw new Exception("File Excel không có dữ liệu tiêu đề.");
+                if (headerRow == null) throw new Exception("Tệp Excel không có dữ liệu hoặc hàng tiêu đề trống.");
 
                 int idxMaHS = -1, idxHoTen = -1, idxGioiTinh = -1, idxNgaySinh = -1;
 
@@ -376,34 +393,19 @@ public class CreateClassListActivity extends AppCompatActivity {
 
                 for (Cell cell : headerRow) {
                     String title = formatter.formatCellValue(cell).trim().toLowerCase();
-                    
-                    if (mahsVariants.contains(title)) {
-                        idxMaHS = cell.getColumnIndex();
-                    } else if (hotenVariants.contains(title)) {
-                        idxHoTen = cell.getColumnIndex();
-                    } else if (gioitinhVariants.contains(title)) {
-                        idxGioiTinh = cell.getColumnIndex();
-                    } else if (ngaysinhVariants.contains(title)) {
-                        idxNgaySinh = cell.getColumnIndex();
-                    }
+                    if (mahsVariants.contains(title)) idxMaHS = cell.getColumnIndex();
+                    else if (hotenVariants.contains(title)) idxHoTen = cell.getColumnIndex();
+                    else if (gioitinhVariants.contains(title)) idxGioiTinh = cell.getColumnIndex();
+                    else if (ngaysinhVariants.contains(title)) idxNgaySinh = cell.getColumnIndex();
                 }
 
                 if (idxMaHS == -1 || idxHoTen == -1 || idxGioiTinh == -1 || idxNgaySinh == -1) {
-                    final List<String> missingCols = new ArrayList<>();
+                    List<String> missingCols = new ArrayList<>();
                     if (idxMaHS == -1) missingCols.add("Mã học sinh");
                     if (idxHoTen == -1) missingCols.add("Họ và tên");
                     if (idxGioiTinh == -1) missingCols.add("Giới tính");
                     if (idxNgaySinh == -1) missingCols.add("Ngày sinh");
-                    
-                    final String msg = "File Excel thiếu cột: " + String.join(", ", missingCols);
-                    runOnUiThread(() -> {
-                        hideLoading();
-                        new MaterialAlertDialogBuilder(CreateClassListActivity.this)
-                                .setTitle("Thất bại")
-                                .setMessage(msg)
-                                .setPositiveButton("OK", null)
-                                .show();
-                    });
+                    showErrorDialog("Lỗi định dạng", "Tệp Excel thiếu các cột bắt buộc: " + String.join(", ", missingCols));
                     return;
                 }
 
@@ -419,6 +421,15 @@ public class CreateClassListActivity extends AppCompatActivity {
                     student.setMaHocSinh(maHS);
                     student.setHoTen(hoTen);
 
+                    String genderText = formatter.formatCellValue(row.getCell(idxGioiTinh)).trim();
+                    if (genderText.equalsIgnoreCase("Nam") || genderText.equalsIgnoreCase("GT1")) {
+                        student.setMaGioiTinh("GT1");
+                    } else if (genderText.equalsIgnoreCase("Nữ") || genderText.equalsIgnoreCase("Nu") || genderText.equalsIgnoreCase("GT2")) {
+                        student.setMaGioiTinh("GT2");
+                    } else {
+                        student.setMaGioiTinh("GT3");
+                    }
+
                     Cell dateCell = row.getCell(idxNgaySinh);
                     if (dateCell != null && dateCell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(dateCell)) {
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
@@ -427,12 +438,6 @@ public class CreateClassListActivity extends AppCompatActivity {
                         String rawDate = formatter.formatCellValue(dateCell).trim();
                         student.setNgaySinh(formatDateString(rawDate));
                     }
-
-                    String genderText = formatter.formatCellValue(row.getCell(idxGioiTinh)).trim();
-                    if (genderText.equalsIgnoreCase("Nam") || genderText.equalsIgnoreCase("GT1")) student.setMaGioiTinh("GT1");
-                    else if (genderText.equalsIgnoreCase("Nữ") || genderText.equalsIgnoreCase("Nu") || genderText.equalsIgnoreCase("GT2")) student.setMaGioiTinh("GT2");
-                    else student.setMaGioiTinh("GT3");
-
                     studentsFromExcel.add(student);
                 }
             }
@@ -449,39 +454,20 @@ public class CreateClassListActivity extends AppCompatActivity {
 
                     listHocSinhSelected.clear();
                     listHocSinhSelected.addAll(uniqueMap.values());
-                    adapter.notifyDataSetChanged();
+                    if (adapter != null) adapter.notifyDataSetChanged();
                     updateSiSo();
-                    hideLoading();
 
                     String tenLop = autoLop.getText().toString().trim();
-
-                    new MaterialAlertDialogBuilder(CreateClassListActivity.this)
-                            .setTitle("Import thành công")
-                            .setMessage("Đã thêm thành công " + studentsFromExcel.size() + " học sinh vào danh sách chờ của lớp " + tenLop + ". Vui lòng kiểm tra lại và nhấn Lưu để hoàn tất.")
-                            .setPositiveButton("OK", null)
-                            .show();
+                    showErrorDialog("Import thành công", "Đã nạp thành công " + studentsFromExcel.size() + " học sinh vào danh sách chờ của lớp " + tenLop + ". Vui lòng kiểm tra lại và nhấn Lưu.");
                 });
             } else {
-                runOnUiThread(() -> {
-                    hideLoading();
-                    new MaterialAlertDialogBuilder(CreateClassListActivity.this)
-                            .setTitle("Import thất bại")
-                            .setMessage("File Excel không có dữ liệu học sinh hợp lệ hoặc sai định dạng tiêu đề cột")
-                            .setPositiveButton("OK", null)
-                            .show();
-                });
+                showErrorDialog("Import thất bại", "Tệp Excel không chứa dữ liệu học sinh hợp lệ.");
             }
-
         } catch (Exception e) {
             Log.e("ExcelError", "Lỗi xử lý file: ", e);
-            runOnUiThread(() -> {
-                hideLoading();
-                new MaterialAlertDialogBuilder(CreateClassListActivity.this)
-                        .setTitle("Lỗi đọc file")
-                        .setMessage(e.getMessage())
-                        .setPositiveButton("OK", null)
-                        .show();
-            });
+            showErrorDialog("Lỗi tệp tin", "Không thể đọc dữ liệu từ tệp Excel: " + e.getMessage());
+        } finally {
+            hideLoading();
         }
     }
 
@@ -625,6 +611,7 @@ public class CreateClassListActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<List<Map<String, String>>> call, @NonNull Throwable t) {
                 hideLoading();
+                showRetrySnackbar("Không thể tải danh sách học sinh cũ", () -> loadExistingStudents(maLop));
             }
         });
     }
@@ -698,12 +685,12 @@ public class CreateClassListActivity extends AppCompatActivity {
         }
 
         if (listHocSinhSelected.size() >= maxSiSo) {
-            Toast.makeText(this, "Lớp đã đạt sĩ số tối đa (" + maxSiSo + " học sinh)", Toast.LENGTH_SHORT).show();
+            showErrorDialog("Thông báo", "Lớp đã đạt sĩ số tối đa (" + maxSiSo + " học sinh)");
             return;
         }
         for (Student s : listHocSinhSelected) {
             if (s.getMaHocSinh() != null && s.getMaHocSinh().equals(selectedStudentToAdd.getMaHocSinh())) {
-                Toast.makeText(this, "Học sinh này đã có trong danh sách", Toast.LENGTH_SHORT).show();
+                showErrorDialog("Thông báo", "Học sinh này đã có trong danh sách");
                 return;
             }
         }
@@ -734,7 +721,7 @@ public class CreateClassListActivity extends AppCompatActivity {
             return;
         }
         if (listHocSinhSelected.isEmpty()) {
-            Toast.makeText(this, "Danh sách học sinh đang trống", Toast.LENGTH_SHORT).show();
+            showErrorDialog("Thông báo", "Danh sách học sinh đang trống. Vui lòng thêm học sinh trước khi lưu.");
             return;
         }
 
@@ -787,13 +774,9 @@ public class CreateClassListActivity extends AppCompatActivity {
                             }
                             adapter.notifyDataSetChanged();
                             if (firstErrorPos != -1) rvHocSinh.smoothScrollToPosition(firstErrorPos);
-                            new MaterialAlertDialogBuilder(CreateClassListActivity.this)
-                                    .setTitle("Thất bại")
-                                    .setMessage("Có " + arr.length() + " học sinh không hợp lệ. Vui lòng kiểm tra các dòng màu đỏ trong danh sách.")
-                                    .setPositiveButton("Đã hiểu", null)
-                                    .show();
+                            showErrorDialog("Thất bại", "Có " + arr.length() + " học sinh không hợp lệ. Vui lòng kiểm tra các dòng màu đỏ trong danh sách.");
                         } else {
-                            Toast.makeText(CreateClassListActivity.this, json.optString("error", "Lưu thất bại"), Toast.LENGTH_SHORT).show();
+                            showErrorDialog("Thất bại", json.optString("error", "Không thể lưu danh sách lớp."));
                         }
                     } catch (Exception e) {
                         Log.e("SaveError", "Parse error", e);
@@ -804,7 +787,7 @@ public class CreateClassListActivity extends AppCompatActivity {
             public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                 btnLuu.setEnabled(true);
                 hideLoading();
-                Toast.makeText(CreateClassListActivity.this, "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                showRetrySnackbar("Lỗi kết nối máy chủ", CreateClassListActivity.this::saveClassList);
             }
         });
     }
