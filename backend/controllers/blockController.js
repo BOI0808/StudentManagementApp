@@ -1,6 +1,5 @@
 const db = require("../config/db");
 
-// API tạo khối lớp
 exports.createBlock = async (req, res) => {
   const TenKhoiLop = req.body.TenKhoiLop?.toString().trim();
 
@@ -8,7 +7,6 @@ exports.createBlock = async (req, res) => {
     if (!TenKhoiLop)
       return res.status(400).json({ error: "Tên khối không được để trống" });
 
-    // 1. Kiểm tra sự tồn tại (kể cả đã ngưng)
     const [existing] = await db.query(
       "SELECT MaKhoiLop, TrangThai FROM khoilop WHERE TenKhoiLop = ?",
       [TenKhoiLop]
@@ -20,7 +18,6 @@ exports.createBlock = async (req, res) => {
           .status(400)
           .json({ error: "Khối này đã tồn tại và đang hoạt động" });
       } else {
-        // Kích hoạt lại khối cũ
         await db.query("UPDATE khoilop SET TrangThai = 1 WHERE MaKhoiLop = ?", [
           existing[0].MaKhoiLop,
         ]);
@@ -31,7 +28,6 @@ exports.createBlock = async (req, res) => {
       }
     }
 
-    // 2. Tạo mới nếu chưa từng có
     const MaKhoiLop = "K" + TenKhoiLop;
     await db.query(
       "INSERT INTO khoilop (MaKhoiLop, TenKhoiLop, TrangThai) VALUES (?, ?, 1)",
@@ -44,13 +40,11 @@ exports.createBlock = async (req, res) => {
   }
 };
 
-// Cập nhật trạng thái khối lớp
 exports.toggleBlockStatus = async (req, res) => {
   const { MaKhoiLop } = req.params;
-  const { TrangThai } = req.body; // 0 hoặc 1
+  const { TrangThai } = req.body;
 
   try {
-    // 1. Nếu muốn ngưng hoạt động (0), phải kiểm tra xem có lớp nào đang thuộc khối này không
     if (TrangThai === 0) {
       const [linkedClasses] = await db.query(
         "SELECT MaLop FROM lop WHERE MaKhoiLop = ? LIMIT 1",
@@ -63,7 +57,6 @@ exports.toggleBlockStatus = async (req, res) => {
       }
     }
 
-    // 2. Cập nhật trạng thái
     const [result] = await db.query(
       "UPDATE khoilop SET TrangThai = ? WHERE MaKhoiLop = ?",
       [TrangThai, MaKhoiLop]
@@ -80,7 +73,6 @@ exports.toggleBlockStatus = async (req, res) => {
   }
 };
 
-// API lấy danh sách khối lớp đang hoạt động
 exports.getActiveBlocks = async (req, res) => {
   try {
     const [rows] = await db.query(

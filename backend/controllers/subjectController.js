@@ -3,15 +3,14 @@ const db = require("../config/db");
 const generateSubjectCode = (tenMon) => {
   return tenMon
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Loại bỏ dấu tiếng Việt
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
-    .replace(/\s+/g, "") // Loại bỏ khoảng trắng
+    .replace(/\s+/g, "")
     .toUpperCase()
-    .slice(0, 10); // Đảm bảo không quá 10 ký tự
+    .slice(0, 10);
 };
 
-// BM4: Lập danh mục môn học
 exports.createSubject = async (req, res) => {
   const TenMonHoc = req.body.TenMonHoc?.toString().trim();
 
@@ -22,7 +21,6 @@ exports.createSubject = async (req, res) => {
         .json({ error: "Tên môn học không được để trống." });
     }
 
-    // 1. Kiểm tra xem môn học đã từng tồn tại trong DB chưa (kể cả đang ngưng dạy)
     const [existing] = await db.query(
       "SELECT MaMonHoc, TrangThai FROM monhoc WHERE TenMonHoc = ?",
       [TenMonHoc]
@@ -31,15 +29,11 @@ exports.createSubject = async (req, res) => {
     if (existing.length > 0) {
       const subject = existing[0];
 
-      // Trường hợp A: Môn học đang hoạt động bình thường
       if (subject.TrangThai === 1) {
         return res
           .status(400)
           .json({ error: "Môn học này đã tồn tại và đang hoạt động." });
-      }
-
-      // Trường hợp B: Môn học tồn tại nhưng đang ngưng dạy -> Bật lại
-      else {
+      } else {
         await db.query("UPDATE monhoc SET TrangThai = 1 WHERE MaMonHoc = ?", [
           subject.MaMonHoc,
         ]);
@@ -50,7 +44,6 @@ exports.createSubject = async (req, res) => {
       }
     }
 
-    // 2. Nếu môn học hoàn toàn mới -> Tiến hành thêm mới như cũ
     const MaMonHoc = generateSubjectCode(TenMonHoc);
 
     await db.query(
@@ -65,13 +58,11 @@ exports.createSubject = async (req, res) => {
   }
 };
 
-// Cập nhật trạng thái môn học
 exports.toggleSubjectStatus = async (req, res) => {
   const { MaMonHoc } = req.params;
-  const { TrangThai } = req.body; // Gửi lên 0 để ngưng dạy, 1 để mở lại
+  const { TrangThai } = req.body;
 
   try {
-    // Cập nhật trạng thái thay vì xóa
     const [result] = await db.query(
       "UPDATE monhoc SET TrangThai = ? WHERE MaMonHoc = ?",
       [TrangThai, MaMonHoc]
@@ -93,7 +84,6 @@ exports.toggleSubjectStatus = async (req, res) => {
   }
 };
 
-// API lấy danh sách môn đang dạy
 exports.getActiveSubjects = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM monhoc WHERE TrangThai = 1");

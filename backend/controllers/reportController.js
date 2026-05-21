@@ -1,17 +1,14 @@
 const db = require("../config/db");
 
-// Báo cáo tổng kết môn (BM10)
 exports.getBaoCaoTongKetMon = async (req, res) => {
   const { MaHocKyNamHoc, MaMonHoc } = req.query;
 
   try {
-    // 1. Lấy đúng tham số DiemDatMon vừa thêm
     const [ts] = await db.query(
       "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'DiemDatMon'"
     );
     const diemDatMon = ts[0].gia_tri;
 
-    // 2. Query thống kê (giữ nguyên logic cũ nhưng dùng diemDatMon)
     const query = `
       SELECT 
         l.TenLop, 
@@ -29,7 +26,6 @@ exports.getBaoCaoTongKetMon = async (req, res) => {
 
     const [rows] = await db.query(query, [diemDatMon, MaMonHoc, MaHocKyNamHoc]);
 
-    // 3. Tính tỉ lệ và format kết quả cho UI
     const reportData = rows.map((item) => {
       const siSo = item.SiSo || 0;
       const soLuongDat = item.SoLuongDat || 0;
@@ -39,7 +35,7 @@ exports.getBaoCaoTongKetMon = async (req, res) => {
         lop: item.TenLop,
         siSo: siSo,
         soLuongDat: soLuongDat,
-        tiLe: `${tiLe}%`, // Trả về dạng chuỗi kèm % cho Giang dễ hiển thị
+        tiLe: `${tiLe}%`,
       };
     });
 
@@ -50,9 +46,8 @@ exports.getBaoCaoTongKetMon = async (req, res) => {
   }
 };
 
-// Báo cáo tổng kết học kỳ
 exports.getBaoCaoTongKetHocKy = async (req, res) => {
-  const { MaHocKyNamHoc } = req.query; // Giang gửi mã học kỳ từ Dropdown
+  const { MaHocKyNamHoc } = req.query;
 
   if (!MaHocKyNamHoc) {
     return res
@@ -61,13 +56,11 @@ exports.getBaoCaoTongKetHocKy = async (req, res) => {
   }
 
   try {
-    // 1. Lấy điểm đạt hệ thống
     const [ts] = await db.query(
       "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'DiemDat'"
     );
     const diemDat = ts[0].gia_tri;
 
-    // 2. Query tổng hợp: Tính GPA học kỳ và đếm số lượng đạt theo lớp
     const query = `
       SELECT 
         l.TenLop, 
@@ -88,7 +81,6 @@ exports.getBaoCaoTongKetHocKy = async (req, res) => {
 
     const [rows] = await db.query(query, [diemDat, MaHocKyNamHoc]);
 
-    // 3. Format dữ liệu trả về cho Giang đổ vào bảng
     const finalReport = rows.map((item) => {
       const siSo = item.SiSo || 0;
       const soLuongDat = item.SoLuongDat || 0;

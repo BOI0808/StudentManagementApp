@@ -1,7 +1,6 @@
 const db = require("../config/db");
 const xlsx = require("xlsx");
 
-// TÁCH HÀM TÍNH ĐIỂM TRUNG BÌNH (GPA) RA NGOÀI ĐỂ CHUNG DÙNG
 const calculateGPA = async (conn, MaHocSinh, MaMonHoc, MaLop) => {
   const [stats] = await conn.query(
     `SELECT 
@@ -23,15 +22,11 @@ const calculateGPA = async (conn, MaHocSinh, MaMonHoc, MaLop) => {
     return null;
   }
   const gpa = Number(row.numerator) / Number(row.denominator);
-  // round to 1 decimal
   return Math.round(gpa * 10) / 10;
 };
-// export nếu cần tái sử dụng ở nơi khác
 exports.calculateGPA = calculateGPA;
 
-//Lấy danh sách học sinh nhập điểm
 exports.getHocSinhNhapDiem = async (req, res) => {
-  // Giang gửi về 4 mã này từ các Dropdown
   const { MaLop, MaMonHoc, MaLoaiKiemTra, MaHocKyNamHoc } = req.query;
 
   if (!MaLop || !MaMonHoc || !MaLoaiKiemTra || !MaHocKyNamHoc) {
@@ -41,7 +36,6 @@ exports.getHocSinhNhapDiem = async (req, res) => {
   }
 
   try {
-    // Dùng LEFT JOIN để lấy tên học sinh TRƯỚC, sau đó "ướm" điểm vào (nếu có)
     const query = `
       SELECT 
         hs.MaHocSinh, 
@@ -64,11 +58,10 @@ exports.getHocSinhNhapDiem = async (req, res) => {
       MaLop,
     ]);
 
-    // Format lại dữ liệu cho Giang dễ đổ vào Table
     const result = rows.map((item) => ({
       maHocSinh: item.MaHocSinh,
       hoTen: item.HoTen,
-      diem: item.Diem !== null ? item.Diem : "", // Để chuỗi rỗng nếu chưa có điểm
+      diem: item.Diem !== null ? item.Diem : "",
       ghiChu: item.GhiChu || "",
     }));
 
@@ -97,7 +90,6 @@ exports.luuBangDiem = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    // 1. Lấy quy định và thông tin lớp
     const [classInfo] = await connection.query(
       "SELECT MaHocKyNamHoc FROM lop WHERE MaLop = ?",
       [MaLop]
@@ -114,20 +106,15 @@ exports.luuBangDiem = async (req, res) => {
       return obj;
     }, {});
 
-    // 2. Duyệt danh sách điểm (Sử dụng entries() để có biến i sinh ID)
     for (const [i, record] of DanhSachDiem.entries()) {
       const { maHocSinh, diem, ghiChu } = record;
 
-      // --- LOGIC XỬ LÝ XÓA ĐIỂM / Ô TRỐNG ---
-      // Nếu điểm là null, undefined hoặc chuỗi rỗng
       if (diem === null || diem === undefined || diem === "") {
         await connection.query(
           "DELETE FROM bangdiem WHERE MaLop = ? AND MaMonHoc = ? AND MaLoaiKiemTra = ? AND MaHocSinh = ?",
           [MaLop, MaMonHoc, MaLoaiKiemTra, maHocSinh]
         );
-      }
-      // --- LOGIC LƯU ĐIỂM NHƯ CŨ ---
-      else {
+      } else {
         const numDiem = parseFloat(diem);
         if (numDiem < limits.DiemToiThieu || numDiem > limits.DiemToiDa) {
           throw new Error(
@@ -146,7 +133,6 @@ exports.luuBangDiem = async (req, res) => {
             [numDiem, ghiChu, existing[0].MaBangDiem]
           );
         } else {
-          // Sinh mã ID an toàn hơn
           const MaBangDiem = `BD${Date.now().toString().slice(-6)}${i
             .toString()
             .padStart(2, "0")}`;
@@ -165,7 +151,6 @@ exports.luuBangDiem = async (req, res) => {
         }
       }
 
-      // 3. TÍNH LẠI ĐIỂM TRUNG BÌNH MÔN (Sau khi đã Insert/Update/Delete)
       const gpa = await calculateGPA(connection, maHocSinh, MaMonHoc, MaLop);
       await connection.query(
         `INSERT INTO ketqua_monhoc (MaHocSinh, MaMonHoc, MaHocKyNamHoc, DiemTrungBinhMon) 
@@ -201,7 +186,6 @@ exports.importGradesExcel = async (req, res) => {
       .json({ success: false, error: "Vui lòng đính kèm file Excel." });
   }
 
-  // Parse Excel
   let rows;
   try {
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
@@ -212,7 +196,6 @@ exports.importGradesExcel = async (req, res) => {
         .json({ success: false, error: "File Excel không có sheet nào." });
     }
     const worksheet = workbook.Sheets[sheetName];
-    // Dùng header: 1 để lấy dòng đầu tiên làm mảng, sau đó tự mapping
     const rawData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
     if (!rawData || rawData.length < 2) {
       return res
@@ -299,7 +282,7 @@ exports.importGradesExcel = async (req, res) => {
         "SELECT 1 FROM chitietlop WHERE MaLop = ? AND MaHocSinh = ? LIMIT 1",
         [MaLop, MaHocSinh]
       );
-      if (inClass.length === 0) continue; // Bỏ qua nếu HS không thuộc lớp
+      if (inClass.length === 0) continue;
 
       let scoreValue = null;
       if (Diem !== "" && Diem !== null && Diem !== undefined) {
