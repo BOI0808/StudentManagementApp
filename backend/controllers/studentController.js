@@ -67,7 +67,6 @@ exports.importStudentsExcel = async (req, res) => {
   try {
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    // Chuyển đổi sang JSON và chuẩn hóa key (xóa khoảng trắng thừa ở tiêu đề)
     const rawData = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
     rows = rawData.map((row) => {
       const newRow = {};
@@ -99,7 +98,6 @@ exports.importStudentsExcel = async (req, res) => {
       const row = rows[i];
       const excelRowNumber = i + 2;
 
-      // ÁNH XẠ THÔNG MINH (Case-insensitive & hỗ trợ cả Tiếng Việt/Anh)
       const HoTen = String(
         row["Họ và Tên"] || row["Họ và tên"] || row.HoTen || row["Họ Tên"] || ""
       ).trim();
@@ -121,7 +119,6 @@ exports.importStudentsExcel = async (req, res) => {
         );
       }
 
-      // Xử lý ngày sinh linh hoạt
       let dateObj;
       if (typeof NgaySinhRaw === "number") {
         dateObj = new Date(Math.round((NgaySinhRaw - 25569) * 86400 * 1000));
@@ -135,7 +132,6 @@ exports.importStudentsExcel = async (req, res) => {
         );
       const formattedDate = dateObj.toISOString().split("T")[0];
 
-      // Kiểm tra tuổi
       const currentYear = new Date().getFullYear();
       const birthYear = dateObj.getFullYear();
       const age = currentYear - birthYear;
@@ -213,8 +209,6 @@ exports.xoaHocSinhKhoiLop = async (req, res) => {
 exports.traCuuHocSinh = async (req, res) => {
   const { maLop, maHocSinh, hoTen } = req.query;
 
-  // Sử dụng GROUP BY để mỗi học sinh chỉ hiện 1 dòng duy nhất trong 1 năm học
-  // Sử dụng MAX/MIN cho các trường thông tin chung để tránh lỗi SQL Mode
   let query = `
     SELECT 
       hs.MaHocSinh, 
@@ -253,7 +247,6 @@ exports.traCuuHocSinh = async (req, res) => {
 
   let params = [];
   if (maLop) {
-    // FIX: Tìm theo tên lớp và năm học thay vì ID duy nhất của 1 học kỳ
     query += ` AND l.TenLop = (SELECT TenLop FROM lop WHERE MaLop = ?) 
                AND hn.NamHocBatDau = (SELECT hn2.NamHocBatDau FROM lop l2 JOIN hocky_namhoc hn2 ON l2.MaHocKyNamHoc = hn2.MaHocKyNamHoc WHERE l2.MaLop = ?)`;
     params.push(maLop, maLop);
@@ -267,7 +260,6 @@ exports.traCuuHocSinh = async (req, res) => {
     params.push(`%${hoTen}%`);
   }
 
-  // Thêm GROUP BY để gộp dữ liệu học sinh theo năm học
   query += " GROUP BY hs.MaHocSinh, hn.NamHocBatDau";
 
   try {

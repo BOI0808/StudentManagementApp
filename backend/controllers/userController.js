@@ -45,7 +45,6 @@ exports.importUsersExcel = async (req, res) => {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
-    // 1. Chuyển đổi sang JSON và chuẩn hóa Key (xóa khoảng trắng thừa ở tiêu đề)
     const rawData = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
     const data = rawData.map((row) => {
       const newRow = {};
@@ -60,12 +59,10 @@ exports.importUsersExcel = async (req, res) => {
     let usernamesInFile = new Set();
     let emailsInFile = new Set();
 
-    // GIAI ĐOẠN 1: Validate toàn bộ dữ liệu
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       const rowIndex = i + 2;
 
-      // ÁNH XẠ THÔNG MINH: Hỗ trợ cả tiếng Việt (có dấu/có cách) và tiếng Anh
       const HoTen = String(
         row["Họ và tên"] || row["Họ tên"] || row.HoTen || ""
       ).trim();
@@ -81,7 +78,6 @@ exports.importUsersExcel = async (req, res) => {
         row["Quyền hạn"] || row.DanhSachQuyen || row.Quyen || ""
       ).trim();
 
-      // 1. Kiểm tra thiếu thông tin bắt buộc
       if (!HoTen || !TenDangNhap || !MatKhau || !Email || !SoDienThoai) {
         errors.push({
           row: rowIndex,
@@ -90,7 +86,6 @@ exports.importUsersExcel = async (req, res) => {
         continue;
       }
 
-      // 2. Kiểm tra định dạng
       if (!validateUsername(TenDangNhap)) {
         errors.push({
           row: rowIndex,
@@ -116,7 +111,6 @@ exports.importUsersExcel = async (req, res) => {
         });
       }
 
-      // 3. Kiểm tra trùng lặp trong file
       if (usernamesInFile.has(TenDangNhap)) {
         errors.push({
           row: rowIndex,
@@ -132,7 +126,6 @@ exports.importUsersExcel = async (req, res) => {
       usernamesInFile.add(TenDangNhap);
       emailsInFile.add(Email);
 
-      // 4. Kiểm tra trùng lặp trong DB
       const [existing] = await connection.query(
         "SELECT TenDangNhap, Email FROM nguoidung WHERE TenDangNhap = ? OR Email = ? LIMIT 1",
         [TenDangNhap, Email]
@@ -166,7 +159,6 @@ exports.importUsersExcel = async (req, res) => {
       return res.status(400).json({ success: false, errors: errors });
     }
 
-    // GIAI ĐOẠN 2: Insert (Transaction)
     await connection.beginTransaction();
 
     for (const user of usersToInsert) {

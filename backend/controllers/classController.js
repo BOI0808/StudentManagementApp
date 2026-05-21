@@ -1,6 +1,5 @@
 const db = require("../config/db");
 
-// API Tạo mới lớp
 exports.taoMoiLop = async (req, res) => {
   const { TenLop, MaKhoiLop, MaHocKyNamHoc, LoaiHocKy } = req.body;
   const connection = await db.getConnection();
@@ -137,7 +136,6 @@ exports.luuDanhSachLop = async (req, res) => {
       });
     }
 
-    // KIỂM TRA CHI TIẾT TỪNG HỌC SINH
     let validationErrors = [];
     for (const MaHocSinh of DanhSachMaHS) {
       const [otherClass] = await connection.query(

@@ -1,11 +1,9 @@
 const db = require("../config/db");
 
-// 1. Lấy toàn bộ tham số hiện tại để Giang đổ vào các ô nhập
 exports.getThamSo = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT ten_tham_so, gia_tri FROM thamso");
 
-    // Biến mảng thành một Object duy nhất để Giang (Android) dễ bóc tách dữ liệu
     const settings = rows.reduce((obj, item) => {
       obj[item.ten_tham_so] = item.gia_tri;
       return obj;
@@ -17,7 +15,6 @@ exports.getThamSo = async (req, res) => {
   }
 };
 
-// 2. Cập nhật đồng thời tất cả các quy định
 exports.updateThamSo = async (req, res) => {
   const {
     TuoiToiThieu,
@@ -30,7 +27,6 @@ exports.updateThamSo = async (req, res) => {
     DiemToiDa,
   } = req.body;
 
-  // Kiểm tra logic cơ bản trước khi lưu
   if (
     TuoiToiThieu >= TuoiToiDa ||
     SiSoToiThieu >= SiSoToiDa ||
@@ -42,7 +38,6 @@ exports.updateThamSo = async (req, res) => {
   }
 
   try {
-    // Sử dụng CASE WHEN để cập nhật nhiều dòng chỉ với 1 câu query (tối ưu hiệu năng)
     const query = `
       UPDATE thamso
       SET gia_tri = CASE ten_tham_so

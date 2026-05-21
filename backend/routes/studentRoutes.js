@@ -3,14 +3,12 @@ const multer = require("multer");
 const router = express.Router();
 const studentController = require("../controllers/studentController");
 
-// Cấu hình Multer để nhận file Excel gửi từ Android
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Endpoint: POST /api/students/tiep-nhan-hoc-sinh
 router.post("/tiep-nhan-hoc-sinh", studentController.tiepNhanHocSinh);
 
 // Endpoint: POST /api/students/import-excel
-// Thêm middleware upload.single("file") ở đây
 router.post(
   "/import-excel",
   upload.single("file"),
