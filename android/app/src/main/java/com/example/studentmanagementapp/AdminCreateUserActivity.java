@@ -164,7 +164,7 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         btn.setAllCaps(false);
         btn.setTextSize(12);
         btn.setPadding(32, 0, 32, 0); // Approx paddingHorizontal="12dp"
-        btn.setStrokeColorResource(R.color.blue_primary); 
+        btn.setStrokeColorResource(R.color.blue_primary);
         btn.setOnClickListener(v -> setQuickPermissions(roleName));
         
         // Add before btnQuickAdmin
