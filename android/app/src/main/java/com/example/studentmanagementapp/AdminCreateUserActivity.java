@@ -2,6 +2,7 @@ package com.example.studentmanagementapp;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,15 +13,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import okhttp3.MediaType;
@@ -58,10 +59,15 @@ public class AdminCreateUserActivity extends AppCompatActivity {
     private TextInputEditText edtFullName, edtUsername, edtPassword, edtEmail, edtPhone;
     private MaterialButton btnCreateAccount, btnXemDanhSach;
     private ImageButton btnImportExcel;
-    private MaterialButton btnQuickAdmin, btnQuickTeacher, btnQuickManagement, btnQuickClear;
+    private MaterialButton btnQuickAdmin, btnQuickClear;
+    private ImageButton btnAddCustomRole;
+    private LinearLayout llQuickButtons;
     private LinearProgressIndicator loadingIndicator;
     private User editingUser = null;
     private Uri selectedFileUri;
+
+    private static final String PREFS_NAME = "CustomRolesPrefs";
+    private static final String KEY_ROLES = "custom_roles";
 
     private final int[] permissionIds = {R.id.cbTiepNhanHS, R.id.cbLapDanhSachLop, R.id.cbLapDanhSachHSChoLop, 
                 R.id.cbLapDanhSachNamHoc, R.id.cbLapDanhSachKhoiLop, R.id.cbLapDanhSachMonHoc,
@@ -117,9 +123,53 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         loadingIndicator = findViewById(R.id.loadingIndicator);
         
         btnQuickAdmin = findViewById(R.id.btnQuickAdmin);
-        btnQuickTeacher = findViewById(R.id.btnQuickTeacher);
-        btnQuickManagement = findViewById(R.id.btnQuickManagement);
         btnQuickClear = findViewById(R.id.btnQuickClear);
+        btnAddCustomRole = findViewById(R.id.btnAddCustomRole);
+        llQuickButtons = findViewById(R.id.llQuickButtons);
+
+        loadCustomRolesDynamic();
+    }
+
+    private void loadCustomRolesDynamic() {
+        // Clear old dynamic buttons (keep btnAddCustomRole, btnQuickAdmin, btnQuickClear)
+        int childCount = llQuickButtons.getChildCount();
+        for (int i = childCount - 1; i >= 0; i--) {
+            View v = llQuickButtons.getChildAt(i);
+            if (v.getId() != R.id.btnAddCustomRole && v.getId() != R.id.btnQuickAdmin && v.getId() != R.id.btnQuickClear) {
+                llQuickButtons.removeViewAt(i);
+            }
+        }
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String rolesJson = prefs.getString(KEY_ROLES, "{}");
+        try {
+            JSONObject json = new JSONObject(rolesJson);
+            Iterator<String> keys = json.keys();
+            while (keys.hasNext()) {
+                String roleName = keys.next();
+                addDynamicButton(roleName);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addDynamicButton(String roleName) {
+        MaterialButton btn = new MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 0, (int) (8 * getResources().getDisplayMetrics().density), 0);
+        btn.setLayoutParams(params);
+        btn.setText(roleName);
+        btn.setAllCaps(false);
+        btn.setTextSize(12);
+        btn.setPadding(32, 0, 32, 0); // Approx paddingHorizontal="12dp"
+        btn.setStrokeColorResource(R.color.blue_primary); 
+        btn.setOnClickListener(v -> setQuickPermissions(roleName));
+        
+        // Add before btnQuickAdmin
+        int index = llQuickButtons.indexOfChild(findViewById(R.id.btnQuickAdmin));
+        llQuickButtons.addView(btn, index);
     }
 
     private void setupErrorClearing() {
@@ -166,26 +216,70 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         }
 
         btnQuickAdmin.setOnClickListener(v -> setQuickPermissions("ADMIN"));
-        btnQuickTeacher.setOnClickListener(v -> setQuickPermissions("TEACHER"));
-        btnQuickManagement.setOnClickListener(v -> setQuickPermissions("MANAGEMENT"));
         btnQuickClear.setOnClickListener(v -> setQuickPermissions("CLEAR"));
+        btnAddCustomRole.setOnClickListener(v -> showAddRoleDialog());
+    }
+
+    private void showAddRoleDialog() {
+        List<String> selectedCodes = getSelectedPermissions();
+        if (selectedCodes.isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn ít nhất một quyền trước khi lưu nhóm!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        EditText input = new EditText(this);
+        input.setHint("Ví dụ: Giáo vụ, Kế toán...");
+        
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Thêm nhóm quyền mới")
+                .setMessage("Nhập tên cho nhóm quyền các tính năng bạn vừa chọn:")
+                .setView(input)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (!name.isEmpty()) {
+                        saveCustomRole(name, selectedCodes);
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void saveCustomRole(String name, List<String> codes) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String rolesJson = prefs.getString(KEY_ROLES, "{}");
+        try {
+            JSONObject json = new JSONObject(rolesJson);
+            JSONArray array = new JSONArray();
+            for (String code : codes) array.put(code);
+            json.put(name, array);
+            
+            prefs.edit().putString(KEY_ROLES, json.toString()).apply();
+            loadCustomRolesDynamic();
+            Toast.makeText(this, "Đã lưu nhóm quyền: " + name, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void setQuickPermissions(String role) {
-        List<String> targetCodes;
-        switch (role) {
-            case "ADMIN":
-                targetCodes = Arrays.asList(permissionCodes);
-                break;
-            case "TEACHER":
-                targetCodes = Arrays.asList("CNTNHS", "CNLDSL", "CNLDSHSCL", "CNTCHS", "CNNBD", "CNNDSCLKT");
-                break;
-            case "MANAGEMENT":
-                targetCodes = Arrays.asList("CNLDSNH", "CNLDSKL", "CNLDSMH", "CNLBCTKM", "CNLBCTKHK", "CNCDTSHT");
-                break;
-            default:
-                targetCodes = new ArrayList<>();
-                break;
+        List<String> targetCodes = new ArrayList<>();
+        if (role.equals("ADMIN")) {
+            targetCodes = Arrays.asList(permissionCodes);
+        } else if (!role.equals("CLEAR")) {
+            // Check dynamic roles
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            String rolesJson = prefs.getString(KEY_ROLES, "{}");
+            try {
+                JSONObject json = new JSONObject(rolesJson);
+                if (json.has(role)) {
+                    JSONArray array = json.getJSONArray(role);
+                    for (int i = 0; i < array.length(); i++) {
+                        targetCodes.add(array.getString(i));
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         for (int i = 0; i < permissionIds.length; i++) {
@@ -220,9 +314,16 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         btnXemDanhSach.setEnabled(enabled);
         btnImportExcel.setEnabled(enabled);
         btnQuickAdmin.setEnabled(enabled);
-        btnQuickTeacher.setEnabled(enabled);
-        btnQuickManagement.setEnabled(enabled);
         btnQuickClear.setEnabled(enabled);
+        btnAddCustomRole.setEnabled(enabled);
+
+        // Enable/Disable dynamic buttons
+        for (int i = 0; i < llQuickButtons.getChildCount(); i++) {
+            View v = llQuickButtons.getChildAt(i);
+            if (v instanceof MaterialButton) {
+                v.setEnabled(enabled);
+            }
+        }
         
         for (int id : permissionIds) {
             CheckBox cb = findViewById(id);
