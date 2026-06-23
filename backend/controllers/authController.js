@@ -27,12 +27,11 @@ exports.login = async (req, res) => {
         .json({ error: "Tên đăng nhập hoặc mật khẩu không đúng." });
     }
 
-    // 2. Truy vấn danh sách mã quyền từ bảng nguoidung_quyen
     const [qRows] = await db.query(
       "SELECT MaCN FROM nguoidung_quyen WHERE MaSo = ?",
       [user.MaSo]
     );
-    // Chuyển kết quả thành mảng chuỗi: ["CNTNHS", "CNLDSL", ...]
+
     const permissions = qRows.map((row) => row.MaCN);
 
     const accessToken = jwt.sign(
@@ -52,10 +51,17 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    await db.query("DELETE FROM refresh_tokens WHERE MaSo = ?", [user.MaSo]);
     await db.query("INSERT INTO refresh_tokens (token, MaSo) VALUES (?, ?)", [
       refreshToken,
       user.MaSo,
     ]);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
 
     res.json({
       success: true,
@@ -133,14 +139,13 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.refreshToken = async (req, res) => {
-  const { refreshToken } = req.body;
+  const { refreshToken } = req.cookies;
 
   if (!refreshToken) {
     return res.status(401).json({ error: "Vui lòng cung cấp refresh token." });
   }
 
   try {
-    // Kiểm tra refreshToken trong database
     const [tokens] = await db.query(
       "SELECT * FROM refresh_tokens WHERE token = ?",
       [refreshToken]
@@ -149,7 +154,6 @@ exports.refreshToken = async (req, res) => {
       return res.status(403).json({ error: "Refresh token không hợp lệ." });
     }
 
-    // Xác thực refreshToken
     jwt.verify(
       refreshToken,
       process.env.JWT_REFRESH_SECRET,
@@ -158,9 +162,27 @@ exports.refreshToken = async (req, res) => {
           return res.status(403).json({ error: "Refresh token không hợp lệ." });
         }
 
-        // Tạo accessToken mới
+        const [users] = await db.query(
+          "SELECT MaSo, HoTen, PhanQuyen FROM nguoidung WHERE MaSo = ? AND TrangThai = 1",
+          [user.MaSo]
+        );
+        if (users.length === 0) {
+          return res.status(403).json({ error: "Tài khoản không hợp lệ." });
+        }
+
+        const [qRows] = await db.query(
+          "SELECT MaCN FROM nguoidung_quyen WHERE MaSo = ?",
+          [user.MaSo]
+        );
+        const permissions = qRows.map((row) => row.MaCN);
+
         const accessToken = jwt.sign(
-          { MaSo: user.MaSo, HoTen: user.HoTen, PhanQuyen: user.PhanQuyen },
+          {
+            MaSo: user.MaSo,
+            HoTen: user.HoTen,
+            PhanQuyen: user.PhanQuyen,
+            DanhSachQuyen: permissions,
+          },
           process.env.JWT_SECRET,
           { expiresIn: "15m" }
         );
@@ -182,7 +204,13 @@ exports.logout = async (req, res) => {
   }
 
   try {
-    // Xóa refreshToken khỏi database
+    const [tokens] = await db.query(
+      "SELECT * FROM refresh_tokens WHERE token = ?",
+      [refreshToken]
+    );
+    if (tokens.length === 0) {
+      return res.status(403).json({ error: "Refresh token không hợp lệ." });
+    }
     await db.query("DELETE FROM refresh_tokens WHERE token = ?", [
       refreshToken,
     ]);

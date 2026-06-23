@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
-require("./config/loadEnv"); // Load environment variables from config
+require("./config/loadEnv");
+require("./utils/cleanupTokens");
 
 const studentRoutes = require("./routes/studentRoutes"); // Kết nối file route bạn đã tạo
 const configRoutes = require("./routes/configRoutes");
