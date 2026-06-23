@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const xlsx = require("xlsx");
+const bcrypt = require("bcrypt");
 
 const generateMaSo = async (connection) => {
   const prefix = "GV";
@@ -163,13 +164,14 @@ exports.importUsersExcel = async (req, res) => {
 
     for (const user of usersToInsert) {
       const MaSo = await generateMaSo(connection);
+      const hashedPassword = await bcrypt.hash(user.MatKhau, 10);
       await connection.query(
         "INSERT INTO nguoidung (MaSo, HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, PhanQuyen) VALUES (?, ?, ?, ?, ?, ?, ?)",
         [
           MaSo,
           user.HoTen,
           user.TenDangNhap,
-          user.MatKhau,
+          hashedPassword,
           user.Email,
           user.SoDienThoai,
           "Giáo Viên",
@@ -249,6 +251,7 @@ exports.createUser = async (req, res) => {
     }
 
     const MaSo = await generateMaSo(connection);
+    const hashedPassword = await bcrypt.hash(MatKhau, 10);
 
     await connection.query(
       "INSERT INTO nguoidung (MaSo, HoTen, TenDangNhap, MatKhau, Email, SoDienThoai, PhanQuyen) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -256,7 +259,7 @@ exports.createUser = async (req, res) => {
         MaSo,
         HoTen.trim(),
         TenDangNhap.trim(),
-        MatKhau,
+        hashedPassword,
         Email.trim(),
         SoDienThoai.trim(),
         "Giáo Viên",
@@ -379,8 +382,9 @@ exports.updateAccount = async (req, res) => {
     if (MatKhau && MatKhau !== "********") {
       if (MatKhau.length < 6)
         throw new Error("Mật khẩu mới phải có ít nhất 6 ký tự.");
+      const hashedPassword = await bcrypt.hash(MatKhau, 10);
       updateFields.push("MatKhau = ?");
-      queryParams.push(MatKhau);
+      queryParams.push(hashedPassword);
     }
 
     queryParams.push(id);

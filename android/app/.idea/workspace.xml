@@ -218,7 +218,17 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="" />
+    <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/config/db.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/config/db.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/controllers/authController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/authController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/controllers/userController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/userController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/routes/classRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/classRoutes.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/server.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -395,12 +405,12 @@
       <map>
         <entry key="com.example.studentmanagementapp">
           <value>
-            <CheckInfo lastCheckTimestamp="1780406494187" />
+            <CheckInfo lastCheckTimestamp="1782181233853" />
           </value>
         </entry>
         <entry key="com.example.studentmanagementapp.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1780406494190" />
+            <CheckInfo lastCheckTimestamp="1782181233848" />
           </value>
         </entry>
       </map>
