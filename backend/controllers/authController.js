@@ -7,6 +7,7 @@ exports.login = async (req, res) => {
   const { TenDangNhap, MatKhau } = req.body;
 
   try {
+    // 1. Chỉ lấy các thông tin có sẵn trong bảng nguoidung
     const [users] = await db.query(
       "SELECT MaSo, HoTen, MatKhau, PhanQuyen FROM nguoidung WHERE TenDangNhap = ? AND TrangThai = 1",
       [TenDangNhap]
@@ -15,68 +16,64 @@ exports.login = async (req, res) => {
     if (users.length === 0) {
       return res
         .status(401)
-        .json({ error: "Tài khoản không tồn tại hoặc đã bị khóa!" });
+        .json({ error: "Tên đăng nhập hoặc mật khẩu không đúng." });
     }
 
     const user = users[0];
-    let isMatch = false;
-
-    const isBcrypt =
-      user.MatKhau &&
-      (user.MatKhau.startsWith("$2a$") ||
-        user.MatKhau.startsWith("$2b$") ||
-        user.MatKhau.startsWith("$2y$"));
-
-    if (isBcrypt) {
-      isMatch = await bcrypt.compare(MatKhau, user.MatKhau);
-    } else {
-      isMatch = user.MatKhau === MatKhau;
-      if (isMatch) {
-        try {
-          const hashedPassword = await bcrypt.hash(MatKhau, 10);
-          await db.query("UPDATE nguoidung SET MatKhau = ? WHERE MaSo = ?", [
-            hashedPassword,
-            user.MaSo,
-          ]);
-        } catch (updateErr) {
-          console.error("Lỗi tự động nâng cấp mật khẩu sang hash:", updateErr);
-        }
-      }
-    }
-
+    const isMatch = await bcrypt.compare(MatKhau, user.MatKhau);
     if (!isMatch) {
-      return res.status(401).json({ error: "Mật khẩu không chính xác!" });
+      return res
+        .status(401)
+        .json({ error: "Tên đăng nhập hoặc mật khẩu không đúng." });
     }
 
-    const [quyen] = await db.query(
+    // 2. Truy vấn danh sách mã quyền từ bảng nguoidung_quyen
+    const [qRows] = await db.query(
       "SELECT MaCN FROM nguoidung_quyen WHERE MaSo = ?",
       [user.MaSo]
     );
+    // Chuyển kết quả thành mảng chuỗi: ["CNTNHS", "CNLDSL", ...]
+    const permissions = qRows.map((row) => row.MaCN);
 
-    const payload = {
-      MaSo: user.MaSo,
-      HoTen: user.HoTen,
-      PhanQuyen: user.PhanQuyen,
-      quyen: quyen.map((q) => q.MaCN),
-    };
-
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
-
-    res.json({
-      message: "Đăng nhập thành công!",
-      accessToken: accessToken,
-      user: {
+    const accessToken = jwt.sign(
+      {
         MaSo: user.MaSo,
         HoTen: user.HoTen,
         PhanQuyen: user.PhanQuyen,
-        quyen: quyen.map((q) => q.MaCN),
+        DanhSachQuyen: permissions,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const refreshToken = jwt.sign(
+      { MaSo: user.MaSo },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    await db.query("INSERT INTO refresh_tokens (token, MaSo) VALUES (?, ?)", [
+      refreshToken,
+      user.MaSo,
+    ]);
+
+    res.json({
+      success: true,
+      message: "Đăng nhập thành công!",
+      data: {
+        accessToken,
+        refreshToken,
+        user: {
+          MaSo: user.MaSo,
+          HoTen: user.HoTen,
+          PhanQuyen: user.PhanQuyen,
+          DanhSachQuyen: permissions,
+        },
       },
     });
   } catch (err) {
-    console.error("Lỗi đăng nhập:", err);
-    res.status(500).json({ error: "Lỗi hệ thống khi đăng nhập" });
+    console.error(err);
+    res.status(500).json({ error: "Lỗi hệ thống." });
   }
 };
 
@@ -132,5 +129,66 @@ exports.changePassword = async (req, res) => {
   } catch (err) {
     console.error("Lỗi đổi mật khẩu:", err);
     res.status(500).json({ error: "Lỗi hệ thống khi đổi mật khẩu." });
+  }
+};
+
+exports.refreshToken = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(401).json({ error: "Vui lòng cung cấp refresh token." });
+  }
+
+  try {
+    // Kiểm tra refreshToken trong database
+    const [tokens] = await db.query(
+      "SELECT * FROM refresh_tokens WHERE token = ?",
+      [refreshToken]
+    );
+    if (tokens.length === 0) {
+      return res.status(403).json({ error: "Refresh token không hợp lệ." });
+    }
+
+    // Xác thực refreshToken
+    jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET,
+      async (err, user) => {
+        if (err) {
+          return res.status(403).json({ error: "Refresh token không hợp lệ." });
+        }
+
+        // Tạo accessToken mới
+        const accessToken = jwt.sign(
+          { MaSo: user.MaSo, HoTen: user.HoTen, PhanQuyen: user.PhanQuyen },
+          process.env.JWT_SECRET,
+          { expiresIn: "15m" }
+        );
+
+        res.json({ accessToken });
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Lỗi hệ thống." });
+  }
+};
+
+exports.logout = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(400).json({ error: "Vui lòng cung cấp refresh token." });
+  }
+
+  try {
+    // Xóa refreshToken khỏi database
+    await db.query("DELETE FROM refresh_tokens WHERE token = ?", [
+      refreshToken,
+    ]);
+    res.json({ message: "Đăng xuất thành công." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Lỗi hệ thống." });
   }
 };

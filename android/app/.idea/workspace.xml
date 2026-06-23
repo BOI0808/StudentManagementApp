@@ -220,14 +220,10 @@
   <component name="ChangeListManager">
     <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/config/db.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/config/db.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/LoginActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/LoginActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/model/LoginResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/model/LoginResponse.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../backend/controllers/authController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/authController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/controllers/userController.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/controllers/userController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/routes/classRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/classRoutes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/server.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../backend/routes/authRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/authRoutes.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -302,7 +298,7 @@
     &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
     &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;D:/StudentManagementApp/android/app&quot;,
     &quot;project.structure.last.edited&quot;: &quot;SDK Location&quot;,
