@@ -2,4 +2,8 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="blue_primary">#1976D2</color>
+    <color name="blue_light">#E3F2FD</color>
+    <color name="red_error">#D32F2F</color>
+    <color name="green_success">#388E3C</color>
 </resources>

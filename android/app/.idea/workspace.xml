@@ -218,12 +218,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/SearchStudentsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/SearchStudentsActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" afterDir="false" />
-    </list>
+    <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -400,12 +395,12 @@
       <map>
         <entry key="com.example.studentmanagementapp">
           <value>
-            <CheckInfo lastCheckTimestamp="1777602895498" />
+            <CheckInfo lastCheckTimestamp="1780406494187" />
           </value>
         </entry>
         <entry key="com.example.studentmanagementapp.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1777868873327" />
+            <CheckInfo lastCheckTimestamp="1780406494190" />
           </value>
         </entry>
       </map>
