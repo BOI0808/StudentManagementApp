@@ -302,7 +302,7 @@ exports.getAllAccounts = async (req, res) => {
     };
 
     const query = `
-      SELECT nd.MaSo, nd.HoTen, nd.Email, nd.SoDienThoai, nd.TenDangNhap, nd.MatKhau,
+      SELECT nd.MaSo, nd.HoTen, nd.Email, nd.SoDienThoai, nd.TenDangNhap,
              GROUP_CONCAT(ndq.MaCN) AS DS_Quyen
       FROM nguoidung nd
       LEFT JOIN nguoidung_quyen ndq ON nd.MaSo = ndq.MaSo
@@ -330,7 +330,6 @@ exports.getAllAccounts = async (req, res) => {
         Email: user.Email,
         SoDienThoai: user.SoDienThoai,
         TenDangNhap: user.TenDangNhap,
-        MatKhau: user.MatKhau,
         QuyenHeThong: mappedRights,
       };
     });

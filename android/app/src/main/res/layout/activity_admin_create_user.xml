@@ -169,7 +169,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:passwordToggleEnabled="true"
-                    android:hint="Mật khẩu">
+                    android:hint="Mật khẩu"
+                    app:helperTextTextColor="#757575">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edtPassword"
                         android:layout_width="match_parent"

@@ -563,10 +563,23 @@ public class AdminCreateUserActivity extends AppCompatActivity {
             edtFullName.setText(editingUser.getHoTen());
             edtUsername.setText(editingUser.getTenDangNhap());
             edtUsername.setEnabled(false);
-            edtPassword.setText(editingUser.getMatKhau());
+            
+            // Xóa bỏ hoàn toàn dòng edtPassword.setText(editingUser.getMatKhau());
+            edtPassword.setText("");
+            
             edtEmail.setText(editingUser.getEmail());
             edtPhone.setText(editingUser.getSoDienThoai());
             setPermissions(editingUser.getDanhSachQuyen());
+            
+            // Hiển thị helper text khi cập nhật tài khoản
+            if (tilPassword != null) {
+                tilPassword.setHelperText("Để trống nếu không muốn thay đổi mật khẩu");
+            }
+        } else {
+            // Ẩn helper text khi tạo mới tài khoản
+            if (tilPassword != null) {
+                tilPassword.setHelperText(null);
+            }
         }
     }
 
@@ -591,7 +604,13 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
         if (fullName.isEmpty()) { tilFullName.setError("Vui lòng nhập họ và tên"); hasError = true; }
         if (username.isEmpty()) { tilUsername.setError("Vui lòng nhập tên đăng nhập"); hasError = true; }
-        if (password.isEmpty()) { tilPassword.setError("Vui lòng nhập mật khẩu"); hasError = true; }
+        
+        // Khi cập nhật, mật khẩu có thể để trống. Chỉ bắt buộc nhập khi tạo tài khoản mới.
+        if (editingUser == null && password.isEmpty()) { 
+            tilPassword.setError("Vui lòng nhập mật khẩu"); 
+            hasError = true; 
+        }
+        
         if (email.isEmpty()) { tilEmail.setError("Vui lòng nhập email"); hasError = true; }
         if (phone.isEmpty()) { tilPhone.setError("Vui lòng nhập số điện thoại"); hasError = true; }
 
@@ -610,7 +629,14 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         User user = new User();
         user.setHoTen(fullName);
         user.setTenDangNhap(username);
-        user.setMatKhau(password);
+        
+        // Đảm bảo mật khẩu gửi lên là chuỗi rỗng "" khi Admin để trống ô nhập mật khẩu ở chế độ cập nhật
+        if (editingUser != null && password.isEmpty()) {
+            user.setMatKhau("");
+        } else {
+            user.setMatKhau(password);
+        }
+
         user.setEmail(email);
         user.setSoDienThoai(phone);
         user.setDanhSachQuyen(permissions);
@@ -699,6 +725,11 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         edtPhone.setText("");
         clearCheckBoxes((ViewGroup) findViewById(android.R.id.content));
         clearAllErrors();
+        
+        // Reset helper text when switching back to create mode
+        if (tilPassword != null) {
+            tilPassword.setHelperText(null);
+        }
     }
 
     private void clearCheckBoxes(ViewGroup viewGroup) {
