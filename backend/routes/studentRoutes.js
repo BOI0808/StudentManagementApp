@@ -22,8 +22,8 @@ router.post(
 // Endpoint: GET /api/students/search?key=Nguyen
 router.get("/search", studentController.searchHocSinh);
 
-// Endpoint: GET /api/students/ket-qua-tra-cuu?maLop=...&hoTen=...&maHocSinh=...
-router.get("/ket-qua-tra-cuu", studentController.traCuuHocSinh);
+// Endpoint: GET /api/students/tra-cuu
+router.get("/tra-cuu", studentController.traCuuHocSinhTheoTenHoacMa);
 
 //Endpoint: GET /api/students/lich-su-hoc-tap/:maHocSinh
 router.get("/lich-su-hoc-tap/:maHocSinh", studentController.getStudentHistory);

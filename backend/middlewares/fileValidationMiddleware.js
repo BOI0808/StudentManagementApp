@@ -1,5 +1,4 @@
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const fileValidation = (req, res, next) => {
   if (req.file) {
     if (req.file.size > MAX_FILE_SIZE) {

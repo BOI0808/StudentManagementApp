@@ -70,6 +70,12 @@ public interface ApiService {
     @GET("api/students/search")
     Call<List<Student>> searchStudent(@Query("key") String key);
 
+    @GET("api/students/tra-cuu")
+    Call<List<Map<String, Object>>> searchStudentByNameOrId(
+        @Query("maHocSinh") String maHocSinh,
+        @Query("hoTen") String hoTen
+    );
+
     @PUT("api/students/cap-nhat-hoc-sinh")
     Call<Map<String, String>> updateStudent(@Body Student student);
 

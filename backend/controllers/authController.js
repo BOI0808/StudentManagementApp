@@ -1,13 +1,12 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-require("../config/loadEnv"); // Load environment variables
+require("../config/loadEnv");
 
 exports.login = async (req, res) => {
   const { TenDangNhap, MatKhau } = req.body;
 
   try {
-    // 1. Chỉ lấy các thông tin có sẵn trong bảng nguoidung
     const [users] = await db.query(
       "SELECT MaSo, HoTen, MatKhau, PhanQuyen FROM nguoidung WHERE TenDangNhap = ? AND TrangThai = 1",
       [TenDangNhap]

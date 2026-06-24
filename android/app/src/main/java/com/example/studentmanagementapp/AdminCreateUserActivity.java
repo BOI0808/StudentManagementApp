@@ -131,7 +131,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
     }
 
     private void loadCustomRolesDynamic() {
-        // Clear old dynamic buttons (keep btnAddCustomRole, btnQuickAdmin, btnQuickClear)
         int childCount = llQuickButtons.getChildCount();
         for (int i = childCount - 1; i >= 0; i--) {
             View v = llQuickButtons.getChildAt(i);
@@ -167,7 +166,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         btn.setStrokeColorResource(R.color.blue_primary);
         btn.setOnClickListener(v -> setQuickPermissions(roleName));
         
-        // Add before btnQuickAdmin
         int index = llQuickButtons.indexOfChild(findViewById(R.id.btnQuickAdmin));
         llQuickButtons.addView(btn, index);
     }
@@ -266,7 +264,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         if (role.equals("ADMIN")) {
             targetCodes = Arrays.asList(permissionCodes);
         } else if (!role.equals("CLEAR")) {
-            // Check dynamic roles
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             String rolesJson = prefs.getString(KEY_ROLES, "{}");
             try {
@@ -317,7 +314,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         btnQuickClear.setEnabled(enabled);
         btnAddCustomRole.setEnabled(enabled);
 
-        // Enable/Disable dynamic buttons
         for (int i = 0; i < llQuickButtons.getChildCount(); i++) {
             View v = llQuickButtons.getChildAt(i);
             if (v instanceof MaterialButton) {
@@ -564,19 +560,16 @@ public class AdminCreateUserActivity extends AppCompatActivity {
             edtUsername.setText(editingUser.getTenDangNhap());
             edtUsername.setEnabled(false);
             
-            // Xóa bỏ hoàn toàn dòng edtPassword.setText(editingUser.getMatKhau());
             edtPassword.setText("");
             
             edtEmail.setText(editingUser.getEmail());
             edtPhone.setText(editingUser.getSoDienThoai());
             setPermissions(editingUser.getDanhSachQuyen());
             
-            // Hiển thị helper text khi cập nhật tài khoản
             if (tilPassword != null) {
                 tilPassword.setHelperText("Để trống nếu không muốn thay đổi mật khẩu");
             }
         } else {
-            // Ẩn helper text khi tạo mới tài khoản
             if (tilPassword != null) {
                 tilPassword.setHelperText(null);
             }
@@ -605,8 +598,7 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         if (fullName.isEmpty()) { tilFullName.setError("Vui lòng nhập họ và tên"); hasError = true; }
         if (username.isEmpty()) { tilUsername.setError("Vui lòng nhập tên đăng nhập"); hasError = true; }
         
-        // Khi cập nhật, mật khẩu có thể để trống. Chỉ bắt buộc nhập khi tạo tài khoản mới.
-        if (editingUser == null && password.isEmpty()) { 
+        if (editingUser == null && password.isEmpty()) {
             tilPassword.setError("Vui lòng nhập mật khẩu"); 
             hasError = true; 
         }
@@ -630,7 +622,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         user.setHoTen(fullName);
         user.setTenDangNhap(username);
         
-        // Đảm bảo mật khẩu gửi lên là chuỗi rỗng "" khi Admin để trống ô nhập mật khẩu ở chế độ cập nhật
         if (editingUser != null && password.isEmpty()) {
             user.setMatKhau("");
         } else {
@@ -726,7 +717,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         clearCheckBoxes((ViewGroup) findViewById(android.R.id.content));
         clearAllErrors();
         
-        // Reset helper text when switching back to create mode
         if (tilPassword != null) {
             tilPassword.setHelperText(null);
         }

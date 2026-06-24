@@ -62,6 +62,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
+                android:visibility="gone"
                 android:hint="Năm học">
                 <AutoCompleteTextView
                     android:id="@+id/autoCompleteNamHoc"
@@ -76,7 +77,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:enabled="false"
+                android:visibility="gone"
                 android:hint="Tên lớp">
                 <AutoCompleteTextView
                     android:id="@+id/autoCompleteMaLop"
@@ -96,6 +97,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Mã HS"
+                    android:enabled="true"
                     app:endIconMode="clear_text"
                     app:startIconDrawable="@android:drawable/ic_menu_edit">
 
@@ -104,6 +106,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:completionThreshold="1"
+                        android:enabled="true"
                         android:importantForAutofill="no"
                         android:inputType="textCapWords" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -129,6 +132,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Tên học sinh"
+                    android:enabled="true"
                     app:endIconMode="clear_text"
                     app:startIconDrawable="@android:drawable/ic_menu_myplaces">
 
@@ -137,6 +141,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:completionThreshold="1"
+                        android:enabled="true"
                         android:importantForAutofill="no"
                         android:inputType="textPersonName" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -185,7 +190,7 @@
             android:clipToPadding="false"
             android:paddingHorizontal="16dp"
             android:paddingBottom="16dp"
-            tools:listitem="@layout/item_search_students" />
+            tools:listitem="@layout/layout/item_search_students" />
 
         <LinearLayout
             android:id="@+id/layoutEmpty"

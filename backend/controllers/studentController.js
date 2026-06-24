@@ -206,67 +206,93 @@ exports.xoaHocSinhKhoiLop = async (req, res) => {
   }
 };
 
-exports.traCuuHocSinh = async (req, res) => {
-  const { maLop, maHocSinh, hoTen } = req.query;
+exports.traCuuHocSinhTheoTenHoacMa = async (req, res) => {
+  const { maHocSinh, hoTen } = req.query;
 
-  let query = `
-    SELECT 
-      hs.MaHocSinh, 
-      hs.HoTen,
-      hs.NgaySinh,      
-      hs.MaGioiTinh,    
-      hs.DiaChi,        
-      hs.Email,         
-      MAX(l.TenLop) AS TenLop, 
-      CONCAT(hn.NamHocBatDau, '-', hn.NamHocKetThuc) AS NamHoc,
-      -- Tính điểm trung bình HK1
-      (SELECT ROUND(AVG(km1.DiemTrungBinhMon), 1) 
-       FROM ketqua_monhoc km1 
-       JOIN hocky_namhoc hn1 ON km1.MaHocKyNamHoc = hn1.MaHocKyNamHoc 
-       WHERE km1.MaHocSinh = hs.MaHocSinh 
-         AND hn1.NamHocBatDau = hn.NamHocBatDau 
-         AND hn1.TenHocKy = 'Học kỳ 1') AS DiemHK1,
-      -- Tính điểm trung bình HK2
-      (SELECT ROUND(AVG(km2.DiemTrungBinhMon), 1) 
-       FROM ketqua_monhoc km2 
-       JOIN hocky_namhoc hn2 ON km2.MaHocKyNamHoc = hn2.MaHocKyNamHoc 
-       WHERE km2.MaHocSinh = hs.MaHocSinh 
-         AND hn2.NamHocBatDau = hn.NamHocBatDau 
-         AND hn2.TenHocKy = 'Học kỳ 2') AS DiemHK2,
-      -- Tính điểm trung bình Cả năm
-      (SELECT ROUND(AVG(km3.DiemTrungBinhMon), 1) 
-       FROM ketqua_monhoc km3 
-       JOIN hocky_namhoc hn3 ON km3.MaHocKyNamHoc = hn3.MaHocKyNamHoc 
-       WHERE km3.MaHocSinh = hs.MaHocSinh 
-         AND hn3.NamHocBatDau = hn.NamHocBatDau) AS DiemCaNam
-    FROM hocsinh hs 
-    JOIN chitietlop ctl ON hs.MaHocSinh = ctl.MaHocSinh 
-    JOIN lop l ON ctl.MaLop = l.MaLop 
-    JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc 
-    WHERE 1=1`;
-
-  let params = [];
-  if (maLop) {
-    query += ` AND l.TenLop = (SELECT TenLop FROM lop WHERE MaLop = ?) 
-               AND hn.NamHocBatDau = (SELECT hn2.NamHocBatDau FROM lop l2 JOIN hocky_namhoc hn2 ON l2.MaHocKyNamHoc = hn2.MaHocKyNamHoc WHERE l2.MaLop = ?)`;
-    params.push(maLop, maLop);
+  if (!maHocSinh && !hoTen) {
+    return res.status(400).json({
+      error: "Vui lòng nhập mã học sinh hoặc họ tên",
+    });
   }
-  if (maHocSinh) {
-    query += " AND hs.MaHocSinh = ?";
-    params.push(maHocSinh);
-  }
-  if (hoTen) {
-    query += " AND hs.HoTen LIKE ?";
-    params.push(`%${hoTen}%`);
-  }
-
-  query += " GROUP BY hs.MaHocSinh, hn.NamHocBatDau";
 
   try {
-    const [rows] = await db.query(query, params);
-    res.json(rows);
+    let searchQuery = "SELECT * FROM hocsinh WHERE 1=1";
+    let searchParams = [];
+
+    if (maHocSinh) {
+      searchQuery += " AND MaHocSinh LIKE ?";
+      searchParams.push(`%${maHocSinh.trim()}%`);
+    }
+    if (hoTen) {
+      searchQuery += " AND HoTen LIKE ?";
+      searchParams.push(`%${hoTen}%`);
+    }
+
+    searchQuery += " LIMIT 10";
+
+    const [students] = await db.query(searchQuery, searchParams);
+
+    if (!students || students.length === 0) {
+      return res.status(404).json({
+        error: "Không tìm thấy học sinh phù hợp",
+      });
+    }
+
+    const result = await Promise.all(
+      students.map(async (student) => {
+        const maHS = student.MaHocSinh;
+
+        const [classesWithScores] = await db.query(
+          `
+          SELECT 
+            l.MaLop,
+            l.TenLop,
+            hn.NamHocBatDau,
+            hn.NamHocKetThuc,
+            CONCAT(hn.NamHocBatDau, '-', hn.NamHocKetThuc) AS NamHoc,
+            -- 1. Tính điểm trung bình Học kỳ 1
+            (SELECT ROUND(AVG(km1.DiemTrungBinhMon), 1) 
+             FROM ketqua_monhoc km1 
+             JOIN hocky_namhoc hn1 ON km1.MaHocKyNamHoc = hn1.MaHocKyNamHoc 
+             WHERE km1.MaHocSinh = ctl.MaHocSinh 
+               AND hn1.NamHocBatDau = hn.NamHocBatDau 
+               AND hn1.TenHocKy = 'Học kỳ 1') AS DiemHK1,
+            -- 2. Tính điểm trung bình Học kỳ 2
+            (SELECT ROUND(AVG(km2.DiemTrungBinhMon), 1) 
+             FROM ketqua_monhoc km2 
+             JOIN hocky_namhoc hn2 ON km2.MaHocKyNamHoc = hn2.MaHocKyNamHoc 
+             WHERE km2.MaHocSinh = ctl.MaHocSinh 
+               AND hn2.NamHocBatDau = hn.NamHocBatDau 
+               AND hn2.TenHocKy = 'Học kỳ 2') AS DiemHK2,
+            -- 3. Tính điểm trung bình Cả năm của năm học đó
+            (SELECT ROUND(AVG(km3.DiemTrungBinhMon), 1) 
+             FROM ketqua_monhoc km3 
+             JOIN hocky_namhoc hn3 ON km3.MaHocKyNamHoc = hn3.MaHocKyNamHoc 
+             WHERE km3.MaHocSinh = ctl.MaHocSinh 
+               AND hn3.NamHocBatDau = hn.NamHocBatDau) AS DiemCaNam
+          FROM chitietlop ctl
+          JOIN lop l ON ctl.MaLop = l.MaLop
+          JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc
+          WHERE ctl.MaHocSinh = ?
+          GROUP BY l.MaLop -- Group theo lớp để gom điểm cả năm học
+          ORDER BY hn.NamHocBatDau DESC
+          `,
+          [maHS]
+        );
+
+        return {
+          ...student,
+          classes: classesWithScores,
+        };
+      })
+    );
+
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: "Lỗi truy vấn: " + error.message });
+    console.error("Lỗi tra cứu:", error);
+    res.status(500).json({
+      error: "Lỗi truy vấn: " + error.message,
+    });
   }
 };
 

@@ -221,7 +221,11 @@
     <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/AdminCreateUserActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_admin_create_user.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_admin_create_user.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/SearchStudentsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/SearchStudentsActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_search_students.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_search_students.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/layout/item_search_students.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/item_search_students.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -31,14 +31,12 @@ public class ApiClient {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
             
-            // Interceptor tự động thêm Header Authorization và xử lý tự động Refresh Token khi gặp lỗi 401/403
             Interceptor authInterceptor = new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
                     Request originalRequest = chain.request();
                     Request.Builder builder = originalRequest.newBuilder();
 
-                    // 1. Đính kèm Access Token hiện tại vào Header
                     Context context = MyApplication.getAppContext();
                     if (context != null) {
                         SharedPreferences sharedPref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
@@ -50,16 +48,13 @@ public class ApiClient {
 
                     Response response = chain.proceed(builder.build());
 
-                    // 2. Bắt mã lỗi 401 (Unauthorized) hoặc 403 (Forbidden) khi Access Token hết hạn
                     if (response.code() == 401 || response.code() == 403) {
                         String urlPath = originalRequest.url().encodedPath();
                         
-                        // Tránh đệ quy vô hạn đối với các API đăng nhập và đổi/làm mới token
                         if (urlPath.contains("api/auths/dang-nhap") || urlPath.contains("api/auths/refresh-token")) {
                             return response;
                         }
 
-                        // Sử dụng cơ chế đồng bộ hóa (synchronized block) để tránh xung đột luồng khi nhiều request đồng thời hết hạn
                         synchronized (lock) {
                             if (context != null) {
                                 SharedPreferences sharedPref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
@@ -67,30 +62,25 @@ public class ApiClient {
                                 String originalAuthHeader = originalRequest.header("Authorization");
                                 String currentAuthHeader = "Bearer " + currentToken;
 
-                                // Nếu Token trong SharedPreferences đã khác so với lúc gửi Request (luồng khác đã làm mới thành công)
-                                // Ta chỉ việc thử lại Request ban đầu với Token mới vừa nhận được
                                 if (originalAuthHeader != null && !originalAuthHeader.equals(currentAuthHeader)) {
-                                    response.close(); // Đóng Response trước khi Retry
+                                    response.close();
                                     return chain.proceed(originalRequest.newBuilder()
                                             .header("Authorization", currentAuthHeader)
                                             .build());
                                 }
 
-                                // Nếu chưa có luồng nào làm mới Token, tiến hành gọi API đổi Token mới đồng bộ (Synchronous)
                                 String refreshToken = sharedPref.getString("refresh_token", "");
                                 if (refreshToken != null && !refreshToken.trim().isEmpty()) {
                                     String newToken = performTokenRefresh(refreshToken);
                                     if (newToken != null && !newToken.isEmpty()) {
-                                        response.close(); // Đóng Response trước khi Retry
+                                        response.close();
                                         return chain.proceed(originalRequest.newBuilder()
                                                 .header("Authorization", "Bearer " + newToken)
                                                 .build());
                                     } else {
-                                        // Trường hợp Refresh Token không hợp lệ hoặc đã hết hạn -> Đăng xuất người dùng
                                         handleLogout(context);
                                     }
                                 } else {
-                                    // Không tìm thấy Refresh Token -> Đăng xuất người dùng
                                     handleLogout(context);
                                 }
                             }
@@ -120,10 +110,8 @@ public class ApiClient {
      */
     private static String performTokenRefresh(String refreshToken) {
         try {
-            // Tạo một OkHttpClient phụ hoàn toàn độc lập, không gắn AuthInterceptor để tránh lặp đệ quy vô hạn
             OkHttpClient baseClient = new OkHttpClient.Builder().build();
 
-            // Khởi tạo JSON Request chứa Refresh Token
             String jsonBody = "{\"refreshToken\":\"" + refreshToken + "\"}";
             RequestBody body = RequestBody.create(
                     MediaType.parse("application/json; charset=utf-8"),
@@ -135,7 +123,6 @@ public class ApiClient {
                     .post(body)
                     .build();
 
-            // Thực hiện cuộc gọi đồng bộ để đổi token ngay lập tức
             try (Response response = baseClient.newCall(request).execute()) {
                 if (response.isSuccessful() && response.body() != null) {
                     String responseString = response.body().string();
@@ -146,7 +133,6 @@ public class ApiClient {
                         String newAccessToken = loginResponse.getAccessToken();
                         String newRefreshToken = loginResponse.getRefreshToken();
 
-                        // Cập nhật SharedPreferences mới
                         Context context = MyApplication.getAppContext();
                         if (context != null) {
                             SharedPreferences sharedPref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
@@ -167,20 +153,14 @@ public class ApiClient {
         return null;
     }
 
-    /**
-     * Xử lý xóa sạch phiên đăng nhập và đưa người dùng về màn hình đăng nhập khi Refresh Token thất bại
-     */
     private static void handleLogout(Context context) {
-        // Xóa thông tin cũ đã lưu trong SharedPreferences
         SharedPreferences sharedPref = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
         sharedPref.edit().clear().apply();
 
-        // Hiển thị thông báo Toast trên UI Thread
         new Handler(Looper.getMainLooper()).post(() -> {
             Toast.makeText(context, "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại!", Toast.LENGTH_LONG).show();
         });
 
-        // Chuyển hướng người dùng về LoginActivity và xóa sạch Stack của Task cũ
         Intent intent = new Intent(context, LoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         context.startActivity(intent);
