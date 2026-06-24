@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const router = express.Router();
 const studentController = require("../controllers/studentController");
+const fileValidation = require("../middlewares/fileValidationMiddleware");
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -12,6 +13,7 @@ router.post("/tiep-nhan-hoc-sinh", studentController.tiepNhanHocSinh);
 router.post(
   "/import-excel",
   upload.single("file"),
+  fileValidation,
   studentController.importStudentsExcel
 );
 

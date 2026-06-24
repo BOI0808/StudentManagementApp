@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
+const { loginLimiter } = require("../middlewares/rateLimitMiddleware");
 
 //Endpoint: POST /api/auths/dang-nhap
-router.post("/dang-nhap", authController.login);
+router.post("/dang-nhap", loginLimiter, authController.login);
 //Endpoint: POST /api/auths/doi-mat-khau
 router.post("/doi-mat-khau", authController.changePassword);
 //Endpoint: POST /api/auths/refresh-token

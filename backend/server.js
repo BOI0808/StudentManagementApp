@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 require("./config/loadEnv");
 require("./utils/cleanupTokens");
 
@@ -18,7 +19,15 @@ const blockRoutes = require("./routes/blockRoutes");
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3001",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 // Kết nối các nhóm Route (Đây là nơi Vinh/Giang sẽ gọi API)

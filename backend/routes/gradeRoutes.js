@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const router = express.Router();
 const gradeController = require("../controllers/gradeController");
+const fileValidation = require("../middlewares/fileValidationMiddleware");
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -11,6 +12,7 @@ router.post("/nhap-diem", gradeController.luuBangDiem);
 router.post(
   "/import-excel",
   upload.single("file"),
+  fileValidation,
   gradeController.importGradesExcel
 );
 // Endpoint: GET /api/grades/nhap-diem/danh-sach?MaLop=...&MaMonHoc=...&MaLoaiKiemTra=...&MaHocKyNamHoc=...

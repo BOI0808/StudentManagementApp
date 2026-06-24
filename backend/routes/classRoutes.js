@@ -3,7 +3,7 @@ const router = express.Router();
 const classController = require("../controllers/classController");
 const authenticateToken = require("../middlewares/authMiddleware");
 
-// router.use(authenticateToken);
+router.use(authenticateToken);
 
 // Endpoint: POST /api/classes/lap-danh-sach-lop
 router.post("/lap-danh-sach-lop", classController.taoMoiLop);
