@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const blockController = require("../controllers/blockController");
+const authenticateToken = require("../middlewares/authMiddleware");
+
+router.use(authenticateToken);
 
 // Endpoint: POST /api/blocks/lap-khoi-lop
 router.post("/lap-khoi-lop", blockController.createBlock);

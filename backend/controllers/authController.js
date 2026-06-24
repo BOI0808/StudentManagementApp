@@ -139,7 +139,7 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.refreshToken = async (req, res) => {
-  const { refreshToken } = req.cookies;
+  const refreshToken = req.body.refreshToken;
 
   if (!refreshToken) {
     return res.status(401).json({ error: "Vui lòng cung cấp refresh token." });

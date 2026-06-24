@@ -14,5 +14,4 @@ const cleanupExpiredTokens = async () => {
   }
 };
 
-// Chạy cron job mỗi ngày lúc 00:00
 cron.schedule("0 0 * * *", cleanupExpiredTokens);

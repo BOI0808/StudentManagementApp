@@ -3,8 +3,11 @@ const multer = require("multer");
 const router = express.Router();
 const gradeController = require("../controllers/gradeController");
 const fileValidation = require("../middlewares/fileValidationMiddleware");
+const authenticateToken = require("../middlewares/authMiddleware");
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+router.use(authenticateToken);
 
 // Endpoint: POST /api/grades/nhap-diem
 router.post("/nhap-diem", gradeController.luuBangDiem);

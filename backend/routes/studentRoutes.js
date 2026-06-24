@@ -3,8 +3,10 @@ const multer = require("multer");
 const router = express.Router();
 const studentController = require("../controllers/studentController");
 const fileValidation = require("../middlewares/fileValidationMiddleware");
+const authenticateToken = require("../middlewares/authMiddleware");
 
 const upload = multer({ storage: multer.memoryStorage() });
+router.use(authenticateToken);
 
 // Endpoint: POST /api/students/tiep-nhan-hoc-sinh
 router.post("/tiep-nhan-hoc-sinh", studentController.tiepNhanHocSinh);

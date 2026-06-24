@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const semesterController = require("../controllers/semesterController");
+const authenticateToken = require("../middlewares/authMiddleware");
+
+router.use(authenticateToken);
 
 // Endpoint: POST /api/semesters/tao-hoc-ky-nam-hoc
 router.post("/tao-hoc-ky-nam-hoc", semesterController.createHocKyNamHoc);

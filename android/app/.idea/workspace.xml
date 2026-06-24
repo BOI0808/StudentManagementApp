@@ -219,15 +219,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ccbd9d6-be9e-40c5-9188-a71f2b370a92" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/MyApplication.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/routes/authRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/authRoutes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/routes/gradeRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/gradeRoutes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/routes/studentRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/studentRoutes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/routes/userRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/routes/userRoutes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../backend/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/../../backend/server.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../node_modules/.package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/studentmanagementapp/api/ApiClient.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -405,12 +400,12 @@
       <map>
         <entry key="com.example.studentmanagementapp">
           <value>
-            <CheckInfo lastCheckTimestamp="1782181233853" />
+            <CheckInfo lastCheckTimestamp="1782267929926" />
           </value>
         </entry>
         <entry key="com.example.studentmanagementapp.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1782181233848" />
+            <CheckInfo lastCheckTimestamp="1782267929929" />
           </value>
         </entry>
       </map>

@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const testTypeController = require("../controllers/testTypeController");
+const authenticateToken = require("../middlewares/authMiddleware");
+
+router.use(authenticateToken);
 
 // Endpoint: POST /api/test-types/lap-loai-kiem-tra
 router.post("/lap-loai-kiem-tra", testTypeController.createLoaiKT);
