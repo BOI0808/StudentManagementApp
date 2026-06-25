@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 30, 2026 at 05:19 AM
+-- Generation Time: Jun 25, 2026 at 01:51 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -191,6 +191,14 @@ CREATE TABLE `monhoc` (
   `TrangThai` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `monhoc`
+--
+
+INSERT INTO `monhoc` (`MaMonHoc`, `TenMonHoc`, `TrangThai`) VALUES
+('TOANHOC', 'Toán học', 1),
+('VATLY', 'Vật lý', 1);
+
 -- --------------------------------------------------------
 
 --
@@ -213,7 +221,7 @@ CREATE TABLE `nguoidung` (
 --
 
 INSERT INTO `nguoidung` (`MaSo`, `HoTen`, `TenDangNhap`, `MatKhau`, `Email`, `SoDienThoai`, `PhanQuyen`, `TrangThai`) VALUES
-('ADMIN01', 'Quản trị viên hệ thống', 'admin', 'admin123', 'admin@school.edu.vn', '0903596792', 'Quản trị viên', 1);
+('ADMIN01', 'Quản trị viên hệ thống', 'admin', '$2b$10$BEn0uG6UZcQJ0uAk6wXIV.LisR/uLB4BecolR0hWP5X/fCn2bIqA.', 'admin@school.edu.vn', '0903596792', 'Quản trị viên', 1);
 
 -- --------------------------------------------------------
 
@@ -243,6 +251,19 @@ INSERT INTO `nguoidung_quyen` (`MaSo`, `MaCN`) VALUES
 ('ADMIN01', 'CNNDSCLKT'),
 ('ADMIN01', 'CNTCHS'),
 ('ADMIN01', 'CNTNHS');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `refresh_tokens`
+--
+
+CREATE TABLE `refresh_tokens` (
+  `id` int(11) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `MaSo` varchar(10) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -365,6 +386,13 @@ ALTER TABLE `nguoidung_quyen`
   ADD KEY `MaCN` (`MaCN`);
 
 --
+-- Indexes for table `refresh_tokens`
+--
+ALTER TABLE `refresh_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `MaSo` (`MaSo`);
+
+--
 -- Indexes for table `thamso`
 --
 ALTER TABLE `thamso`
@@ -373,6 +401,12 @@ ALTER TABLE `thamso`
 --
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `refresh_tokens`
+--
+ALTER TABLE `refresh_tokens`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=98;
 
 --
 -- AUTO_INCREMENT for table `thamso`
@@ -426,6 +460,12 @@ ALTER TABLE `lop`
 ALTER TABLE `nguoidung_quyen`
   ADD CONSTRAINT `nguoidung_quyen_ibfk_1` FOREIGN KEY (`MaSo`) REFERENCES `nguoidung` (`MaSo`),
   ADD CONSTRAINT `nguoidung_quyen_ibfk_2` FOREIGN KEY (`MaCN`) REFERENCES `chucnang` (`MaCN`);
+
+--
+-- Constraints for table `refresh_tokens`
+--
+ALTER TABLE `refresh_tokens`
+  ADD CONSTRAINT `refresh_tokens_ibfk_1` FOREIGN KEY (`MaSo`) REFERENCES `nguoidung` (`MaSo`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
