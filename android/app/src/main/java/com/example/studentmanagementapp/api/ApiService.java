@@ -164,4 +164,10 @@ public interface ApiService {
 
     @POST("api/configs/cap-nhat-tham-so")
     Call<Map<String, Object>> updateSystemParameters(@Body Map<String, Object> parameters);
+
+    @GET("api/students/diem-chi-tiet")
+    Call<List<Map<String, Object>>> getStudentScoreDetails(
+        @Query("maHocSinh") String maHocSinh,
+        @Query("maLop") String maLop
+    );
 }

@@ -25,6 +25,9 @@ router.get("/search", studentController.searchHocSinh);
 // Endpoint: GET /api/students/tra-cuu
 router.get("/tra-cuu", studentController.traCuuHocSinhTheoTenHoacMa);
 
+// Endpoint: GET /api/students/diem-chi-tiet?maHocSinh=HS2401&maLop=10A1
+router.get("/diem-chi-tiet", studentController.getStudentScoreDetails);
+
 //Endpoint: GET /api/students/lich-su-hoc-tap/:maHocSinh
 router.get("/lich-su-hoc-tap/:maHocSinh", studentController.getStudentHistory);
 
