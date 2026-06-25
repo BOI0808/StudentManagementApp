@@ -41,11 +41,6 @@ uploads/
 *.xlsx
 *.xls
 
-# Database dumps or backups
-*.sql
-*.sqlite
-*.db
-
 # Android-specific files
 android/.gradle/
 android/.idea/
