@@ -166,8 +166,38 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         btn.setStrokeColorResource(R.color.blue_primary);
         btn.setOnClickListener(v -> setQuickPermissions(roleName));
         
+        btn.setOnLongClickListener(v -> {
+            showDeleteRoleDialog(roleName);
+            return true;
+        });
+        
         int index = llQuickButtons.indexOfChild(findViewById(R.id.btnQuickAdmin));
         llQuickButtons.addView(btn, index);
+    }
+
+    private void showDeleteRoleDialog(String roleName) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Xóa nhóm quyền")
+                .setMessage("Bạn có chắc chắn muốn xóa nhóm quyền \"" + roleName + "\" không?")
+                .setPositiveButton("Xóa", (dialog, which) -> deleteCustomRole(roleName))
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void deleteCustomRole(String roleName) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        String rolesJson = prefs.getString(KEY_ROLES, "{}");
+        try {
+            JSONObject json = new JSONObject(rolesJson);
+            if (json.has(roleName)) {
+                json.remove(roleName);
+                prefs.edit().putString(KEY_ROLES, json.toString()).apply();
+                loadCustomRolesDynamic();
+                Toast.makeText(this, "Đã xóa nhóm quyền: " + roleName, Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void setupErrorClearing() {
