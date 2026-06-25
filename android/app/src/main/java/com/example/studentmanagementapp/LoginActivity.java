@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import okhttp3.ResponseBody;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -48,7 +51,7 @@ public class LoginActivity extends AppCompatActivity {
         setupTextWatchers();
 
         edtPassword.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE || 
+            if (actionId == EditorInfo.IME_ACTION_DONE ||
                 (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN)) {
                 performLogin();
                 return true;
@@ -76,27 +79,21 @@ public class LoginActivity extends AppCompatActivity {
 
     private void setupTextWatchers() {
         edtUsername.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 tilUsername.setError(null);
                 tilUsername.setErrorEnabled(false);
             }
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
         edtPassword.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 tilPassword.setError(null);
                 tilPassword.setErrorEnabled(false);
             }
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
     }
 
@@ -139,53 +136,47 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 hideLoading();
-                
+
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponse loginResponse = response.body();
-                    
-                    saveUserData(loginResponse);
 
-                    String phanQuyen = loginResponse.getUser().getPhanQuyen();
-                    if (phanQuyen.equalsIgnoreCase("Admin") || phanQuyen.equalsIgnoreCase("Quản trị viên")) {
-                        Intent intent = new Intent(LoginActivity.this, AdminCreateUserActivity.class);
-                        startActivity(intent);
-                        finish();
+                    String accessToken = loginResponse.getAccessToken();
+                    String refreshToken = loginResponse.getRefreshToken();
+                    LoginResponse.UserData userData = loginResponse.getUser();
+
+                    if (accessToken == null || accessToken.isEmpty()) {
+                        Toast.makeText(LoginActivity.this, "Lỗi: Không nhận được token đăng nhập", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    saveUserData(userData, accessToken, refreshToken);
+
+                    String phanQuyen = (userData != null) ? userData.getPhanQuyen() : "";
+                    
+                    // Nếu userData null, thử lấy phanQuyen từ JWT payload đã lưu
+                    if (phanQuyen.isEmpty()) {
+                        SharedPreferences sharedPref = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+                        phanQuyen = sharedPref.getString("user_phanquyen", "");
+                    }
+
+                    Intent intent;
+                    if ("Admin".equalsIgnoreCase(phanQuyen) || "Quản trị viên".equalsIgnoreCase(phanQuyen)) {
+                        intent = new Intent(LoginActivity.this, AdminCreateUserActivity.class);
                     } else {
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        startActivity(intent);
-                        finish();
+                        intent = new Intent(LoginActivity.this, MainActivity.class);
                     }
-                    
-                    Toast.makeText(LoginActivity.this, loginResponse.getMessage(), Toast.LENGTH_SHORT).show();
+
+                    startActivity(intent);
+
+                    if (loginResponse.getMessage() != null) {
+                        Toast.makeText(LoginActivity.this, loginResponse.getMessage(), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(LoginActivity.this, "Đăng nhập thành công", Toast.LENGTH_SHORT).show();
+                    }
+
+                    finish();
                 } else {
-                    try {
-                        String errorJson = "";
-                        try (ResponseBody errorBody = response.errorBody()) {
-                            if (errorBody != null) {
-                                errorJson = errorBody.string();
-                            }
-                        }
-
-                        String errorMsg = "";
-                        if (!errorJson.isEmpty()) {
-                            JSONObject jObjError = new JSONObject(errorJson);
-                            errorMsg = jObjError.optString("error", jObjError.optString("message", "")).toLowerCase();
-                        }
-
-                        if (errorMsg.contains("không tồn tại") || errorMsg.contains("không tìm thấy") || errorMsg.contains("tài khoản sai")) {
-                            tilUsername.setErrorEnabled(true);
-                            tilUsername.setError("Tài khoản không tồn tại");
-                            tilPassword.setError(null);
-                        } else if (errorMsg.contains("mật khẩu")) {
-                            tilPassword.setErrorEnabled(true);
-                            tilPassword.setError("Mật khẩu không chính xác");
-                            tilUsername.setError(null);
-                        } else {
-                            Toast.makeText(LoginActivity.this, "Đăng nhập thất bại: Sai tài khoản hoặc mật khẩu", Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (Exception e) {
-                        Toast.makeText(LoginActivity.this, "Đăng nhập thất bại", Toast.LENGTH_SHORT).show();
-                    }
+                    handleErrorResponse(response);
                 }
             }
 
@@ -197,20 +188,80 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void saveUserData(LoginResponse response) {
+    private void handleErrorResponse(Response<LoginResponse> response) {
+        try {
+            String errorJson = "";
+            try (ResponseBody errorBody = response.errorBody()) {
+                if (errorBody != null) {
+                    errorJson = errorBody.string();
+                }
+            }
+
+            String errorMsg = "";
+            if (!errorJson.isEmpty()) {
+                JSONObject jObjError = new JSONObject(errorJson);
+                errorMsg = jObjError.optString("error", jObjError.optString("message", "")).toLowerCase();
+            }
+
+            if (errorMsg.contains("tên đăng nhập hoặc mật khẩu không đúng")) {
+                tilUsername.setErrorEnabled(true);
+                tilUsername.setError("Tên đăng nhập hoặc mật khẩu không đúng.");
+            } else if (errorMsg.contains("tài khoản không tồn tại") || errorMsg.contains("tài khoản sai")) {
+                tilUsername.setErrorEnabled(true);
+                tilUsername.setError("Tài khoản không tồn tại");
+            } else {
+                Toast.makeText(LoginActivity.this, "Đăng nhập thất bại: " + (errorMsg.isEmpty() ? "Lỗi " + response.code() : errorMsg), Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(LoginActivity.this, "Đăng nhập thất bại", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void saveUserData(LoginResponse.UserData user, String accessToken, String refreshToken) {
         SharedPreferences sharedPref = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-        
-        if (response.getUser() != null) {
-            editor.putString("user_fullname", response.getUser().getHoTen());
+
+        editor.putString("access_token", accessToken);
+        editor.putString("refresh_token", refreshToken);
+
+        if (user != null && user.getMaSo() != null) {
+            editor.putString("user_fullname", user.getHoTen());
+            editor.putString("user_maso", user.getMaSo());
+            editor.putString("user_phanquyen", user.getPhanQuyen());
             
-            List<String> permissions = response.getUser().getQuyen();
-            if (permissions != null) {
-                Set<String> set = new HashSet<>(permissions);
-                editor.putStringSet("user_permissions", set);
+            if (user.getDanhSachQuyen() != null) {
+                editor.putStringSet("user_permissions", new HashSet<>(user.getDanhSachQuyen()));
+            } else {
+                editor.remove("user_permissions");
+            }
+        } else {
+            // Fallback decoding from JWT
+            try {
+                String[] parts = accessToken.split("\\.");
+                if (parts.length >= 2) {
+                    String payload = new String(Base64.decode(parts[1], Base64.URL_SAFE));
+                    JSONObject json = new JSONObject(payload);
+                    editor.putString("user_fullname", json.optString("HoTen", ""));
+                    editor.putString("user_maso", json.optString("MaSo", ""));
+                    String pq = json.optString("PhanQuyen", "");
+                    editor.putString("user_phanquyen", pq);
+                    
+                    if (json.has("DanhSachQuyen")) {
+                        JSONArray array = json.getJSONArray("DanhSachQuyen");
+                        Set<String> perms = new HashSet<>();
+                        for (int i = 0; i < array.length(); i++) {
+                            perms.add(array.getString(i));
+                        }
+                        editor.putStringSet("user_permissions", perms);
+                    } else {
+                        editor.remove("user_permissions");
+                    }
+                }
+            } catch (Exception e) {
+                Log.e("JWT", "Error decoding token", e);
             }
         }
-
+        
         editor.apply();
     }
 }

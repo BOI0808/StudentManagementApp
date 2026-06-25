@@ -206,67 +206,73 @@ exports.xoaHocSinhKhoiLop = async (req, res) => {
   }
 };
 
-exports.traCuuHocSinh = async (req, res) => {
-  const { maLop, maHocSinh, hoTen } = req.query;
+exports.traCuuHocSinhTheoTenHoacMa = async (req, res) => {
+  const { maHocSinh, hoTen } = req.query;
 
-  let query = `
-    SELECT 
-      hs.MaHocSinh, 
-      hs.HoTen,
-      hs.NgaySinh,      
-      hs.MaGioiTinh,    
-      hs.DiaChi,        
-      hs.Email,         
-      MAX(l.TenLop) AS TenLop, 
-      CONCAT(hn.NamHocBatDau, '-', hn.NamHocKetThuc) AS NamHoc,
-      -- Tính điểm trung bình HK1
-      (SELECT ROUND(AVG(km1.DiemTrungBinhMon), 1) 
-       FROM ketqua_monhoc km1 
-       JOIN hocky_namhoc hn1 ON km1.MaHocKyNamHoc = hn1.MaHocKyNamHoc 
-       WHERE km1.MaHocSinh = hs.MaHocSinh 
-         AND hn1.NamHocBatDau = hn.NamHocBatDau 
-         AND hn1.TenHocKy = 'Học kỳ 1') AS DiemHK1,
-      -- Tính điểm trung bình HK2
-      (SELECT ROUND(AVG(km2.DiemTrungBinhMon), 1) 
-       FROM ketqua_monhoc km2 
-       JOIN hocky_namhoc hn2 ON km2.MaHocKyNamHoc = hn2.MaHocKyNamHoc 
-       WHERE km2.MaHocSinh = hs.MaHocSinh 
-         AND hn2.NamHocBatDau = hn.NamHocBatDau 
-         AND hn2.TenHocKy = 'Học kỳ 2') AS DiemHK2,
-      -- Tính điểm trung bình Cả năm
-      (SELECT ROUND(AVG(km3.DiemTrungBinhMon), 1) 
-       FROM ketqua_monhoc km3 
-       JOIN hocky_namhoc hn3 ON km3.MaHocKyNamHoc = hn3.MaHocKyNamHoc 
-       WHERE km3.MaHocSinh = hs.MaHocSinh 
-         AND hn3.NamHocBatDau = hn.NamHocBatDau) AS DiemCaNam
-    FROM hocsinh hs 
-    JOIN chitietlop ctl ON hs.MaHocSinh = ctl.MaHocSinh 
-    JOIN lop l ON ctl.MaLop = l.MaLop 
-    JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc 
-    WHERE 1=1`;
-
-  let params = [];
-  if (maLop) {
-    query += ` AND l.TenLop = (SELECT TenLop FROM lop WHERE MaLop = ?) 
-               AND hn.NamHocBatDau = (SELECT hn2.NamHocBatDau FROM lop l2 JOIN hocky_namhoc hn2 ON l2.MaHocKyNamHoc = hn2.MaHocKyNamHoc WHERE l2.MaLop = ?)`;
-    params.push(maLop, maLop);
+  if (!maHocSinh && !hoTen) {
+    return res.status(400).json({
+      error: "Vui lòng nhập mã học sinh hoặc họ tên",
+    });
   }
-  if (maHocSinh) {
-    query += " AND hs.MaHocSinh = ?";
-    params.push(maHocSinh);
-  }
-  if (hoTen) {
-    query += " AND hs.HoTen LIKE ?";
-    params.push(`%${hoTen}%`);
-  }
-
-  query += " GROUP BY hs.MaHocSinh, hn.NamHocBatDau";
 
   try {
-    const [rows] = await db.query(query, params);
-    res.json(rows);
+    let searchQuery = "SELECT * FROM hocsinh WHERE 1=1";
+    let searchParams = [];
+
+    if (maHocSinh) {
+      searchQuery += " AND MaHocSinh LIKE ?";
+      searchParams.push(`%${maHocSinh.trim()}%`);
+    }
+    if (hoTen) {
+      searchQuery += " AND HoTen LIKE ?";
+      searchParams.push(`%${hoTen}%`);
+    }
+
+    searchQuery += " LIMIT 10";
+
+    const [students] = await db.query(searchQuery, searchParams);
+
+    if (!students || students.length === 0) {
+      return res.status(404).json({
+        error: "Không tìm thấy học sinh phù hợp",
+      });
+    }
+
+    const result = await Promise.all(
+      students.map(async (student) => {
+        const maHS = student.MaHocSinh;
+
+        const [classes] = await db.query(
+          `
+          SELECT 
+            l.MaLop,
+            l.TenLop,
+            hn.NamHocBatDau,
+            hn.NamHocKetThuc,
+            CONCAT(hn.NamHocBatDau, '-', hn.NamHocKetThuc) AS NamHoc
+          FROM chitietlop ctl
+          JOIN lop l ON ctl.MaLop = l.MaLop
+          JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc
+          WHERE ctl.MaHocSinh = ?
+          GROUP BY l.TenLop, hn.NamHocBatDau -- Nhóm lại để tránh lặp lớp giữa các học kỳ trên danh sách search
+          ORDER BY hn.NamHocBatDau DESC
+          `,
+          [maHS]
+        );
+
+        return {
+          ...student,
+          classes: classes,
+        };
+      })
+    );
+
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: "Lỗi truy vấn: " + error.message });
+    console.error("Lỗi tra cứu:", error);
+    res.status(500).json({
+      error: "Lỗi truy vấn: " + error.message,
+    });
   }
 };
 
@@ -288,5 +294,121 @@ exports.getStudentHistory = async (req, res) => {
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getStudentScoreDetails = async (req, res) => {
+  const { maHocSinh } = req.query;
+
+  if (!maHocSinh) {
+    return res.status(400).json({ error: "Thiếu mã học sinh." });
+  }
+
+  try {
+    const [yearsRows] = await db.query(
+      `SELECT DISTINCT hn.NamHocBatDau, hn.NamHocKetThuc, l.TenLop
+       FROM chitietlop ctl
+       JOIN lop l ON ctl.MaLop = l.MaLop
+       JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc
+       WHERE ctl.MaHocSinh = ?
+       ORDER BY hn.NamHocBatDau DESC`,
+      [maHocSinh]
+    );
+
+    if (yearsRows.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Học sinh này hiện chưa được xếp vào lớp nào." });
+    }
+
+    const getScoresByClassId = async (maLop) => {
+      const [subjects] = await db.query(
+        `SELECT DISTINCT mh.MaMonHoc, mh.TenMonHoc 
+         FROM monhoc mh
+         JOIN bangdiem bd ON mh.MaMonHoc = bd.MaMonHoc
+         WHERE bd.MaHocSinh = ? AND bd.MaLop = ? AND mh.TrangThai = 1`,
+        [maHocSinh, maLop]
+      );
+
+      return await Promise.all(
+        subjects.map(async (subject) => {
+          const [scores] = await db.query(
+            `SELECT lkt.TenLoaiKiemTra, lkt.HeSo, bd.Diem, bd.GhiChu
+             FROM bangdiem bd
+             JOIN loaihinhkiemtra lkt ON bd.MaLoaiKiemTra = lkt.MaLoaiKiemTra
+             WHERE bd.MaHocSinh = ? AND bd.MaLop = ? AND bd.MaMonHoc = ? AND lkt.TrangThai = 1
+             ORDER BY lkt.HeSo ASC`,
+            [maHocSinh, maLop, subject.MaMonHoc]
+          );
+
+          const [avgRows] = await db.query(
+            `SELECT DiemTrungBinhMon FROM ketqua_monhoc 
+             WHERE MaHocSinh = ? AND MaMonHoc = ? AND MaHocKyNamHoc = (SELECT MaHocKyNamHoc FROM lop WHERE MaLop = ?)`,
+            [maHocSinh, subject.MaMonHoc, maLop]
+          );
+          return {
+            MaMonHoc: subject.MaMonHoc,
+            TenMonHoc: subject.TenMonHoc,
+            DiemTrungBinhMon:
+              avgRows.length > 0 ? avgRows[0].DiemTrungBinhMon : null,
+            DanhSachDiemChiTiet: scores,
+          };
+        })
+      );
+    };
+
+    const classHistoryDetails = await Promise.all(
+      yearsRows.map(async (yearRow) => {
+        const { NamHocBatDau, NamHocKetThuc, TenLop } = yearRow;
+
+        const [hk1Class] = await db.query(
+          `SELECT l.MaLop FROM lop l JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc 
+           WHERE l.TenLop = ? AND hn.NamHocBatDau = ? AND hn.TenHocKy = 'Học kỳ 1' LIMIT 1`,
+          [TenLop, NamHocBatDau]
+        );
+        const scoresHK1 =
+          hk1Class.length > 0
+            ? await getScoresByClassId(hk1Class[0].MaLop)
+            : [];
+
+        const [hk2Class] = await db.query(
+          `SELECT l.MaLop FROM lop l JOIN hocky_namhoc hn ON l.MaHocKyNamHoc = hn.MaHocKyNamHoc 
+           WHERE l.TenLop = ? AND hn.NamHocBatDau = ? AND hn.TenHocKy = 'Học kỳ 2' LIMIT 1`,
+          [TenLop, NamHocBatDau]
+        );
+        const scoresHK2 =
+          hk2Class.length > 0
+            ? await getScoresByClassId(hk2Class[0].MaLop)
+            : [];
+
+        const [termScores] = await db.query(
+          `SELECT 
+             ROUND(AVG(CASE WHEN hn.TenHocKy = 'Học kỳ 1' THEN km.DiemTrungBinhMon END), 1) AS DiemHK1,
+             ROUND(AVG(CASE WHEN hn.TenHocKy = 'Học kỳ 2' THEN km.DiemTrungBinhMon END), 1) AS DiemHK2,
+             ROUND(AVG(km.DiemTrungBinhMon), 1) AS DiemCaNam
+           FROM ketqua_monhoc km
+           JOIN hocky_namhoc hn ON km.MaHocKyNamHoc = hn.MaHocKyNamHoc
+           WHERE km.MaHocSinh = ? AND hn.NamHocBatDau = ?`,
+          [maHocSinh, NamHocBatDau]
+        );
+
+        return {
+          TenLop,
+          NamHoc: `${NamHocBatDau}-${NamHocKetThuc}`,
+          MonHocHocKy1: scoresHK1,
+          MonHocHocKy2: scoresHK2,
+          TongKetChung: termScores[0] || {
+            DiemHK1: null,
+            DiemHK2: null,
+            DiemCaNam: null,
+          },
+        };
+      })
+    );
+
+    res.json(classHistoryDetails);
+  } catch (error) {
+    console.error("Lỗi lấy điểm gộp năm học:", error);
+    res.status(500).json({ error: "Lỗi hệ thống: " + error.message });
   }
 };

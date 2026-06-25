@@ -2,8 +2,11 @@ const express = require("express");
 const multer = require("multer");
 const router = express.Router();
 const userController = require("../controllers/userController");
+const fileValidation = require("../middlewares/fileValidationMiddleware");
+const authenticateToken = require("../middlewares/authMiddleware");
 
 const upload = multer({ storage: multer.memoryStorage() });
+router.use(authenticateToken);
 
 //Endpoint: POST /api/users/tao-tai-khoan
 router.post("/tao-tai-khoan", userController.createUser);
@@ -11,6 +14,7 @@ router.post("/tao-tai-khoan", userController.createUser);
 router.post(
   "/import-excel",
   upload.single("file"),
+  fileValidation,
   userController.importUsersExcel
 );
 //Endpoint: GET /api/users/danh-sach-tai-khoan

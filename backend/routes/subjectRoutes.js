@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const subjectController = require("../controllers/subjectController");
+const authenticateToken = require("../middlewares/authMiddleware");
+
+router.use(authenticateToken);
 
 // Endpoint: POST /api/subjects/lap-mon-hoc
 router.post("/lap-mon-hoc", subjectController.createSubject);

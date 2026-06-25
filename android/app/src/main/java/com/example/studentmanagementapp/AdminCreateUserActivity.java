@@ -131,7 +131,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
     }
 
     private void loadCustomRolesDynamic() {
-        // Clear old dynamic buttons (keep btnAddCustomRole, btnQuickAdmin, btnQuickClear)
         int childCount = llQuickButtons.getChildCount();
         for (int i = childCount - 1; i >= 0; i--) {
             View v = llQuickButtons.getChildAt(i);
@@ -163,11 +162,10 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         btn.setText(roleName);
         btn.setAllCaps(false);
         btn.setTextSize(12);
-        btn.setPadding(32, 0, 32, 0); // Approx paddingHorizontal="12dp"
+        btn.setPadding(32, 0, 32, 0);
         btn.setStrokeColorResource(R.color.blue_primary);
         btn.setOnClickListener(v -> setQuickPermissions(roleName));
         
-        // Add before btnQuickAdmin
         int index = llQuickButtons.indexOfChild(findViewById(R.id.btnQuickAdmin));
         llQuickButtons.addView(btn, index);
     }
@@ -266,7 +264,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         if (role.equals("ADMIN")) {
             targetCodes = Arrays.asList(permissionCodes);
         } else if (!role.equals("CLEAR")) {
-            // Check dynamic roles
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             String rolesJson = prefs.getString(KEY_ROLES, "{}");
             try {
@@ -317,7 +314,6 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         btnQuickClear.setEnabled(enabled);
         btnAddCustomRole.setEnabled(enabled);
 
-        // Enable/Disable dynamic buttons
         for (int i = 0; i < llQuickButtons.getChildCount(); i++) {
             View v = llQuickButtons.getChildAt(i);
             if (v instanceof MaterialButton) {
@@ -563,10 +559,20 @@ public class AdminCreateUserActivity extends AppCompatActivity {
             edtFullName.setText(editingUser.getHoTen());
             edtUsername.setText(editingUser.getTenDangNhap());
             edtUsername.setEnabled(false);
-            edtPassword.setText(editingUser.getMatKhau());
+            
+            edtPassword.setText("");
+            
             edtEmail.setText(editingUser.getEmail());
             edtPhone.setText(editingUser.getSoDienThoai());
             setPermissions(editingUser.getDanhSachQuyen());
+            
+            if (tilPassword != null) {
+                tilPassword.setHelperText("Để trống nếu không muốn thay đổi mật khẩu");
+            }
+        } else {
+            if (tilPassword != null) {
+                tilPassword.setHelperText(null);
+            }
         }
     }
 
@@ -591,7 +597,12 @@ public class AdminCreateUserActivity extends AppCompatActivity {
 
         if (fullName.isEmpty()) { tilFullName.setError("Vui lòng nhập họ và tên"); hasError = true; }
         if (username.isEmpty()) { tilUsername.setError("Vui lòng nhập tên đăng nhập"); hasError = true; }
-        if (password.isEmpty()) { tilPassword.setError("Vui lòng nhập mật khẩu"); hasError = true; }
+        
+        if (editingUser == null && password.isEmpty()) {
+            tilPassword.setError("Vui lòng nhập mật khẩu"); 
+            hasError = true; 
+        }
+        
         if (email.isEmpty()) { tilEmail.setError("Vui lòng nhập email"); hasError = true; }
         if (phone.isEmpty()) { tilPhone.setError("Vui lòng nhập số điện thoại"); hasError = true; }
 
@@ -610,7 +621,13 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         User user = new User();
         user.setHoTen(fullName);
         user.setTenDangNhap(username);
-        user.setMatKhau(password);
+        
+        if (editingUser != null && password.isEmpty()) {
+            user.setMatKhau("");
+        } else {
+            user.setMatKhau(password);
+        }
+
         user.setEmail(email);
         user.setSoDienThoai(phone);
         user.setDanhSachQuyen(permissions);
@@ -699,6 +716,10 @@ public class AdminCreateUserActivity extends AppCompatActivity {
         edtPhone.setText("");
         clearCheckBoxes((ViewGroup) findViewById(android.R.id.content));
         clearAllErrors();
+        
+        if (tilPassword != null) {
+            tilPassword.setHelperText(null);
+        }
     }
 
     private void clearCheckBoxes(ViewGroup viewGroup) {

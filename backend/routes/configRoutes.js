@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const configController = require("../controllers/configController");
+const authenticateToken = require("../middlewares/authMiddleware");
+
+router.use(authenticateToken);
 
 // Endpoint: POST /api/config/cap-nhat-tham-so
 router.post("/cap-nhat-tham-so", configController.updateThamSo);

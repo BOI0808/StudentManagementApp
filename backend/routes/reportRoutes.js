@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const reportController = require("../controllers/reportController");
+const authenticateToken = require("../middlewares/authMiddleware");
+
+router.use(authenticateToken);
 
 // Endpoint: GET /api/reports/bao-cao-mon?MaHocKyNamHoc=...&MaMonHoc=...
 router.get("/bao-cao-mon", reportController.getBaoCaoTongKetMon);
