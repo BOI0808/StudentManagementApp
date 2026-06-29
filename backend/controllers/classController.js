@@ -119,8 +119,11 @@ exports.luuDanhSachLop = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const [[config]] = await connection.query(
+    const [[config_siSoToiDa]] = await connection.query(
       "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'SiSoToiDa'"
+    );
+    const [[config_siSoToiThieu]] = await connection.query(
+      "SELECT gia_tri FROM thamso WHERE ten_tham_so = 'SiSoToiThieu'"
     );
     const [[lopInfo]] = await connection.query(
       "SELECT MaHocKyNamHoc, TenLop FROM lop WHERE MaLop = ?",
@@ -129,10 +132,16 @@ exports.luuDanhSachLop = async (req, res) => {
 
     if (!lopInfo) throw new Error("Lớp học không tồn tại.");
 
-    if (DanhSachMaHS.length > config.gia_tri) {
+    if (DanhSachMaHS.length > config_siSoToiDa.gia_tri) {
       return res.status(400).json({
         success: false,
         error: `Danh sách (${DanhSachMaHS.length}) vượt quá sĩ số tối đa (${config.gia_tri}).`,
+      });
+    }
+    if (DanhSachMaHS.length < config_siSoToiThieu.gia_tri) {
+      return res.status(400).json({
+        success: false,
+        error: `Danh sách (${DanhSachMaHS.length}) không đủ sĩ số tối thiểu (${config_siSoToiThieu.gia_tri}).`,
       });
     }
 
