@@ -135,7 +135,7 @@ exports.luuDanhSachLop = async (req, res) => {
     if (DanhSachMaHS.length > config_siSoToiDa.gia_tri) {
       return res.status(400).json({
         success: false,
-        error: `Danh sách (${DanhSachMaHS.length}) vượt quá sĩ số tối đa (${config.gia_tri}).`,
+        error: `Danh sách (${DanhSachMaHS.length}) vượt quá sĩ số tối đa (${config_siSoToiDa.gia_tri}).`,
       });
     }
     if (DanhSachMaHS.length < config_siSoToiThieu.gia_tri) {
